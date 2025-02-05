@@ -1,8 +1,8 @@
 <script>
     import { goto } from '$app/navigation'; // Import goto for navigation
     // @ts-ignore
-    //import { projectsList } from '../stores/projectsList'; 
-    import { dummyProjects } from '../stores/projectsList'; // Import the mockdata store
+    import { projectsList } from '../stores/projectsList'; 
+    //import { dummyProjects } from '../stores/projectsList'; // Import the mockdata store
 
     /**
      * @type {{ id: any; formattedDateTime: any; imagePath: any; grade: any; isSent: any; attempts: any; }}

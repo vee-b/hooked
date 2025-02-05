@@ -60,28 +60,3 @@
       <span>Profile</span>
     </a> -->
   </nav>
-  
-  
-
-<!-- <script>
-    import { goto } from '$app/navigation';
-  </script>
-  
-  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t shadow-md flex justify-around py-3">
-    <button on:click={() => goto('/')} class="text-gray-600 hover:text-blue-600">
-      Home
-    </button>
-    <button on:click={() => goto('/newProject')} class="text-gray-600 hover:text-blue-600">
-      New Project
-    </button>
-    <button on:click={() => goto('/settings')} class="text-gray-600 hover:text-blue-600">
-      Settings
-    </button>
-  </nav>
-  
-  <style>
-    nav {
-      z-index: 10;
-    }
-  </style> -->
-  

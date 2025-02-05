@@ -5,8 +5,8 @@ import { invoke } from '@tauri-apps/api/core';
 import { Project } from '../models/Project';
 
 // using the dummy/mockdata
-import { mockProjects } from '../mockData.js';
-export const dummyProjects = writable(mockProjects);
+//import { mockProjects } from '../mockData.js';
+//export const dummyProjects = writable(mockProjects);
 
 
 /**
@@ -28,7 +28,7 @@ export async function initializeProjectsList() {
     // Invoke the Rust command to get all projects from the database
     const result = await invoke('get_all_projects');
     // Convert the result to a list of Project objects
-    const projects = result.map((/** @type {{ id: any; date_time: string | number | Date; image_path: any; is_sent: number; attempts: any; grade: any; }} */ projectMap) => Project.fromMap(projectMap));
+    const projects = result.map((/** @type {{ id: any; date_time: string | number | Date; image_path: any; is_sent: number; attempts: any; grade: any; is_active: any; }} */ projectMap) => Project.fromMap(projectMap));
     // Set the projects list in the Svelte store
     projectsList.set(projects);
   } catch (error) {

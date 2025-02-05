@@ -8,12 +8,3 @@
     </main>
     <NavBar />
   </div>
-  
-
-<!-- <script>
-    import NavBar from '../components/NavBar.svelte';
-  </script>
-  
-  <slot />
-  <NavBar />
-   -->

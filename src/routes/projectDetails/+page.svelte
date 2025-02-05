@@ -13,6 +13,7 @@
   let isSent = false;
   let selectedOption = 'Unknown';
   let dateTime = new Date();
+  let isActive = true;
   let message = '';
   const options = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10'];
 
@@ -27,10 +28,11 @@
     const project = new Project({
       id: crypto.randomUUID(),
       date_time: dateTimeObj,
-      image_path: imagePath,
+      image_path: imagePath || '',
       is_sent: isSent,
       attempts: attemptsNumber,
       grade: selectedOption,
+      is_active: isActive, 
     });
 
     try {
@@ -53,11 +55,10 @@
       
       // Set the image preview to the captured image
       imagePreview = image.webPath || '/images/default-girl.jpg';; // Set the image path for preview
-      imagePath = image.path || ''; // Store the image path in imagePath
+      imagePath = image.path || image.webPath || ''; // Store the image path in imagePath
     } catch (error) {
       // @ts-ignore
       if (error.code !== 'CANCELLED') { // Check if the action was cancelled
-      //if (error.code !== 'CANCELLED') { // Check if the action was cancelled
         console.error('Error capturing image:', error);
         message = 'Error capturing image.';
       } else {

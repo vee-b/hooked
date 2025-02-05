@@ -10,6 +10,7 @@ pub struct Project {
     pub is_sent: i32,            // Use i32 for the is_sent field
     pub attempts: i32,           // Number of attempts
     pub grade: String,           // Project grade
+    pub is_active: i32,
 }
 
 // Database struct (Manages the SQLite connection pool (SqlitePool), which allows asynchronous queries on the database)
@@ -49,6 +50,11 @@ impl DatabaseHelper {
     
     // Initialize the database and create the table
     async fn initialize(pool: &SqlitePool) -> Result<(), sqlx::Error> {
+        // Drop the existing table to reset the schema (use only in development)
+        // sqlx::query("DROP TABLE IF EXISTS projectTable")
+        // .execute(pool)
+        // .await?;
+
         sqlx::query(
             r#"
             CREATE TABLE IF NOT EXISTS projectTable (
@@ -57,7 +63,8 @@ impl DatabaseHelper {
                 image_path TEXT,
                 is_sent INTEGER,
                 attempts INTEGER,
-                grade TEXT
+                grade TEXT,
+                is_active INTEGER NOT NULL DEFAULT 1
             )
             "#,
         )
@@ -70,8 +77,8 @@ impl DatabaseHelper {
     pub async fn insert_project(&self, project: Project) -> Result<(), sqlx::Error> {
         let result = sqlx::query(
             r#"
-            INSERT INTO projectTable (id, date_time, image_path, is_sent, attempts, grade)
-            VALUES (?, ?, ?, ?, ?, ?)
+            INSERT INTO projectTable (id, date_time, image_path, is_sent, attempts, grade, is_active)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
             "#,
         )
         .bind(project.id) // Ensure correct binding
@@ -80,6 +87,7 @@ impl DatabaseHelper {
         .bind(project.is_sent) // Bind is_sent
         .bind(project.attempts) // Bind attempts
         .bind(project.grade) // Bind grade
+        .bind(project.is_active) // Bind active
         .execute(&self.pool) // Execute against the pool
         .await; // Handle any errors
 
@@ -94,7 +102,7 @@ impl DatabaseHelper {
     pub async fn get_all_projects(&self) -> Result<Vec<Project>, sqlx::Error> {
         let rows = sqlx::query(
             r#"
-            SELECT id, dateTime, imagePath, isSent, attempts, grade
+            SELECT id, dateTime, imagePath, isSent, attempts, grade, isActive
             FROM projectTable
             ORDER BY dateTime ASC
             "#,
@@ -109,6 +117,7 @@ impl DatabaseHelper {
             is_sent: row.get("isSent"),
             attempts: row.get("attempts"),
             grade: row.get("grade"),
+            is_active: row.get("isActive"),
         }).collect();
 
         Ok(projects)
@@ -119,7 +128,7 @@ impl DatabaseHelper {
         sqlx::query(
             r#"
             UPDATE projectTable
-            SET dateTime = ?, imagePath = ?, isSent = ?, attempts = ?, grade = ?
+            SET dateTime = ?, imagePath = ?, isSent = ?, attempts = ?, grade = ?, isActive = ?,
             WHERE id = ?
             "#,
         )
@@ -129,6 +138,7 @@ impl DatabaseHelper {
         .bind(project.attempts)
         .bind(project.grade)
         .bind(project.id)
+        .bind(project.is_active)
         .execute(&self.pool)
         .await?;
         Ok(())
@@ -155,12 +165,6 @@ impl DatabaseHelper {
             .await?;
         Ok(count.0)
     }
-
-    // Optionally, delete the database file (if needed)
-    // pub async fn delete_database_file() -> Result<(), std::io::Error> {
-    //     std::fs::remove_file("database/project.db")?; // Make sure the path is correct
-    //     Ok(())
-    // }
 }
 
 
