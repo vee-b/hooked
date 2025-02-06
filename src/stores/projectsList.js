@@ -2,16 +2,11 @@
 
 import { writable } from 'svelte/store';
 import { invoke } from '@tauri-apps/api/core';
-import { Project } from '../models/Project';
+import { getActiveProjects, Project } from '../models/Project';
 
-// using the dummy/mockdata
-//import { mockProjects } from '../mockData.js';
-//export const dummyProjects = writable(mockProjects);
-
-
-/**
- * @type {import('svelte/store').Writable<Project[]>}
- */
+// /**
+//  * @type {import('svelte/store').Writable<Project[]>}
+//  */
 // Initialize the project list as a Svelte store
 export const projectsList = writable([]);
 
@@ -35,21 +30,6 @@ export async function initializeProjectsList() {
     console.error('Error initializing projects list:', error);
   }
 }
-
-// // Function to add a new project
-// /**
-//  * @param {{ toMap: () => any; }} newProject
-//  */
-// export async function addProject(newProject) {
-//   try {
-//     // Invoke the Rust command to insert the project into the database
-//     await invoke('insert_project', { project: newProject.toMap() });
-//     // Reinitialize the projects list after adding the new project
-//     initializeProjectsList();
-//   } catch (error) {
-//     console.error('Error adding project:', error);
-//   }
-// }
 
 // Function to add a new project
 /**
@@ -118,4 +98,33 @@ export async function fetchSendsCount(grade) {
 // Function to initialize the sends count
 export function initializeSendsCount() {
   sendsCount.set({});
+}
+
+// Function to fetch only active projects
+// export async function getActiveProjects() {
+//   try {
+//     const result = await invoke('get_all_projects');
+//     const projects = result.map((/** @type {{ id: any; date_time: string | number | Date; image_path: any; is_sent: number; attempts: any; grade: any; is_active: number; }} */ projectMap) => Project.fromMap(projectMap));
+    
+//     // Filter active projects
+//     const activeProjects = projects.filter((/** @type {{ is_active: any; }} */ project) => project.is_active);
+    
+//     return activeProjects;
+//   } catch (error) {
+//     console.error('Error fetching active projects:', error);
+//     return []; // Return an empty array on error
+//   }
+// }
+export async function fetchActiveProjects() {
+  try {
+    const projectsData = await getActiveProjects(); // Should return an array
+    if (Array.isArray(projectsData)) {
+      return projectsData;
+    }
+    console.error('Unexpected response format:', projectsData);
+    return [];
+  } catch (error) {
+    console.error('Error fetching active projects:', error);
+    return [];
+  }
 }

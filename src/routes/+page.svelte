@@ -1,30 +1,28 @@
-<script>
+<script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import ProjectComponent from '../components/ProjectComponent.svelte';
   import { writable } from 'svelte/store';
   import { PlusCircle, Filter } from 'lucide-svelte';
+  import type { Project } from '../models/Project'; // Adjust the path if needed
+  //import { getActiveProjects } from '../models/Project';
 
-  /**
-   * @typedef {Object} Project
-   * @property {boolean} isSent
-   * @property {string} grade
-   * @property {string} formattedDateTime
-   * @property {string} imagePath
-   * @property {number} attempts
-   * @property {number} id
-   */
+  import { fetchActiveProjects } from '../stores/projectsList';
 
-  const projectsList = writable([]);
+  export const projectsList = writable<Project[]>([]);
 
   const navigateToNewProject = () => {
     goto('/projectDetails');
   };
 
   const fetchProjects = async () => {
-    const response = await fetch('/api/projects');
-    const data = await response.json();
-    projectsList.set(data.projects);
+    try {
+      const projectsData = await fetchActiveProjects();
+      projectsList.set(projectsData);  // projectsData should now be Project[]
+      console.log('Fetched projects successfully:', projectsData);
+    } catch (error) {
+      console.error('Error fetching active projects:', error);
+    }
   };
 
   onMount(() => {
