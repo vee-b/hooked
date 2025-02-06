@@ -1,4 +1,5 @@
 // src/lib/db.js
+
 import { invoke } from '@tauri-apps/api/core';
 
 /**
@@ -60,6 +61,21 @@ export async function getSendsCount(grade) {
     return result; // The result should be the sends count for the given grade
   } catch (error) {
     console.error('Error fetching sends count:', error);
+    throw error;
+  }
+}
+
+/**
+ * Fetch active projects from the database via Tauri.
+ * This function calls the Rust command 'get_active_projects'.
+ * @returns {Promise<Array<any>>} - Array of active project objects.
+ */
+export async function getActiveProjects() {
+  try {
+    const result = await invoke('get_active_projects');
+    return result;
+  } catch (error) {
+    console.error('Error fetching active projects:', error);
     throw error;
   }
 }

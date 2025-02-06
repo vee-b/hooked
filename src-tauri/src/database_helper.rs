@@ -1,15 +1,15 @@
-use sqlx::{SqlitePool, Row}; // Rust SQL toolkit for asynchronous database interactions. SqlitePool manages connections to the SQLite database, and Row is used to access results from a query.
-use serde::{Deserialize, Serialize}; // Serialization/deserialization framework. Serialize and Deserialize are used to convert Rust structs to and from JSON or other formats.
+use serde::{Deserialize, Serialize};
+use sqlx::{FromRow, Row, SqlitePool}; // Rust SQL toolkit for asynchronous database interactions. SqlitePool manages connections to the SQLite database, and Row is used to access results from a query. // Serialization/deserialization framework. Serialize and Deserialize are used to convert Rust structs to and from JSON or other formats.
 
 // Define the Project struct
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(FromRow, Debug, Serialize, Deserialize)]
 pub struct Project {
-    pub id: String,              // Keep as String, adjust if necessary
-    pub date_time: i64,          // Use i64 for date/time representation
-    pub image_path: String,       // Image path
-    pub is_sent: i32,            // Use i32 for the is_sent field
-    pub attempts: i32,           // Number of attempts
-    pub grade: String,           // Project grade
+    pub id: String,         // Keep as String, adjust if necessary
+    pub date_time: i64,     // Use i64 for date/time representation
+    pub image_path: String, // Image path
+    pub is_sent: i32,       // Use i32 for the is_sent field
+    pub attempts: i32,      // Number of attempts
+    pub grade: String,      // Project grade
     pub is_active: i32,
 }
 
@@ -31,23 +31,23 @@ impl DatabaseHelper {
     fn get_database_path() -> Result<String, std::io::Error> {
         let project_dir = std::env::current_dir()?;
         let db_dir = project_dir.join("database");
-    
+
         // If the "database" directory or the project.db file doesn't exist, it creates it.
         if !db_dir.exists() {
             std::fs::create_dir(&db_dir)?;
         }
-    
+
         let db_path = db_dir.join("project.db");
         println!("Database path: {}", db_path.display()); // Log the database path
-    
+
         if !db_path.exists() {
             std::fs::File::create(&db_path)?;
         }
-    
+
         // Returns the file path in a format SQLite understands (sqlite:path_to_db).
         Ok(format!("sqlite:{}", db_path.to_string_lossy()))
     }
-    
+
     // Initialize the database and create the table
     async fn initialize(pool: &SqlitePool) -> Result<(), sqlx::Error> {
         // Drop the existing table to reset the schema (use only in development)
@@ -102,23 +102,26 @@ impl DatabaseHelper {
     pub async fn get_all_projects(&self) -> Result<Vec<Project>, sqlx::Error> {
         let rows = sqlx::query(
             r#"
-            SELECT id, dateTime, imagePath, isSent, attempts, grade, isActive
+            SELECT id, date_time, image_path, is_sent, attempts, grade, is_active
             FROM projectTable
-            ORDER BY dateTime ASC
+            ORDER BY date_time ASC
             "#,
         )
         .fetch_all(&self.pool)
         .await?;
 
-        let projects = rows.iter().map(|row| Project {
-            id: row.get("id"),
-            date_time: row.get("dateTime"),
-            image_path: row.get("imagePath"),
-            is_sent: row.get("isSent"),
-            attempts: row.get("attempts"),
-            grade: row.get("grade"),
-            is_active: row.get("isActive"),
-        }).collect();
+        let projects = rows
+            .iter()
+            .map(|row| Project {
+                id: row.get("id"),
+                date_time: row.get("date_time"),
+                image_path: row.get("image_path"),
+                is_sent: row.get("is_sent"),
+                attempts: row.get("attempts"),
+                grade: row.get("grade"),
+                is_active: row.get("is_active"),
+            })
+            .collect();
 
         Ok(projects)
     }
@@ -128,7 +131,7 @@ impl DatabaseHelper {
         sqlx::query(
             r#"
             UPDATE projectTable
-            SET dateTime = ?, imagePath = ?, isSent = ?, attempts = ?, grade = ?, isActive = ?,
+            SET date_time = ?, image_path = ?, is_sent = ?, attempts = ?, grade = ?, is_active = ?,
             WHERE id = ?
             "#,
         )
@@ -165,9 +168,24 @@ impl DatabaseHelper {
             .await?;
         Ok(count.0)
     }
+
+    // pub async fn get_active_projects(&self) -> Result<Vec<Project>, sqlx::Error> {
+    //     let rows = sqlx::query_as::<_, Project>(
+    //         "SELECT id, date_time, image_path, is_sent, attempts, grade, is_active
+    //          FROM projectTable
+    //          WHERE active = 1"
+    //     )
+    //     .fetch_all(&self.pool)
+    //     .await?;
+
+    pub async fn get_active_projects(&self) -> Result<Vec<Project>, sqlx::Error> {
+        let query = "SELECT * FROM projectTable WHERE is_active = 1";
+        let projects = sqlx::query_as::<_, Project>(query)
+            .fetch_all(&self.pool)
+            .await?;
+        Ok(projects)
+    }
 }
-
-
 
 // //use sqlx::{Sqlite, SqlitePool};
 // //use sqlx::sqlite::SqliteConnectOptions;
@@ -204,28 +222,27 @@ impl DatabaseHelper {
 //     fn get_database_path() -> Result<String, std::io::Error> {
 //         // Get the path to the current working directory (your project's root)
 //         let project_dir = std::env::current_dir()?;
-        
+
 //         // Create a subdirectory for the database file, like "database"
 //         let db_dir = project_dir.join("database");
-        
+
 //         // Create the directory if it doesn't exist
 //         if !db_dir.exists() {
 //             std::fs::create_dir(&db_dir)?;
 //         }
-    
+
 //         // Construct the full path to the database
 //         let db_path = db_dir.join("project.db");
 //         println!("Database path: {}", db_path.display()); // Log the database path
-    
+
 //         // Ensure the file exists (create it if it doesn't)
 //         if !db_path.exists() {
 //             std::fs::File::create(&db_path)?;
 //         }
-    
+
 //         // Return the path with the "sqlite:" prefix for SqlitePool to handle
 //         Ok(format!("sqlite:{}", db_path.to_string_lossy()))
 //     }
-    
 
 //     // Initialize the database and create the table
 //     async fn initialize(pool: &SqlitePool) -> Result<(), sqlx::Error> {
