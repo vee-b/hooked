@@ -1,7 +1,7 @@
 <script>
   import { invoke } from '@tauri-apps/api/core';
   import { addProject } from '../../stores/projectsList.js';
-  import { Project } from '../../models/Project.js';
+  import { Project } from '../../models/Project';
   import { goto } from '$app/navigation';
   import { Camera, Upload } from 'lucide-svelte';
   import { Camera as CapacitorCamera, CameraResultType } from '@capacitor/camera'; // Import Capacitor Camera
@@ -165,10 +165,10 @@
     <input type="datetime-local" id="dateTime" bind:value={dateTime} />
   </div>
 
-  <div class="form-group">
+  <!-- <div class="form-group">
     <label for="imagePath">Image Path</label>
     <input type="text" id="imagePath" bind:value={imagePath} placeholder="Image Path" />
-  </div>
+  </div> -->
 
   <div class="form-group">
     <label for="grade">Grade</label>

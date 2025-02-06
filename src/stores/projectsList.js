@@ -119,7 +119,8 @@ export async function fetchActiveProjects() {
   try {
     const projectsData = await getActiveProjects(); // Should return an array
     if (Array.isArray(projectsData)) {
-      return projectsData;
+      const projectInstances = projectsData.map(data => new Project(data))
+      return projectInstances;
     }
     console.error('Unexpected response format:', projectsData);
     return [];

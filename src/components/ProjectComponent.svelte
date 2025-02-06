@@ -80,25 +80,26 @@
     
   </style>
     <div class="project-card">
-      <p class="project-label">Date & Time:</p>
-    <p class="text-content">{project.formatted_date_time}</p>
+      <p class="project-label">Date & Time: {project.formatted_date_time}</p>
+      <!-- <p class="text-content">{project.date_time}</p> -->
 
     {#if project.image_path}
-      <p class="project-label">Image:</p>
-      <img src={project.image_path} alt="Project Image">
+      <p class="project-label">Image: <img src={project.image_path}></p>
+      <!-- <img src={project.image_path} alt="Project Image"> -->
     {/if}
 
-    <p class="project-label">Grade:</p>
-    <p class="text-content">{project.grade}</p>
+    <p class="project-label">Grade: {project.grade}</p>
+    <!-- <p class="text-content">{project.grade}</p> -->
 
-    <p class="project-label">Sent:</p>
-    <p class="text-content">{project.is_sent ? "Yes" : "No"}</p>
+    <p class="project-label">Sent: {project.is_sent ? "Yes" : "No"}</p>
+    <!-- <p class="text-content">{project.is_sent ? "Yes" : "No"}</p> -->
 
-    <p class="project-label">Attempts:</p>
-    <p class="text-content">{project.attempts}</p>
+    <p class="project-label">Attempts: {project.attempts}</p>
+    <!-- <p class="text-content">{project.attempts}</p> -->
 
-    <p class="project-label">Project ID:</p>
-    <p class="text-content">{project.id}</p>
+    <!-- <p class="project-label">Project ID:</p>
+    <p class="text-content">{project.id}</p> -->
+
     <!-- <p class="project-label">Date & Time: {project.formatted_date_time}</p> -->
     <!-- <p class="text-content">{buildText(`Date & Time: ${project.formatted_date_time}`)}</p>
     {#if project.image_path} 

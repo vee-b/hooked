@@ -35,7 +35,7 @@ export class Project {
   }
 
   // Format the date
-  get formattedDateTime(): string {
+  get formatted_date_time(): string {
     return this.date_time ? format(this.date_time, 'dd-MM-yyyy HH:mm:ss') : 'Invalid Date';
   }
 
@@ -54,6 +54,12 @@ export class Project {
 
   // Static method to create a Project from a map (e.g., fetched from a database)
   static fromMap(map: any): Project {
+    if (!map.date_time) {
+      console.warn("Missing or invalid date_time in project data", map);
+    } else {
+      console.warn("date_time is valid");
+    }
+
     return new Project({
       id: map.id,
       date_time: new Date(map.date_time),
@@ -71,6 +77,7 @@ export async function getActiveProjects(): Promise<Project[]> {
   try {
     const projectsData = await invoke('get_active_projects');
     if (Array.isArray(projectsData)) {
+      console.log("Raw projects data:", projectsData);
       return projectsData.map(Project.fromMap);
     }
     console.error('Data format unexpected:', projectsData);
