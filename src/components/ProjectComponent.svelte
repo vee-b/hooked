@@ -84,7 +84,7 @@
       <!-- <p class="text-content">{project.date_time}</p> -->
 
     {#if project.image_path}
-      <p class="project-label">Image: <img src={project.image_path}></p>
+      <p class="project-label">Image:</p>
       <!-- <img src={project.image_path} alt="Project Image"> -->
     {/if}
 
