@@ -4,8 +4,7 @@
   import ProjectComponent from '../components/ProjectComponent.svelte';
   import { writable } from 'svelte/store';
   import { PlusCircle, Filter } from 'lucide-svelte';
-  import type { Project } from '../models/Project'; // Adjust the path if needed
-  //import { getActiveProjects } from '../models/Project';
+  import type { Project } from '../models/Project';
 
   import { fetchActiveProjects } from '../stores/projectsList';
 
@@ -18,7 +17,7 @@
   const fetchProjects = async () => {
     try {
       const projectsData = await fetchActiveProjects();
-      projectsList.set(projectsData);  // projectsData should now be Project[]
+      projectsList.set(projectsData);  // projectsData should be Project[]
       console.log('Fetched projects successfully:', projectsData);
     } catch (error) {
       console.error('Error fetching active projects:', error);
@@ -95,7 +94,7 @@
 
   <div class="divider"></div>
 
-  {#each $projectsList as project (project.id)}
+  {#each $projectsList as project (project._id)}
     <ProjectComponent {project} />
   {/each}
 </div>

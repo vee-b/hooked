@@ -3,7 +3,7 @@
 import { invoke } from '@tauri-apps/api/core';
 
 /**
- * Fetch all projects from the Rust backend using Tauri.
+ * Fetch all projects from the MongoDB backend using Tauri.
  * This function calls the 'get_all_projects' command in the Rust backend.
  * It returns an array of project objects.
  */
@@ -18,8 +18,8 @@ export async function getAllProjects() {
 }
 
 /**
- * Add a new project to the database via Tauri.
- * This function calls the 'insert_project' Rust command to insert a new project into the database.
+ * Add a new project to the MongoDB database via Tauri.
+ * This function calls the 'insert_project' Rust command to insert a new project.
  * @param {Object} project - The project object to add.
  * @returns {Promise<void>}
  */
@@ -34,14 +34,14 @@ export async function addProject(project) {
 }
 
 /**
- * Delete a project from the database.
+ * Delete a project from the MongoDB database.
  * This function invokes the 'delete_project' Rust command to delete the project by its ID.
  * @param {string} projectId - The ID of the project to delete.
  * @returns {Promise<void>}
  */
 export async function deleteProject(projectId) {
   try {
-    await invoke('delete_project', { id: projectId });
+    await invoke('delete_project', { _id: projectId });
     console.log('Project deleted successfully');
   } catch (error) {
     console.error('Error deleting project:', error);
@@ -66,8 +66,8 @@ export async function getSendsCount(grade) {
 }
 
 /**
- * Fetch active projects from the database via Tauri.
- * This function calls the Rust command 'get_active_projects'.
+ * Fetch active projects from the MongoDB backend via Tauri.
+ * This function calls the Rust command 'get_active_projects' to fetch active projects.
  * @returns {Promise<Array<any>>} - Array of active project objects.
  */
 export async function getActiveProjects() {

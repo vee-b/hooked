@@ -23,7 +23,7 @@ export async function initializeProjectsList() {
     // Invoke the Rust command to get all projects from the database
     const result = await invoke('get_all_projects');
     // Convert the result to a list of Project objects
-    const projects = result.map((/** @type {{ id: any; date_time: string | number | Date; image_path: any; is_sent: number; attempts: any; grade: any; is_active: any; }} */ projectMap) => Project.fromMap(projectMap));
+    const projects = result.map((/** @type {{ _id: any; date_time: string | number | Date; image_path: any; is_sent: number; attempts: any; grade: any; is_active: any; }} */ projectMap) => Project.fromMap(projectMap));
     // Set the projects list in the Svelte store
     projectsList.set(projects);
   } catch (error) {
@@ -49,12 +49,12 @@ export async function addProject(newProject) {
 
 // Function to delete a project by its ID
 /**
- * @param {any} id
+ * @param {any} _id
  */
-export async function deleteProject(id) {
+export async function deleteProject(_id) {
   try {
     // Invoke the Rust command to delete the project from the database
-    await invoke('delete_project', { id });
+    await invoke('delete_project', { _id });
     // Reinitialize the projects list after deleting the project
     initializeProjectsList();
   } catch (error) {
@@ -100,21 +100,6 @@ export function initializeSendsCount() {
   sendsCount.set({});
 }
 
-// Function to fetch only active projects
-// export async function getActiveProjects() {
-//   try {
-//     const result = await invoke('get_all_projects');
-//     const projects = result.map((/** @type {{ id: any; date_time: string | number | Date; image_path: any; is_sent: number; attempts: any; grade: any; is_active: number; }} */ projectMap) => Project.fromMap(projectMap));
-    
-//     // Filter active projects
-//     const activeProjects = projects.filter((/** @type {{ is_active: any; }} */ project) => project.is_active);
-    
-//     return activeProjects;
-//   } catch (error) {
-//     console.error('Error fetching active projects:', error);
-//     return []; // Return an empty array on error
-//   }
-// }
 export async function fetchActiveProjects() {
   try {
     const projectsData = await getActiveProjects(); // Should return an array

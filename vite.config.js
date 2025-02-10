@@ -17,7 +17,6 @@ export default defineConfig(async () => ({
   clearScreen: false,
   // 2. tauri expects a fixed port, fail if that port is not available
   server: {
-    //port: 1421,
     port: 1420,
     strictPort: true,
     host: host || false,
@@ -32,5 +31,6 @@ export default defineConfig(async () => ({
       // 3. tell vite to ignore watching `src-tauri`
       ignored: ["**/src-tauri/**"],
     },
+    allowedHosts: ['b21a-82-41-69-161.ngrok-free.app'],
   },
 }));

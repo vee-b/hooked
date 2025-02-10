@@ -4,7 +4,9 @@
   import { Project } from '../../models/Project';
   import { goto } from '$app/navigation';
   import { Camera, Upload } from 'lucide-svelte';
-  import { Camera as CapacitorCamera, CameraResultType } from '@capacitor/camera'; // Import Capacitor Camera
+  import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera'; // Import Capacitor Camera
+  import { Filesystem, Directory } from '@capacitor/filesystem';
+  import { Capacitor } from '@capacitor/core';
 
   let imagePath = 'No Image';
   let imagePreview = '/images/default-girl.jpg'; // Default image
@@ -26,9 +28,8 @@
     const attemptsNumber = parseInt(attempts, 10);
 
     const project = new Project({
-      id: crypto.randomUUID(),
       date_time: dateTimeObj,
-      image_path: imagePath || '',
+      image_path: imagePath || 'No Image',
       is_sent: isSent,
       attempts: attemptsNumber,
       grade: selectedOption,
@@ -66,6 +67,7 @@
       }
     }
   };
+
 </script>
 
 <style>
