@@ -28,7 +28,6 @@
     const attemptsNumber = parseInt(attempts, 10);
 
     const project = new Project({
-      //_id: crypto.randomUUID(),
       date_time: dateTimeObj,
       image_path: imagePath || 'No Image',
       is_sent: isSent,
