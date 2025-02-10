@@ -5,9 +5,12 @@ mod database_helper; // Assuming `database_helper.rs` is in the same directory
 
 use database_helper::{DatabaseHelper, Project};
 use tauri::{Manager, State};
-use tauri::command;
+//use tauri::command;
 use mongodb::{Client, options::ClientOptions};
 use mongodb::bson::doc;
+use mongodb::bson::Document;
+use mongodb::bson;
+use futures_util::stream::TryStreamExt;
 use std::sync::Arc;
 use tokio::sync::Mutex; // Mutex is needed for async code
 
@@ -56,68 +59,71 @@ async fn main() {
         .expect("error while running tauri application");
 }
 
-// Example command function to insert a project
 #[tauri::command]
-async fn insert_project(
-    db_helper: State<'_, DatabaseHelper>,
-    project: Project,
-) -> Result<(), String> {
-    println!("Inserting project: {:?}", project); // Log project details
-    db_helper.insert_project(project).await.map_err(|e| {
-        eprintln!("Failed to insert project: {}", e); // Log the error
-        e.to_string()
-    })?; 
-    Ok(())
-}
-
-// Get all projects from the database
-#[tauri::command]
-async fn get_all_projects(db_helper: State<'_, DatabaseHelper>) -> Result<Vec<Project>, String> {
-    db_helper
-        .get_all_projects()
-        .await
-        .map_err(|e| e.to_string())
-}
-
-#[tauri::command]
-async fn get_active_projects(db: State<'_, DatabaseHelper>) -> Result<Vec<Project>, String> {
-    match db.get_active_projects().await {
-        Ok(projects) => {
-            println!("\nFetched active projects: {:?}", projects);
-            Ok(projects)
-        }
-        Err(e) => {
-            println!("\nError fetching active projects: {:?}", e);
-            Err(e.to_string())
-        }
+async fn insert_project(client: State<'_, Client>, project: Project) -> Result<(), String> {
+    let collection = client.database("hooked_db").collection("projects");
+    match collection.insert_one(bson::to_document(&project).unwrap(), None).await {
+        Ok(_) => Ok(()),
+        Err(e) => Err(e.to_string()),
     }
 }
 
-// Update a project
 #[tauri::command]
-async fn update_project(
-    db_helper: State<'_, DatabaseHelper>,
-    project: Project,
-) -> Result<(), String> {
-    db_helper
-        .update_project(project)
-        .await
-        .map_err(|e| e.to_string())
+async fn get_all_projects(client: State<'_, Client>) -> Result<Vec<Project>, String> {
+    let collection = client.database("hooked_db").collection::<Document>("projects");
+    let mut cursor = collection.find(None, None).await.map_err(|e| e.to_string())?;
+    let mut projects = Vec::new();
+
+    while let Some(doc) = cursor.try_next().await.map_err(|e| e.to_string())? {
+        let project: Project = bson::from_document(doc).map_err(|e| e.to_string())?;
+        projects.push(project);
+    }
+    Ok(projects)
 }
 
-// Delete a project
 #[tauri::command]
-async fn delete_project(db_helper: State<'_, DatabaseHelper>, id: String) -> Result<(), String> {
-    db_helper
-        .delete_project(&id)
-        .await
-        .map_err(|e| e.to_string())
+async fn get_active_projects(client: State<'_, Client>) -> Result<Vec<Project>, String> {
+    let collection = client.database("hooked_db").collection::<Document>("projects");
+    let filter = doc! {"active": 1};
+    let mut cursor = collection.find(filter, None).await.map_err(|e| e.to_string())?;
+    let mut projects = Vec::new();
+
+    while let Some(doc) = cursor.try_next().await.map_err(|e| e.to_string())? {
+        let project: Project = bson::from_document(doc).map_err(|e| e.to_string())?;
+        projects.push(project);
+    }
+    Ok(projects)
 }
 
-// Get sends count
 #[tauri::command]
-async fn get_sends_count(db_helper: State<'_, DatabaseHelper>) -> Result<i64, String> {
-    db_helper.get_sends_count().await.map_err(|e| e.to_string())
+async fn update_project(client: State<'_, Client>, project: Project) -> Result<(), String> {
+    let collection = client.database("hooked_db").collection::<Document>("projects");
+
+    if let Some(_id) = project._id {
+        let filter = doc! {"_id": _id};
+        let update = doc! {"$set": bson::to_document(&project).unwrap()};
+        collection.update_one(filter, update, None).await.map_err(|e| e.to_string())?;
+        Ok(())
+    } else {
+        Err("Project ID is required for update".to_string())
+    }
+}
+
+#[tauri::command]
+async fn delete_project(client: State<'_, Client>, _id: String) -> Result<(), String> {
+    let collection = client.database("hooked_db").collection::<Document>("projects");
+    let object_id = bson::oid::ObjectId::parse_str(&_id).map_err(|e| e.to_string())?;
+    let filter = doc! {"_id": object_id};
+
+    collection.delete_one(filter, None).await.map_err(|e| e.to_string())?;
+    Ok(())
+}
+
+#[tauri::command]
+async fn get_sends_count(client: State<'_, Client>) -> Result<i64, String> {
+    let collection = client.database("hooked_db").collection::<Document>("projects");
+    let count = collection.count_documents(None, None).await.map_err(|e| e.to_string())?;
+    Ok(count.try_into().map_err(|_| "Count exceeds i64 capacity".to_string())?)
 }
 
 
@@ -125,30 +131,93 @@ async fn get_sends_count(db_helper: State<'_, DatabaseHelper>) -> Result<i64, St
 
 
 
-// Prevents additional console window on Windows in release, DO NOT REMOVE!!
-// #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
-// #[cfg_attr(mobile, tauri::mobile_entry_point)]
 
-// use mongodb::{bson::doc, options::{ClientOptions, ServerApi, ServerApiVersion}, Client, error::Result};
 
-// #[tokio::main]
-// async fn main() -> Result<()> {
-//   let mut client_options =
-//     ClientOptions::parse("***REMOVED***Vee:<644R8rnooVubZx9E>@hooked.akkpt.mongodb.net/?retryWrites=true&w=majority&appName=Hooked")
-//       .await?;
-//   // Set the server_api field of the client_options object to set the version of the Stable API on the client
 
-//   let server_api = ServerApi::builder().version(ServerApiVersion::V1).build();
-//   client_options.server_api = Some(server_api);
-//   // Get a handle to the cluster
-//   let client = Client::with_options(client_options)?;
-//   // Ping the server to see if you can connect to the cluster
-//   client
-//     .database("admin")
-//     .run_command(doc! {"ping": 1}, None)
-//     .await?;
-//   println!("Pinged your deployment. You successfully connected to MongoDB!");
-//   Ok(())
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// SQLite Code
+// Insert a project
+// #[tauri::command]
+// async fn insert_project(
+//     db_helper: State<'_, DatabaseHelper>,
+//     project: Project,
+// ) -> Result<(), String> {
+//     println!("Inserting project: {:?}", project); // Log project details
+//     db_helper.insert_project(project).await.map_err(|e| {
+//         eprintln!("Failed to insert project: {}", e); // Log the error
+//         e.to_string()
+//     })?; 
+//     Ok(())
 // }
 
+// // Get all projects from the database
+// #[tauri::command]
+// async fn get_all_projects(db_helper: State<'_, DatabaseHelper>) -> Result<Vec<Project>, String> {
+//     db_helper
+//         .get_all_projects()
+//         .await
+//         .map_err(|e| e.to_string())
+// }
 
+// #[tauri::command]
+// async fn get_active_projects(db: State<'_, DatabaseHelper>) -> Result<Vec<Project>, String> {
+//     match db.get_active_projects().await {
+//         Ok(projects) => {
+//             println!("\nFetched active projects: {:?}", projects);
+//             Ok(projects)
+//         }
+//         Err(e) => {
+//             println!("\nError fetching active projects: {:?}", e);
+//             Err(e.to_string())
+//         }
+//     }
+// }
+
+// // Update a project
+// #[tauri::command]
+// async fn update_project(
+//     db_helper: State<'_, DatabaseHelper>,
+//     project: Project,
+// ) -> Result<(), String> {
+//     db_helper
+//         .update_project(project)
+//         .await
+//         .map_err(|e| e.to_string())
+// }
+
+// // Delete a project
+// #[tauri::command]
+// async fn delete_project(db_helper: State<'_, DatabaseHelper>, id: String) -> Result<(), String> {
+//     db_helper
+//         .delete_project(&id)
+//         .await
+//         .map_err(|e| e.to_string())
+// }
+
+// // Get sends count
+// #[tauri::command]
+// async fn get_sends_count(db_helper: State<'_, DatabaseHelper>) -> Result<i64, String> {
+//     db_helper.get_sends_count().await.map_err(|e| e.to_string())
+// }

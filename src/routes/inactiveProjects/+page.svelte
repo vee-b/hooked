@@ -12,7 +12,7 @@
      * @property {string} formattedDateTime
      * @property {string} imagePath
      * @property {number} attempts
-     * @property {number} id
+     * @property {number} _id
      */
   
     const projectsList = writable([]);
@@ -93,7 +93,7 @@
   
     <div class="divider"></div>
   
-    {#each $projectsList as project (project.id)}
+    {#each $projectsList as project (project._id)}
       <ProjectComponent {project} />
     {/each}
   </div>

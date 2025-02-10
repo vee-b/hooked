@@ -21,10 +21,10 @@
     // Function to delete the project
     async function deleteProject() {
         // @ts-ignore
-        console.log(`Project ID to delete: ${project.id}`);
+        console.log(`Project ID to delete: ${project._id}`);
         // Call delete function from the projectsList store
         // @ts-ignore
-        await deleteProject(project.id);
+        await deleteProject(project._id);
         // Refresh the current route after deletion
         goto(window.location.pathname); // Navigate to the current path to refresh the view
     }

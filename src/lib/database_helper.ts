@@ -1,4 +1,4 @@
-// For Capacitor SQLite
+// For Capacitor SQLite DB
 
 import { CapacitorSQLite, SQLiteConnection } from '@capacitor-community/sqlite';
 import type { SQLiteDBConnection } from '@capacitor-community/sqlite';
