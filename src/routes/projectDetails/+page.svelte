@@ -7,7 +7,6 @@
   import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera'; // Import Capacitor Camera
   import { Filesystem, Directory } from '@capacitor/filesystem';
   import { Capacitor } from '@capacitor/core';
-  //import { open } from '@tauri-apps/api/dialog';
 
   let imagePath = 'No Image';
   let imagePreview = '/images/default-girl.jpg'; // Default image

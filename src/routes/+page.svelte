@@ -5,7 +5,6 @@
   import { writable } from 'svelte/store';
   import { PlusCircle, Filter } from 'lucide-svelte';
   import type { Project } from '../models/Project'; // Adjust the path if needed
-  //import { getActiveProjects } from '../models/Project';
 
   import { fetchActiveProjects } from '../stores/projectsList';
 

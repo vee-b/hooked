@@ -100,21 +100,6 @@ export function initializeSendsCount() {
   sendsCount.set({});
 }
 
-// Function to fetch only active projects
-// export async function getActiveProjects() {
-//   try {
-//     const result = await invoke('get_all_projects');
-//     const projects = result.map((/** @type {{ id: any; date_time: string | number | Date; image_path: any; is_sent: number; attempts: any; grade: any; is_active: number; }} */ projectMap) => Project.fromMap(projectMap));
-    
-//     // Filter active projects
-//     const activeProjects = projects.filter((/** @type {{ is_active: any; }} */ project) => project.is_active);
-    
-//     return activeProjects;
-//   } catch (error) {
-//     console.error('Error fetching active projects:', error);
-//     return []; // Return an empty array on error
-//   }
-// }
 export async function fetchActiveProjects() {
   try {
     const projectsData = await getActiveProjects(); // Should return an array

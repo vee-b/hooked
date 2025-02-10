@@ -84,7 +84,7 @@ async fn get_all_projects(client: State<'_, Client>) -> Result<Vec<Project>, Str
 #[tauri::command]
 async fn get_active_projects(client: State<'_, Client>) -> Result<Vec<Project>, String> {
     let collection = client.database("hooked_db").collection::<Document>("projects");
-    let filter = doc! {"active": 1};
+    let filter = doc! {"is_active": 1};
     let mut cursor = collection.find(filter, None).await.map_err(|e| e.to_string())?;
     let mut projects = Vec::new();
 
@@ -157,7 +157,8 @@ async fn get_sends_count(client: State<'_, Client>) -> Result<i64, String> {
 
 
 
-// SQLite Code
+// OLD SQLITE DB CODE
+
 // Insert a project
 // #[tauri::command]
 // async fn insert_project(
