@@ -1,6 +1,7 @@
-<script>
+<script lang="ts">
+    import { deleteProject, projectsList } from "../stores/projectsList";
+    import type { Project } from '../models/Project';
     import { goto } from '$app/navigation'; // Import goto for navigation
-    //import '../models/Project.js';
 
     // /**
     //  * @type {{ id: any; formatted_date_time: any; image_path: any; grade: any; is_sent: any; attempts: any; is_active: any; }}
@@ -10,7 +11,7 @@
   //   /**
   //  * @type {{ id: any; formatted_date_time: string; image_path: any; grade: any; is_sent: any; attempts: any; }}
   //  */
-     export let project; // Receive project object as prop
+  export let project: Project; // Receive project object as prop
     
     // Navigation to edit the project
     async function editProject() {
@@ -19,15 +20,28 @@
     }
     
     // Function to delete the project
-    async function deleteProject() {
-        // @ts-ignore
-        console.log(`Project ID to delete: ${project._id}`);
-        // Call delete function from the projectsList store
-        // @ts-ignore
-        await deleteProject(project._id);
-        // Refresh the current route after deletion
-        goto(window.location.pathname); // Navigate to the current path to refresh the view
+    async function handleDeleteProject() {
+        console.log(`Project ID to delete:`, project?._id); // Debugging
+        if (!project?._id) {
+            console.error("Error: Project ID is undefined or invalid.");
+            return;
+        }
+        
+        try {
+      // Call delete function from the projectsList store
+      await deleteProject(project._id);
+
+      // Update the store manually by filtering out the deleted project
+      projectsList.update((projects) => {
+        return projects.filter((p) => p._id !== project._id);
+      });
+
+      // Optionally, navigate to the same page to refresh the UI (optional)
+      // goto(window.location.pathname);
+    } catch (error) {
+      console.error('Error deleting project:', error);
     }
+  }
     
     // // Helper function to format text like in the Flutter method
     // /**
@@ -114,7 +128,7 @@
       Edit Project
     </button>
   
-    <button class="button" on:click={deleteProject}>
+    <button class="button" on:click={handleDeleteProject}>
       Delete Project
     </button>
   </div>

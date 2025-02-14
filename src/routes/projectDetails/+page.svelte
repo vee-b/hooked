@@ -1,6 +1,6 @@
 <script>
   import { invoke } from '@tauri-apps/api/core';
-  import { addProject } from '../../stores/projectsList.js';
+  import { addProject } from '../../stores/projectsList';
   import { Project } from '../../models/Project';
   import { goto } from '$app/navigation';
   import { Camera, Upload } from 'lucide-svelte';
