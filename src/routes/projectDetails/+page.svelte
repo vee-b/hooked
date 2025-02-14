@@ -192,5 +192,10 @@
     <input type="checkbox" id="isSent" bind:checked={isSent} />
   </div>
 
+  <div class="form-group">
+    <label for="isActive">Active</label>
+    <input type="checkbox" id="isActive" bind:checked={isActive} />
+  </div>
+
   <button on:click={submitData}>Add Project</button>
 </div>
