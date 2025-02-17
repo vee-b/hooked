@@ -93,13 +93,14 @@
     }
     
   </style>
-    <div class="project-card">
+
+  <div class="project-card">
       <p class="project-label">Date & Time: {project.formatted_date_time}</p>
       <!-- <p class="text-content">{project.date_time}</p> -->
 
     {#if project.image_path}
       <p class="project-label">Image:</p>
-      <!-- <img src={project.image_path} alt="Project Image"> -->
+      <img src="/images/{project.image_path}" alt="Project Image" />
     {/if}
 
     <p class="project-label">Grade: {project.grade}</p>

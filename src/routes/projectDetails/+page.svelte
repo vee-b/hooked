@@ -1,14 +1,15 @@
-<script>
+<!-- src/routes/projectDetails/+page.svelte -->
+
+<script lang="ts">
   import { invoke } from '@tauri-apps/api/core';
-  import { addProject } from '../../stores/projectsList';
+  import { addProject, uploadImageToCloudinary, sanitizeFileName } from '../../stores/projectsList';
   import { Project } from '../../models/Project';
   import { goto } from '$app/navigation';
   import { Camera, Upload } from 'lucide-svelte';
   import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera'; // Import Capacitor Camera
-  import { Filesystem, Directory } from '@capacitor/filesystem';
   import { Capacitor } from '@capacitor/core';
 
-  let imagePath = 'No Image';
+  let imagePath: string = 'No Image';
   let imagePreview = '/images/default-girl.jpg'; // Default image
   let attempts = '0';
   let grade = 'Unknown';
@@ -17,6 +18,7 @@
   let dateTime = new Date();
   let isActive = true;
   let message = '';
+  let imageFile: File | null = null; // Store the image as a File object
   const options = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10'];
 
   const navigateToHome = () => {
@@ -24,25 +26,46 @@
   };
 
   async function submitData() {
+  try {
+    let savedImagePath: string = '';
+
+    // Create project object
     const dateTimeObj = new Date(dateTime);
     const attemptsNumber = parseInt(attempts, 10);
-
     const project = new Project({
       date_time: dateTimeObj,
-      image_path: imagePath || 'No Image',
+      image_path: savedImagePath,
       is_sent: isSent,
       attempts: attemptsNumber,
       grade: selectedOption,
-      is_active: isActive, 
+      is_active: isActive,
     });
 
-    try {
-      await addProject(project);
-      message = 'Project added successfully!';
-    } catch (error) {
-      console.error('Error adding project:', error);
-      message = 'Failed to add project.';
+    // Add project (handles image internally)
+    if (imageFile) {
+      await addProject(project, imageFile);
+    } else {
+      console.error('No file selected.');
     }
+
+    message = 'Project added successfully!';
+    resetForm();
+  } catch (error) {
+    console.error('Error adding project:', error);
+    message = 'Failed to add project.';
+  }
+}
+
+  // Reset the form after successful submission
+  function resetForm() {
+    imagePath = 'No Image';
+    imagePreview = '/images/default-girl.jpg';
+    attempts = '0';
+    grade = 'Unknown';
+    isSent = false;
+    selectedOption = 'Unknown';
+    dateTime = new Date();
+    isActive = true;
   }
 
   // Function to open the camera and capture an image
@@ -53,10 +76,15 @@
         allowEditing: true,
         resultType: CameraResultType.Uri, // Use URI to display image
       });
+
+      console.log("Captured image:", image); // Log image object to inspect properties
       
+      const sanitizedFileName = sanitizeFileName(image); // Generate the sanitized name here
+
       // Set the image preview to the captured image
       imagePreview = image.webPath || '/images/default-girl.jpg';; // Set the image path for preview
       imagePath = image.path || image.webPath || ''; // Store the image path in imagePath
+      imageFile = await fetchImageFile(image, sanitizedFileName); // Fetch image file for storage
     } catch (error) {
       // @ts-ignore
       if (error.code !== 'CANCELLED') { // Check if the action was cancelled
@@ -67,6 +95,19 @@
       }
     }
   };
+
+  // Helper function to fetch the image as a File object
+  async function fetchImageFile(image: any, fileName: string): Promise<File | null> {
+    try {
+      const response = await fetch(image.webPath);
+      const blob = await response.blob();
+      const file = new File([blob], fileName);
+      return file;
+    } catch (error) {
+      console.error('Error fetching image file:', error);
+      return null;
+    }
+  }
 
 </script>
 

@@ -1,3 +1,5 @@
+// src-tauri/src/main.rs
+
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -5,14 +7,19 @@ mod database_helper; // Assuming `database_helper.rs` is in the same directory
 
 use database_helper::{DatabaseHelper, Project};
 use tauri::{Manager, State};
-//use tauri::command;
-use mongodb::{Client, options::ClientOptions};
+use mongodb::{Client as MongoClient, options::ClientOptions};
 use mongodb::bson::doc;
 use mongodb::bson::Document;
 use mongodb::bson;
 use futures_util::stream::TryStreamExt;
 use std::sync::Arc;
 use tokio::sync::Mutex; // Mutex is needed for async code
+use serde::{Serialize, Deserialize};
+
+#[derive(Serialize, Deserialize)]
+struct CloudinaryUploadResponse {
+    secure_url: String,
+}
 
 #[tokio::main] // This enables the async entry point for the app.
 async fn main() {
@@ -23,7 +30,7 @@ async fn main() {
     client_options.server_api = Some(server_api);
 
     // Initialize MongoDB client
-    let client = Client::with_options(client_options).unwrap();
+    let client = MongoClient::with_options(client_options).unwrap();
     //client_options.connect_timeout = Some(std::time::Duration::from_secs(10)); // Adjust timeout
 
     // Ping MongoDB to verify connection
@@ -54,13 +61,14 @@ async fn main() {
             delete_project,
             get_sends_count,
             get_active_projects,
+            upload_image
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
 }
 
 #[tauri::command]
-async fn insert_project(client: State<'_, Client>, project: Project) -> Result<(), String> {
+async fn insert_project(client: State<'_, MongoClient>, project: Project) -> Result<(), String> {
     let collection = client.database("hooked_db").collection("projects");
     match collection.insert_one(bson::to_document(&project).unwrap(), None).await {
         Ok(_) => Ok(()),
@@ -69,7 +77,7 @@ async fn insert_project(client: State<'_, Client>, project: Project) -> Result<(
 }
 
 #[tauri::command]
-async fn get_all_projects(client: State<'_, Client>) -> Result<Vec<Project>, String> {
+async fn get_all_projects(client: State<'_, MongoClient>) -> Result<Vec<Project>, String> {
     let collection = client.database("hooked_db").collection::<Document>("projects");
     let mut cursor = collection.find(None, None).await.map_err(|e| e.to_string())?;
     let mut projects = Vec::new();
@@ -82,7 +90,7 @@ async fn get_all_projects(client: State<'_, Client>) -> Result<Vec<Project>, Str
 }
 
 #[tauri::command]
-async fn get_active_projects(client: State<'_, Client>) -> Result<Vec<Project>, String> {
+async fn get_active_projects(client: State<'_, MongoClient>) -> Result<Vec<Project>, String> {
     let collection = client.database("hooked_db").collection::<Document>("projects");
     let filter = doc! {"is_active": 1};
     let mut cursor = collection.find(filter, None).await.map_err(|e| e.to_string())?;
@@ -96,7 +104,7 @@ async fn get_active_projects(client: State<'_, Client>) -> Result<Vec<Project>, 
 }
 
 #[tauri::command]
-async fn update_project(client: State<'_, Client>, project: Project) -> Result<(), String> {
+async fn update_project(client: State<'_, MongoClient>, project: Project) -> Result<(), String> {
     let collection = client.database("hooked_db").collection::<Document>("projects");
 
     if let Some(_id) = project._id {
@@ -110,7 +118,7 @@ async fn update_project(client: State<'_, Client>, project: Project) -> Result<(
 }
 
 #[tauri::command]
-async fn delete_project(client: State<'_, Client>, _id: String) -> Result<(), String> {
+async fn delete_project(client: State<'_, MongoClient>, _id: String) -> Result<(), String> {
     let collection = client.database("hooked_db").collection::<Document>("projects");
     let object_id = bson::oid::ObjectId::parse_str(&_id).map_err(|e| e.to_string())?;
     let filter = doc! {"_id": object_id};
@@ -120,8 +128,39 @@ async fn delete_project(client: State<'_, Client>, _id: String) -> Result<(), St
 }
 
 #[tauri::command]
-async fn get_sends_count(client: State<'_, Client>) -> Result<i64, String> {
+async fn get_sends_count(client: State<'_, MongoClient>) -> Result<i64, String> {
     let collection = client.database("hooked_db").collection::<Document>("projects");
     let count = collection.count_documents(None, None).await.map_err(|e| e.to_string())?;
     Ok(count.try_into().map_err(|_| "Count exceeds i64 capacity".to_string())?)
+}
+
+#[tauri::command]
+async fn upload_image(image_data: Vec<u8>, image_name: String) -> Result<String, String> {
+    let client = reqwest::Client::new();
+    let cloud_name = "du9hsgxds";
+    let upload_preset = "shafaedyn";
+
+    let part = reqwest::multipart::Part::bytes(image_data)
+        .file_name(image_name);  // Provide the image name (filename)
+
+    let form = reqwest::multipart::Form::new()
+        .part("file", part)  // Add the image part
+        .text("upload_preset", upload_preset.to_string());  // Add the upload preset
+
+    let res = client
+        .post(format!("https://api.cloudinary.com/v1_1/{}/upload", cloud_name))  // Replace with your Cloudinary cloud name
+        .multipart(form)  // Use multipart to send the file
+        .send()
+        .await
+        .map_err(|e| format!("Request failed: {}", e))?;
+
+    let body = res.text().await.map_err(|e| format!("Failed to read response: {}", e))?;
+
+    // Check the response for a successful upload (this will depend on Cloudinary's response format)
+    if !body.contains("secure_url") {
+        return Err("Image upload failed".to_string());
+    }
+
+    // Assuming Cloudinary returns a URL in the response
+    Ok(body)  // Return the Cloudinary URL in the response
 }
