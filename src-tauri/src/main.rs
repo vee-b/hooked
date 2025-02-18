@@ -211,12 +211,6 @@ fn extract_cloudinary_public_id(image_url: &str) -> Result<String, String> {
     }
 }
 
-
-
-
-
-
-
 #[tauri::command]
 async fn get_sends_count(client: State<'_, MongoClient>) -> Result<i64, String> {
     let collection = client.database("hooked_db").collection::<Document>("projects");
@@ -227,30 +221,33 @@ async fn get_sends_count(client: State<'_, MongoClient>) -> Result<i64, String> 
 #[tauri::command]
 async fn upload_image(image_data: Vec<u8>, image_name: String) -> Result<String, String> {
     let client = reqwest::Client::new();
-    let cloud_name = "du9hsgxds";
-    let upload_preset = "shafaedyn";
+    let cloud_name = "du9hsgxds"; // Replace with your Cloudinary cloud name
+    let upload_preset = "shafaedyn"; // Replace with your upload preset
 
     let part = reqwest::multipart::Part::bytes(image_data)
-        .file_name(image_name);  // Provide the image name (filename)
+        .file_name(image_name);
 
     let form = reqwest::multipart::Form::new()
-        .part("file", part)  // Add the image part
-        .text("upload_preset", upload_preset.to_string());  // Add the upload preset
+        .part("file", part)
+        .text("upload_preset", upload_preset.to_string());
 
     let res = client
-        .post(format!("https://api.cloudinary.com/v1_1/{}/upload", cloud_name))  // Replace with your Cloudinary cloud name
-        .multipart(form)  // Use multipart to send the file
+        .post(format!("https://api.cloudinary.com/v1_1/{}/upload", cloud_name))
+        .multipart(form)
         .send()
         .await
         .map_err(|e| format!("Request failed: {}", e))?;
 
-    let body = res.text().await.map_err(|e| format!("Failed to read response: {}", e))?;
-
-    // Check the response for a successful upload (this will depend on Cloudinary's response format)
-    if !body.contains("secure_url") {
-        return Err("Image upload failed".to_string());
+    if res.status().is_success() {
+        let response_body: Value = res.json().await.map_err(|e| format!("Failed to parse JSON: {}", e))?;
+        if let Some(secure_url) = response_body.get("secure_url").and_then(Value::as_str) {
+            Ok(secure_url.to_string())
+        } else {
+            Err("`secure_url` not found in Cloudinary response".to_string())
+        }
+    } else {
+        let status = res.status();
+        let error_body = res.text().await.unwrap_or_else(|_| "Failed to read error body".to_string());
+        Err(format!("Cloudinary upload failed (Status: {}): {}", status, error_body))
     }
-
-    // Assuming Cloudinary returns a URL in the response
-    Ok(body)  // Return the Cloudinary URL in the response
 }

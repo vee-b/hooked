@@ -100,7 +100,8 @@
 
     {#if project.image_path}
       <p class="project-label">Image:</p>
-      <img src="/images/{project.image_path}" alt="Project Image" />
+      <img src={project.image_path} alt="Project Image" />
+      <p class="loading" style="display: none;">Loading Image from Cloudinary...</p>
     {/if}
 
     <p class="project-label">Grade: {project.grade}</p>
