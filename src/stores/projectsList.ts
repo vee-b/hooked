@@ -50,19 +50,6 @@ export async function initializeProjectsList(): Promise<void> {
   }
 }
 
-// Function to add a new project
-export async function addProject(newProject: Project): Promise<void> {
-  try {
-    // Convert project to map and send to Rust backend
-    await invoke('insert_project', { project: newProject.toMap() });
-
-    // Refresh project list
-    await initializeProjectsList();
-  } catch (error) {
-    console.error('Error adding project:', error);
-  }
-}
-
 // Function to fetch active projects from MongoDB
 export async function getActiveProjects(): Promise<Project[]> {
   try {
@@ -143,5 +130,68 @@ export async function fetchActiveProjects(): Promise<Project[]> {
   } catch (error) {
     console.error('Error fetching active projects:', error);
     return [];
+  }
+}
+
+// Sanitize file name - key change to prevent double uploads
+export const sanitizeFileName = (image: any): string => {
+  const timestamp = Date.now();
+  const extension = image.format || 'jpg';
+  const originalFileName = image.name || `image_${timestamp}`;
+  const sanitizedName = originalFileName.replace(/\s+/g, "_")
+                                      .replace(/[^a-zA-Z0-9._-]/g, "")
+                                      .replace(/\//g, "_");
+  return `${timestamp}_${sanitizedName}.${extension}`;
+};
+
+export async function uploadImageToCloudinary(imageFile: File): Promise<string | null> {
+  try {
+    const sanitizedFileName = imageFile.name;
+    console.log("Uploading image with sanitized name:", sanitizedFileName);
+
+    // Convert the image to binary (Uint8Array)
+    const imageData = new Uint8Array(await imageFile.arrayBuffer());
+
+    // Invoke the Rust function to upload the image
+    const imagePath = await invoke<string>('upload_image', {
+      imageData,
+      imageName: sanitizedFileName,
+    });
+
+    console.log('Cloudinary response:', imagePath);
+    console.log('Image size (bytes):', imageFile.size);
+
+    // Ensure the upload was successful and return the Cloudinary URL
+    if (!imagePath || typeof imagePath !== 'string') {
+      throw new Error('Image upload failed or invalid response.');
+    }
+
+    return imagePath; // Return Cloudinary image URL
+  } catch (error) {
+    console.error('Error uploading image:', error);
+    return null;
+  }
+}
+
+// Function to add a new project with image upload to Cloudinary
+export async function addProject(newProject: Project, imageFile: File): Promise<void> {
+  try {
+    // Upload the image to Cloudinary
+    const imagePath = await uploadImageToCloudinary(imageFile);
+    if (!imagePath) throw new Error('Image upload failed.');
+
+    // Create a new Project instance with the Cloudinary URL for the image
+    const projectWithImage = new Project({
+      ...newProject,
+      image_path: imagePath, // Store the Cloudinary URL here
+    });
+
+    // Convert project to map and send to Rust backend to insert
+    await invoke('insert_project', { project: projectWithImage.toMap() });
+
+    // Refresh the project list after adding the new project
+    await initializeProjectsList();
+  } catch (error) {
+    console.error('Error adding project:', error);
   }
 }

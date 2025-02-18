@@ -5,7 +5,6 @@
   import { writable } from 'svelte/store';
   import { PlusCircle, Filter } from 'lucide-svelte';
   import type { Project } from '../models/Project';
-
   import { fetchActiveProjects, deleteProject } from '../stores/projectsList';
 
   export const projectsList = writable<Project[]>([]);

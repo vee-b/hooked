@@ -75,19 +75,3 @@ export class Project {
     });
   }
 }
-
-// Function to fetch active projects from MongoDB
-// export async function getActiveProjects(): Promise<Project[]> {
-//   try {
-//     const projectsData = await invoke('get_active_projects');
-//     if (Array.isArray(projectsData)) {
-//       console.log("Raw projects data:", projectsData);
-//       return projectsData.map(Project.fromMap);
-//     }
-//     console.error('Data format unexpected:', projectsData);
-//     return [];
-//   } catch (error) {
-//     console.error('Error fetching active projects:', error);
-//     return [];
-//   }
-// }
