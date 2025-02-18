@@ -86,8 +86,8 @@
     }
 
     img {
-      max-width: 100px;
-      max-height: 100px;
+      max-width: 200px;
+      max-height: 200px;
       border-radius: 4px;
       margin-top: 8px;
     }
@@ -96,35 +96,17 @@
 
   <div class="project-card">
       <p class="project-label">Date & Time: {project.formatted_date_time}</p>
-      <!-- <p class="text-content">{project.date_time}</p> -->
 
     {#if project.image_path}
-      <p class="project-label">Image:</p>
       <img src={project.image_path} alt="Project Image" />
       <p class="loading" style="display: none;">Loading Image from Cloudinary...</p>
     {/if}
 
     <p class="project-label">Grade: {project.grade}</p>
-    <!-- <p class="text-content">{project.grade}</p> -->
 
     <p class="project-label">Sent: {project.is_sent ? "Yes" : "No"}</p>
-    <!-- <p class="text-content">{project.is_sent ? "Yes" : "No"}</p> -->
 
     <p class="project-label">Attempts: {project.attempts}</p>
-    <!-- <p class="text-content">{project.attempts}</p> -->
-
-    <!-- <p class="project-label">Project ID:</p>
-    <p class="text-content">{project.id}</p> -->
-
-    <!-- <p class="project-label">Date & Time: {project.formatted_date_time}</p> -->
-    <!-- <p class="text-content">{buildText(`Date & Time: ${project.formatted_date_time}`)}</p>
-    {#if project.image_path} 
-        <span class="project-label">Image:</span> <img src={project.image_path}>
-    {/if}
-    <p class="text-content">{buildText(`Grade: ${project.grade}`)}</p>
-    <p class="text-content">{buildText(`Sent: ${project.is_sent}`)}</p>
-    <p class="text-content">{buildText(`Attempts: ${project.attempts}`)}</p>
-    <p class="text-content">{buildText(`ID: ${project.id}`)}</p> -->
   
     <button class="button" on:click={editProject}>
       Edit Project

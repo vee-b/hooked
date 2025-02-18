@@ -95,12 +95,12 @@
   <h1 class="title">Active Projects</h1>
 
   <div class="button-container">
-    <button class="button" on:click={navigateToNewProject}>
-      <PlusCircle /> Add New Project
-    </button>
-
     <button class="button" on:click={toggleFilter}>
       <Filter /> {filterActive ? 'Hide Filter' : 'Show Filter'}
+    </button>
+
+    <button class="button" on:click={navigateToNewProject}>
+      <PlusCircle /> Add New Project
     </button>
   </div>
 
@@ -109,7 +109,4 @@
   {#each $projectsList as project (project._id)}
     <ProjectComponent {project} />
   {/each}
-  <!-- {#each $projectsList as project (project._id)}
-    <ProjectComponent {project} on:delete={handleDeleteProject} />
-  {/each} -->
 </div>

@@ -133,6 +133,36 @@ export async function fetchActiveProjects(): Promise<Project[]> {
   }
 }
 
+// Function to fetch inactive projects
+export async function fetchInactiveProjects(): Promise<Project[]> {
+  try {
+    const projectsData: unknown = await invoke('get_inactive_projects');
+
+    if (!Array.isArray(projectsData)) {
+      console.error('Unexpected response format:', projectsData);
+      return [];
+    }
+
+    const typedProjectsData: MongoDBProject[] = projectsData;
+
+    const projectInstances: Project[] = typedProjectsData.map((data) => {
+      return new Project({
+        ...data,
+        _id:
+          typeof data._id === 'object' && data._id !== null && '$oid' in data._id
+            ? data._id.$oid
+            : String(data._id || ''),
+      });
+    });
+
+    console.log('Processed Project IDs:', projectInstances.map((p) => p._id));
+    return projectInstances;
+  } catch (error) {
+    console.error('Error fetching active projects:', error);
+    return [];
+  }
+}
+
 // Sanitize file name - key change to prevent double uploads
 export const sanitizeFileName = (image: any): string => {
   const timestamp = Date.now();
