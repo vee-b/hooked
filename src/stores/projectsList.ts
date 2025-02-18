@@ -4,9 +4,7 @@ import { writable, type Writable } from 'svelte/store';
 import { invoke } from '@tauri-apps/api/core';
 import { Project } from '../models/Project';
 
-/**
- * Type definition for a MongoDB Project.
- */
+// Define the shape of a MongoDB project object.
 export interface MongoDBProject {
   _id: string | { $oid: string };
   date_time: number;
@@ -17,22 +15,24 @@ export interface MongoDBProject {
   is_active: boolean;
 }
 
-// Initialize the project list as a Svelte store
-export const projectsList: Writable<Project[]> = writable([]);
+// Initialize the project list as a Svelte store.
+export const projectsList: Writable<Project[]> = writable([]); // projectsList: Stores an array of Project instances.
 
-// Store to hold the sends count by grade
-export const sendsCount: Writable<Record<string, number>> = writable({});
+// Store to hold the sends count by grade.
+export const sendsCount: Writable<Record<string, number>> = writable({}); // sendsCount: Stores a record (object) mapping grades to their "send" counts.
 
-// Function to initialize projects from the database
+// Initialize projects list.
 export async function initializeProjectsList(): Promise<void> {
   try {
-    // Invoke Rust command to get all projects
+    // Invoke Rust command to get all projects.
     const result: unknown = await invoke('get_all_projects');
 
+    // Ensures the response is an array.
     if (!Array.isArray(result)) {
       throw new Error('Unexpected response format');
     }
 
+    // Convert MongoDB-style objects into Project instances.
     const projects: Project[] = result.map((projectMap: MongoDBProject) =>
       Project.fromMap({
         ...projectMap,
@@ -43,40 +43,25 @@ export async function initializeProjectsList(): Promise<void> {
       })
     );
 
-    // Set the projects list in the Svelte store
+    // Update the projectsList store with the fetched projects.
     projectsList.set(projects);
   } catch (error) {
     console.error('Error initializing projects list:', error);
   }
 }
 
-// Function to fetch active projects from MongoDB
-export async function getActiveProjects(): Promise<Project[]> {
-  try {
-    const projectsData = await invoke('get_active_projects');
-    if (Array.isArray(projectsData)) {
-      console.log("Raw projects data:", projectsData);
-      return projectsData.map(Project.fromMap);
-    }
-    console.error('Data format unexpected:', projectsData);
-    return [];
-  } catch (error) {
-    console.error('Error fetching active projects:', error);
-    return [];
-  }
-}
-
-// Function to delete a project by its ID
+// Delete a project by its ID.
 export async function deleteProject(_id: string): Promise<void> {
   try {
     await invoke('delete_project', { id: _id });
+    // Refresh the projectsList store by re-fetching all projects.
     await initializeProjectsList();
   } catch (error) {
     console.error('Error deleting project:', error);
   }
 }
 
-// Function to fetch the sends count by grade
+// Fetch the sends count by grade.
 export async function fetchSendsCount(grade: string): Promise<void> {
   try {
     let projects: Project[] = [];
@@ -88,7 +73,7 @@ export async function fetchSendsCount(grade: string): Promise<void> {
     if (projects.length > 0) {
       const count = projects.filter((project) => project.is_sent && project.grade === grade).length;
 
-      // Update sends count store
+      // Update sends count.
       sendsCount.update((currentCount) => ({ ...currentCount, [grade]: count }));
     } else {
       console.error('No projects found');
@@ -98,12 +83,12 @@ export async function fetchSendsCount(grade: string): Promise<void> {
   }
 }
 
-// Function to initialize the sends count store
+// Initialize the sends count.
 export function initializeSendsCount(): void {
   sendsCount.set({});
 }
 
-// Function to fetch active projects
+// Fetch the active projects.
 export async function fetchActiveProjects(): Promise<Project[]> {
   try {
     const projectsData: unknown = await invoke('get_active_projects');
