@@ -18,8 +18,11 @@ export interface MongoDBProject {
 // Initialize the project list as a Svelte store.
 export const projectsList: Writable<Project[]> = writable([]); // projectsList: Stores an array of Project instances.
 
-// Store to hold the sends count by grade.
-export const sendsCount: Writable<Record<string, number>> = writable({}); // sendsCount: Stores a record (object) mapping grades to their "send" counts.
+// Store for sends count (by grade and total)
+export const sendsSummary = writable<{ total: number; byGrade: Record<string, number> }>({
+  total: 0,
+  byGrade: {},
+});
 
 // Initialize projects list.
 export async function initializeProjectsList(): Promise<void> {
@@ -61,31 +64,28 @@ export async function deleteProject(_id: string): Promise<void> {
   }
 }
 
-// Fetch the sends count by grade.
-export async function fetchSendsCount(grade: string): Promise<void> {
+// Fetch sends summary from backend
+export async function fetchSendsSummary(): Promise<void> {
   try {
-    let projects: Project[] = [];
-    const unsubscribe = projectsList.subscribe((value) => {
-      projects = value;
-    });
-    unsubscribe(); // Cleanup subscription
+    const [total, gradeCounts] = await invoke<[number, [string, number][]]>('get_sends_summary');
 
-    if (projects.length > 0) {
-      const count = projects.filter((project) => project.is_sent && project.grade === grade).length;
 
-      // Update sends count.
-      sendsCount.update((currentCount) => ({ ...currentCount, [grade]: count }));
+    console.log('Backend returned data:', { total, gradeCounts }); // Debugging log
+
+    // Ensure gradeCounts is defined and an array
+    if (Array.isArray(gradeCounts)) {
+      const byGrade: Record<string, number> = {};
+      gradeCounts.forEach(([grade, count]) => {
+        byGrade[grade] = count;
+      });
+
+      sendsSummary.set({ total, byGrade });
     } else {
-      console.error('No projects found');
+      console.error('Invalid data format for gradeCounts:', gradeCounts);
     }
   } catch (error) {
-    console.error('Error fetching sends count:', error);
+    console.error('Error fetching sends summary:', error);
   }
-}
-
-// Initialize the sends count.
-export function initializeSendsCount(): void {
-  sendsCount.set({});
 }
 
 // Fetch the active projects.

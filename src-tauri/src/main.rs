@@ -71,6 +71,7 @@ async fn main() {
             update_project,
             delete_project,
             get_sends_count,
+            get_sends_summary,
             get_active_projects,
             get_inactive_projects,
             upload_image
@@ -273,6 +274,50 @@ async fn get_sends_count(client: State<'_, MongoClient>) -> Result<i64, String> 
     let count = collection.count_documents(None, None).await.map_err(|e| e.to_string())?;
     // Convert the count into an i64 (signed 64-bit integer).
     Ok(count.try_into().map_err(|_| "Count exceeds i64 capacity".to_string())?)
+}
+
+// Returns the total sends and sends count by grade.
+#[tauri::command]
+async fn get_sends_summary(client: State<'_, MongoClient>) -> Result<(i64, Vec<(String, i64)>), String> {
+    let collection = client.database("hooked_db").collection::<Document>("projects");
+
+    // Log the number of matching projects before aggregation
+    let matching_count = collection.count_documents(doc! { "is_sent": 1 }, None).await.map_err(|e| e.to_string())?;
+    println!("Matching projects with is_sent = 1: {}", matching_count);
+
+    // Aggregation pipeline: filter sent projects and group by grade.
+    let pipeline = vec![
+        doc! { "$match": { "is_sent": 1 } },
+        doc! { "$group": { "_id": "$grade", "count": { "$sum": 1 } } }
+    ];
+
+    // Execute the aggregation pipeline.
+    let mut cursor = collection.aggregate(pipeline, None).await.map_err(|e| e.to_string())?;
+
+    let mut grade_counts = Vec::new();
+    let mut total_count = 0;
+
+    // Iterate through the results.
+    while let Some(doc) = cursor.try_next().await.map_err(|e| e.to_string())? {
+        println!("Aggregation result: {:?}", doc);
+        
+        if let Some(grade) = doc.get_str("_id").ok() {
+            // Handle both Int32 and Int64
+            let count = match doc.get("count") {
+                Some(bson::Bson::Int32(n)) => *n as i64,
+                Some(bson::Bson::Int64(n)) => *n,
+                _ => 0,
+            };
+            
+            grade_counts.push((grade.to_string(), count));
+            total_count += count;
+        }
+    }
+
+    // Log the result before returning
+    println!("Returning sends summary: total_count = {}, grade_counts = {:?}", total_count, grade_counts);
+
+    Ok((total_count, grade_counts))
 }
 
 // Uploads image data to Cloudinary and returns the secure_url.
