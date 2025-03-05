@@ -10,7 +10,7 @@ mod database_helper;
 use database_helper::{DatabaseHelper, Project};
 use tauri::{Manager, State}; // Manager: Provides app management features like accessing state. State: Allows sharing state (like database connections) between Tauri commands.
 use mongodb::{Client as MongoClient, options::ClientOptions}; // MongoClient: The main MongoDB client for database interactions. ClientOptions: For configuring MongoDB connection options.
-use mongodb::bson::{self, doc, Document}; // bson: MongoDB’s binary JSON format. doc: Macro for creating BSON documents. 
+use mongodb::bson::{self, doc, Document, oid::ObjectId}; // bson: MongoDB’s binary JSON format. doc: Macro for creating BSON documents. 
 use futures_util::stream::TryStreamExt; // Provides asynchronous streaming methods.
 use std::sync::Arc; // Enables thread-safe reference counting.
 use tokio::sync::Mutex; // Allows safe sharing and mutation of data in async code.
@@ -74,7 +74,8 @@ async fn main() {
             get_sends_summary,
             get_active_projects,
             get_inactive_projects,
-            upload_image
+            upload_image,
+            get_project_by_id
         ])
         // Start the Tauri application.
         .run(tauri::generate_context!())
@@ -358,5 +359,19 @@ async fn upload_image(image_data: Vec<u8>, image_name: String) -> Result<String,
         let status = res.status();
         let error_body = res.text().await.unwrap_or_else(|_| "Failed to read error body".to_string());
         Err(format!("Cloudinary upload failed (Status: {}): {}", status, error_body))
+    }
+}
+
+#[tauri::command]
+async fn get_project_by_id(state: State<'_, Arc<Mutex<DatabaseHelper>>>, id: String) -> Result<Option<Project>, String> {
+    let db = state.lock().await;
+
+    // Convert the string ID to ObjectId
+    let object_id = ObjectId::parse_str(&id).map_err(|e| format!("Invalid ObjectId: {}", e))?;
+
+    match db.get_project_by_id(&object_id).await {
+        Ok(Some(project)) => Ok(Some(project)),
+        Ok(none) => Ok(none),
+        Err(err) => Err(format!("Error fetching project: {}", err)),
     }
 }

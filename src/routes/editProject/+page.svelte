@@ -2,13 +2,17 @@
 
 <script lang="ts">
     import { invoke } from '@tauri-apps/api/core';
-    import { addProject, uploadImageToCloudinary, sanitizeFileName } from '../../stores/projectsList'; // updateProject
+    import { addProject, fetchProjectById, uploadImageToCloudinary, sanitizeFileName } from '../../stores/projectsList'; // updateProject
     import { Project } from '../../models/Project';
     import { goto } from '$app/navigation';
     import { Camera, Upload } from 'lucide-svelte';
     import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera'; // Import Capacitor Camera
     import { Capacitor } from '@capacitor/core';
+    import { onMount } from 'svelte';
   
+    let project: any = null;
+    let projectId: string | null = null;
+
     let imagePath: string = 'No Image';
     let imagePreview = '/images/default-girl.jpg'; // Default image
     let attempts = '0';
@@ -21,52 +25,63 @@
     let imageFile: File | null = null; // Store the image as a File object
     const options = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10'];
   
+    // Helper function to format the Date to "YYYY-MM-DDThh:mm"
+    function formatDateForInput(date: Date): string {
+      const pad = (n: number) => n < 10 ? '0' + n : n;
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    }
+
+    // A reactive variable that holds the formatted date string
+    $: formattedDateTime = formatDateForInput(dateTime);
+
+    // When the input changes, update the dateTime variable
+    function updateDateTime(e: Event) {
+      const target = e.target as HTMLInputElement;
+      dateTime = new Date(target.value);
+    }
+
+    onMount(async () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        projectId = urlParams.get('id');
+        
+        if (projectId) {
+          console.log("Project ID received:", projectId);
+          try {
+            project = await fetchProjectById(projectId);
+            console.log("Fetched project details:", project); // Log fetched project details
+            if (project) {
+              imagePath = project.imagePath || 'No Image';
+              imagePreview = project.imageUrl || '/images/default-girl.jpg';
+              attempts = project.attempts || '0';
+              selectedOption = project.grade || 'Unknown';
+              isSent = project.isSent || false;
+              dateTime = project.dateTime ? new Date(project.dateTime) : new Date();
+              isActive = project.isActive || true;
+              }
+            } catch (error) {
+                console.error('Error fetching project:', error);
+                message = 'Error fetching project data';
+            }
+        }
+    });
+
     const navigateToHome = () => {
       goto('/'); // Navigate to home page
     };
   
-    async function submitData() {
-    try {
-      let savedImagePath: string = '';
-  
-      // Create project object
-      const dateTimeObj = new Date(dateTime);
-      const attemptsNumber = parseInt(attempts, 10);
-      const project = new Project({
-        date_time: dateTimeObj,
-        image_path: savedImagePath,
-        is_sent: isSent,
-        attempts: attemptsNumber,
-        grade: selectedOption,
-        is_active: isActive,
-      });
-  
-      // Add project (handles image internally)
-      if (imageFile) {
-        //await updateProject(project, imageFile);
-      } else {
-        console.error('No file selected.');
-      }
-  
-      message = 'Project updated successfully!';
-      resetForm();
-    } catch (error) {
-      console.error('Error updating project:', error);
-      message = 'Failed to update project.';
-    }
-  }
+    //async function submitData() {}
   
     // Reset the form after successful submission (Change to retreived projects data/navigate back)
-    function resetForm() { 
-      imagePath = 'No Image';
-      imagePreview = '/images/default-girl.jpg'; 
-      attempts = '0';
-      grade = 'Unknown';
-      isSent = false;
-      selectedOption = 'Unknown';
-      dateTime = new Date();
-      isActive = true;
-    }
+    // function resetForm() { 
+    //   imagePath = 'No Image';
+    //   imagePreview = '/images/default-girl.jpg'; 
+    //   attempts = '0';
+    //   grade = 'Unknown';
+    //   isSent = false;
+    //   selectedOption = 'Unknown';
+    //   dateTime = new Date();
+    //   isActive = true;
+    // }
   
     // Function to open the camera and capture an image
     const pickImage = async () => {
@@ -205,13 +220,8 @@
   
     <div class="form-group">
       <label for="dateTime">Date & Time</label>
-      <input type="datetime-local" id="dateTime" bind:value={dateTime} />
+      <input type="datetime-local" id="dateTime" bind:value={formattedDateTime} on:change={updateDateTime} />
     </div>
-  
-    <!-- <div class="form-group">
-      <label for="imagePath">Image Path</label>
-      <input type="text" id="imagePath" bind:value={imagePath} placeholder="Image Path" />
-    </div> -->
   
     <div class="form-group">
       <label for="grade">Grade</label>
@@ -238,5 +248,5 @@
       <input type="checkbox" id="isActive" bind:checked={isActive} />
     </div>
   
-    <button on:click={submitData}>Update Project</button>
+    <!-- <button on:click={submitData}>Update Project</button> -->
   </div>

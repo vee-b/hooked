@@ -4,7 +4,6 @@
 
 use serde::{Deserialize, Serialize};
 use mongodb::{Client, bson::{self, doc}, Collection};
-//use futures_util::TryStreamExt;
 use bson::oid::ObjectId;
 
 // Define the Project struct.
@@ -32,5 +31,16 @@ impl DatabaseHelper {
         let client = Client::with_uri_str(mongo_uri).await?; // Asynchronously connects to MongoDB using the URI.
         client.database("admin").run_command(doc! {"ping": 1}, None).await?; // client.database("admin"): Selects the admin database. .run_command(doc! {"ping": 1}, None).await?: Executes a ping command to check the database connection.
         Ok(DatabaseHelper { client }) // Returns an instance of DatabaseHelper with the connected client.
+    }
+
+    // Fetch a project by its ID
+    pub async fn get_project_by_id(&self, id: &ObjectId) -> Result<Option<Project>, mongodb::error::Error> {
+        let database = self.client.database("hooked_db");
+        let collection: Collection<Project> = database.collection("projects");
+
+        let filter = doc! { "_id": id };
+        let project = collection.find_one(filter, None).await?;
+
+        Ok(project)
     }
 }

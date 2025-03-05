@@ -16,7 +16,8 @@
     // Navigation to edit the project
     async function editProject() {
       // Navigate to the edit project page
-      goto('/editProject');
+      //goto('/editProject');
+      goto(`/editProject?id=${project._id}`);
     }
     
     // Function to delete the project

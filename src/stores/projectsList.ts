@@ -210,3 +210,29 @@ export async function addProject(newProject: Project, imageFile: File): Promise<
     console.error('Error adding project:', error);
   }
 }
+
+// Fetch a project by its ID
+export async function fetchProjectById(projectId: string): Promise<Project | null> {
+  try {
+    const projectData: unknown = await invoke('get_project_by_id', { id: projectId });
+
+    if (!projectData || typeof projectData !== 'object') {
+      console.error('Unexpected response format:', projectData);
+      return null;
+    }
+
+    const data = projectData as MongoDBProject;
+
+    // Convert MongoDB-style object into a Project instance
+    return new Project({
+      ...data,
+      _id:
+        typeof data._id === 'object' && data._id !== null && '$oid' in data._id
+          ? data._id.$oid
+          : String(data._id || ''),
+    });
+  } catch (error) {
+    console.error('Error fetching project by ID:', error);
+    return null;
+  }
+}
