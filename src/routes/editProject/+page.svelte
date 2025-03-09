@@ -2,7 +2,7 @@
 
 <script lang="ts">
     import { invoke } from '@tauri-apps/api/core';
-    import { addProject, fetchProjectById, uploadImageToCloudinary, sanitizeFileName } from '../../stores/projectsList'; // updateProject
+    import { editProject, fetchProjectById, uploadImageToCloudinary, sanitizeFileName } from '../../stores/projectsList'; // updateProject
     import { Project } from '../../models/Project';
     import { goto } from '$app/navigation';
     import { Camera, Upload } from 'lucide-svelte';
@@ -50,8 +50,8 @@
             project = await fetchProjectById(projectId);
             console.log("Fetched project details:", project); // Log fetched project details
             if (project) {
-              imagePath = project.imagePath || 'No Image';
-              imagePreview = project.imageUrl || '/images/default-girl.jpg';
+              imagePath = project.image_path || 'No Image';
+              imagePreview = project.image_path || '/images/default-girl.jpg';
               attempts = project.attempts || '0';
               selectedOption = project.grade || 'Unknown';
               isSent = project.isSent || false;
@@ -69,19 +69,49 @@
       goto('/'); // Navigate to home page
     };
   
-    //async function submitData() {}
-  
+    async function submitData() {
+      try {
+        if (!projectId) {
+          console.error("No project ID found.");
+          message = "Cannot update project: No project ID.";
+          return;
+        }
+
+        // Create project object
+        const dateTimeObj = new Date(dateTime);
+        const attemptsNumber = parseInt(attempts, 10);
+        
+        const project = new Project({
+          _id: projectId, // Ensure project ID is included
+          date_time: dateTimeObj,
+          image_path: imagePath,
+          is_sent: isSent,
+          attempts: attemptsNumber,
+          grade: selectedOption,
+          is_active: isActive,
+        });
+
+        // Call editProject function to update the project
+        await editProject(project, imageFile);
+
+        resetForm();
+      } catch (error) {
+        console.error("Error submitting project data:", error);
+        message = "Failed to update project.";
+      }
+    }
+      
     // Reset the form after successful submission (Change to retreived projects data/navigate back)
-    // function resetForm() { 
-    //   imagePath = 'No Image';
-    //   imagePreview = '/images/default-girl.jpg'; 
-    //   attempts = '0';
-    //   grade = 'Unknown';
-    //   isSent = false;
-    //   selectedOption = 'Unknown';
-    //   dateTime = new Date();
-    //   isActive = true;
-    // }
+    function resetForm() { 
+      imagePath = 'No Image';
+      imagePreview = '/images/default-girl.jpg'; 
+      attempts = '0';
+      grade = 'Unknown';
+      isSent = false;
+      selectedOption = 'Unknown';
+      dateTime = new Date();
+      isActive = true;
+    }
   
     // Function to open the camera and capture an image
     const pickImage = async () => {
@@ -202,7 +232,7 @@
   </style>
   
   <div class="container">
-    <h1>Project Details</h1>
+    <h1>Edit Project</h1>
   
     {#if message}
       <p class="message">{message}</p>
@@ -248,5 +278,5 @@
       <input type="checkbox" id="isActive" bind:checked={isActive} />
     </div>
   
-    <!-- <button on:click={submitData}>Update Project</button> -->
+    <button on:click={submitData}>Update Project</button>
   </div>

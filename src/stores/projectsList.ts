@@ -236,3 +236,41 @@ export async function fetchProjectById(projectId: string): Promise<Project | nul
     return null;
   }
 }
+
+export async function editProject(project: Project, imageFile: File | null): Promise<void> {
+  try {
+    let savedImagePath: string = project.image_path;
+
+    // If a new image is selected, upload it and get the new image URL
+    if (imageFile) {
+      console.log("Uploading image to Cloudinary...");
+      const uploadedImageUrl = await uploadImageToCloudinary(imageFile);
+      if (uploadedImageUrl) {
+        savedImagePath = uploadedImageUrl;
+      }
+    }
+
+    // Construct the updated project object
+    const updatedProject = {
+      _id: project._id, // Use the correct project ID
+      date_time: project.date_time,
+      image_path: savedImagePath, // Use updated image path
+      is_sent: project.is_sent,
+      attempts: project.attempts,
+      grade: project.grade,
+      is_active: project.is_active,
+    };
+
+    console.log("Updating project:", updatedProject);
+
+    // Invoke the Tauri command to update the project
+    await invoke("update_project", { project: updatedProject });
+
+    // Refresh the project list to reflect changes
+    await initializeProjectsList();
+
+    console.log("Project updated successfully!");
+  } catch (error) {
+    console.error("Error updating project:", error);
+  }
+}
