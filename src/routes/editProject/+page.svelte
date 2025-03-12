@@ -1,3 +1,5 @@
+<!-- DEPRECIATED -->
+ 
 <!-- src/routes/projectDetails/+page.svelte -->
 
 <script lang="ts">
@@ -92,7 +94,7 @@
         });
 
         // Call editProject function to update the project
-        await editProject(project, imageFile);
+        await editProject(project, imageFile ?? undefined);
 
         resetForm();
       } catch (error) {
@@ -101,17 +103,27 @@
       }
     }
       
-    // Reset the form after successful submission (Change to retreived projects data/navigate back)
-    function resetForm() { 
-      imagePath = 'No Image';
-      imagePreview = '/images/default-girl.jpg'; 
-      attempts = '0';
-      grade = 'Unknown';
-      isSent = false;
-      selectedOption = 'Unknown';
-      dateTime = new Date();
-      isActive = true;
-    }
+    async function resetForm() {
+      if (!projectId) return;
+
+      try {
+          project = await fetchProjectById(projectId);
+          console.log("Reset form with updated project:", project);
+
+          if (project) {
+              imagePath = project.image_path || 'No Image';
+              imagePreview = project.image_path || '/images/default-girl.jpg';
+              attempts = project.attempts || '0';
+              selectedOption = project.grade || 'Unknown';
+              isSent = project.isSent || false;
+              dateTime = project.dateTime ? new Date(project.dateTime) : new Date();
+              isActive = project.isActive || true;
+          }
+      } catch (error) {
+          console.error('Error resetting project form:', error);
+          message = 'Failed to reset project data.';
+      }
+  }
   
     // Function to open the camera and capture an image
     const pickImage = async () => {

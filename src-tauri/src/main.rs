@@ -153,15 +153,33 @@ async fn get_inactive_projects(client: State<'_, MongoClient>) -> Result<Vec<Pro
 async fn update_project(client: State<'_, MongoClient>, project: Project) -> Result<(), String> {
     let collection = client.database("hooked_db").collection::<Document>("projects");
 
-    // Check whether the project._id field exists.
     if let Some(_id) = project._id {
-        // {"_id": _id} specifies the filter to find the document where the _id matches the project’s _id.
         let filter = doc! {"_id": _id};
-        // Define the update document.
-        let update = doc! {"$set": bson::to_document(&project).unwrap()}; // {"$set": ...} is a MongoDB update operator that modifies the fields of the existing document without replacing it.
-        // Perform the update.
-        collection.update_one(filter, update, None).await.map_err(|e| e.to_string())?;
-        Ok(())
+
+        // Convert Rust struct into a BSON document
+        let mut update_doc = bson::to_document(&project).map_err(|e| e.to_string())?;
+
+        // Ensure `date_time` is a proper integer
+        if let Some(bson::Bson::Int64(date_time)) = update_doc.get("date_time") {
+            update_doc.insert("date_time", bson::Bson::Int64(*date_time));
+        } else {
+            return Err("Invalid date_time format".to_string());
+        }
+
+        // Ensure boolean fields (`is_active` and `is_sent`) are stored as `i32`
+        if let Some(bson::Bson::Boolean(is_active)) = update_doc.get("is_active") {
+            update_doc.insert("is_active", bson::Bson::Int32(if *is_active { 1 } else { 0 }));
+        }
+        if let Some(bson::Bson::Boolean(is_sent)) = update_doc.get("is_sent") {
+            update_doc.insert("is_sent", bson::Bson::Int32(if *is_sent { 1 } else { 0 }));
+        }
+
+        let update = doc! {"$set": update_doc};
+
+        match collection.update_one(filter, update, None).await {
+            Ok(_) => Ok(()),
+            Err(e) => Err(e.to_string()),
+        }
     } else {
         Err("Project ID is required for update".to_string())
     }

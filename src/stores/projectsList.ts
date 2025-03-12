@@ -237,9 +237,9 @@ export async function fetchProjectById(projectId: string): Promise<Project | nul
   }
 }
 
-export async function editProject(project: Project, imageFile: File | null): Promise<void> {
+export async function editProject(updatedProject: Project, imageFile?: File): Promise<void> {
   try {
-    let savedImagePath: string = project.image_path;
+    let savedImagePath: string = updatedProject.image_path;
 
     // If a new image is selected, upload it and get the new image URL
     if (imageFile) {
@@ -250,27 +250,67 @@ export async function editProject(project: Project, imageFile: File | null): Pro
       }
     }
 
-    // Construct the updated project object
-    const updatedProject = {
-      _id: project._id, // Use the correct project ID
-      date_time: project.date_time,
-      image_path: savedImagePath, // Use updated image path
-      is_sent: project.is_sent,
-      attempts: project.attempts,
-      grade: project.grade,
-      is_active: project.is_active,
-    };
-
     console.log("Updating project:", updatedProject);
 
-    // Invoke the Tauri command to update the project
-    await invoke("update_project", { project: updatedProject });
+    // Ensure correct formatting before sending to Rust
+    const formattedProject = {
+      _id: updatedProject._id,
+      date_time: typeof updatedProject.date_time === "number" 
+        ? updatedProject.date_time 
+        : new Date(updatedProject.date_time).getTime(), // Convert to timestamp
+      image_path: savedImagePath,
+      is_sent: updatedProject.is_sent ? 1 : 0, // Convert boolean to integer
+      attempts: updatedProject.attempts,
+      grade: updatedProject.grade,
+      is_active: updatedProject.is_active ? 1 : 0, // Convert boolean to integer
+    };
 
-    // Refresh the project list to reflect changes
+    await invoke("update_project", { project: formattedProject });
+    console.log("Project updated successfully.");
+
+    // Refresh project list
     await initializeProjectsList();
-
-    console.log("Project updated successfully!");
   } catch (error) {
     console.error("Error updating project:", error);
+  }
+}
+
+// Add or update a project (CURRENTLY NOT IN USE)
+export async function saveProject(project: Project, imageFile?: File): Promise<void> {
+  try {
+    let updatedImagePath = project.image_path;
+
+    // If a new image is provided, upload it.
+    if (imageFile) {
+      const uploadedUrl = await uploadImageToCloudinary(imageFile);
+      if (!uploadedUrl) throw new Error("Image upload failed");
+      updatedImagePath = uploadedUrl;
+    }
+
+    if (project._id) {
+      // Prepare project for update
+      const formattedProject = {
+        _id: project._id,
+        date_time: typeof project.date_time === "number" ? project.date_time : new Date(project.date_time).getTime(),
+        image_path: updatedImagePath,
+        is_sent: project.is_sent ? 1 : 0,
+        attempts: project.attempts,
+        grade: project.grade,
+        is_active: project.is_active ? 1 : 0,
+      };
+      await invoke("update_project", { project: formattedProject });
+    } else {
+      // Create new project with image URL
+      const projectWithImage = new Project({
+        ...project,
+        image_path: updatedImagePath,
+      });
+      await invoke('insert_project', { project: projectWithImage.toMap() });
+    }
+
+    // Refresh the projects list if needed.
+    await initializeProjectsList();
+  } catch (error) {
+    console.error("Error saving project:", error);
   }
 }
