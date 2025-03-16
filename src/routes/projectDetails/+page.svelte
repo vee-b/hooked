@@ -211,6 +211,11 @@
     <img src={imagePreview} alt="Selected Image" class="image-preview" />
   {/if}
 
+  <button on:click={() => goto(`/annotate?id=${projectId}&image=${encodeURIComponent(imagePath)}`)}>
+    Annotate
+  </button>
+  
+
   <div class="form-group">
     <label for="dateTime">Date & Time</label>
     <!-- Using ISO string slice to match "YYYY-MM-DDThh:mm" format -->
