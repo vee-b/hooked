@@ -25,7 +25,28 @@
       const x = ((event.clientX - rect.left) / rect.width).toFixed(4);
       const y = ((event.clientY - rect.top) / rect.height).toFixed(4);
   
-      points = [...points, { x, y }];
+      if (!removePoint(parseFloat(x), parseFloat(y))) {
+            points = [...points, { x, y }];
+        }
+    }
+
+    function removePoint(x: number, y: number): boolean {
+        const tolerance = 0.02; // 2% tolerance for clicking accuracy
+
+        const index = points.findIndex(p =>
+            Math.abs(parseFloat(p.x) - x) < tolerance && 
+            Math.abs(parseFloat(p.y) - y) < tolerance
+        );
+
+        if (index !== -1) {
+            points = [...points.slice(0, index), ...points.slice(index + 1)];
+            return true;
+        }
+        return false;
+    }
+
+    function clearAnnotations() {
+        points = []; // Reset points array
     }
   
     async function saveAnnotations() {
@@ -64,9 +85,16 @@
         background-color: red;
         border-radius: 50%;
         transform: translate(-50%, -50%);
+        pointer-events: none; /* ✅ Allows clicks to pass through */
     }
     .coordinates {
       margin-top: 15px;
+    }
+    .button-group {
+        margin-top: 20px;
+        display: flex;
+        gap: 10px;
+        justify-content: center;
     }
   </style>
   
@@ -93,7 +121,10 @@
       </ul>
     </div>
   
-    <button on:click={saveAnnotations}>Save Annotations</button>
-    <button on:click={() => goto(`/projectDetails?id=${projectId}`)}>Cancel</button>
+    <div class="button-group">
+        <button on:click={saveAnnotations}>Save Annotations</button>
+        <button on:click={clearAnnotations}>Clear</button>
+        <button on:click={() => goto(`/projectDetails?id=${projectId}`)}>Cancel</button>
+    </div>
   </div>
   
