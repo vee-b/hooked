@@ -26,6 +26,12 @@
       color: #666;
       font-size: 0.8rem;
     }
+
+    a span {
+      font-size: 0.8rem;
+      line-height: 1.2; /* Ensures good readability */
+    }
+
   
     a:hover {
       color: #111;
@@ -49,7 +55,7 @@
     </a> -->
     <a href="/inactiveProjects">
       <CalendarDays class="icon" />
-      <span>History</span>
+      <span>Inactive<br>Projects</span>
     </a>
     <a href="/stats">
       <ChartLine class="icon" />

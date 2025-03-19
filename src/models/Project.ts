@@ -12,6 +12,7 @@ export class Project {
   attempts: number;
   grade: string;
   is_active: boolean;
+  coordinates: { lat: number; lng: number }[];
 
   constructor({ 
     _id,
@@ -20,7 +21,8 @@ export class Project {
     is_sent = false, 
     attempts = 0, 
     grade = 'Unknown', 
-    is_active = true 
+    is_active = true, 
+    coordinates = [] 
   } : {
     _id?: string;
     date_time?: Date | string | number;
@@ -29,6 +31,8 @@ export class Project {
     attempts?: number;
     grade?: string;
     is_active?: boolean;
+    //coordinates?: { x: string; y: string }[];
+    coordinates?: { lat: number; lng: number }[];
   }) {
     this._id = _id;
     this.date_time = typeof date_time === 'string' || typeof date_time === 'number'
@@ -39,6 +43,7 @@ export class Project {
     this.attempts = attempts;
     this.grade = grade;
     this.is_active = is_active;
+    this.coordinates = coordinates;
   }
 
   // Format the date
@@ -56,14 +61,12 @@ export class Project {
       attempts: this.attempts,
       grade: this.grade,
       is_active: this.is_active ? 1 : 0,
+      coordinates: this.coordinates,
     };
   }
 
   // Static method to create a Project from MongoDB document format
   static fromMap(map: any): Project {
-    // MongoDB may return _id as an ObjectId or string, so we handle that properly
-    //const _id = map._id ? map._id.toString() : undefined;
-
     return new Project({
       _id: map._id ? String(map._id) : undefined,
       date_time: new Date(map.date_time),
@@ -72,6 +75,7 @@ export class Project {
       attempts: map.attempts,
       grade: map.grade,
       is_active: map.is_active === 1,
+      coordinates: map.coordinates || []
     });
   }
 }

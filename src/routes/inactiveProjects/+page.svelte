@@ -1,30 +1,26 @@
-<script>
+<script lang="ts">
     import { onMount } from 'svelte';
     import { goto } from '$app/navigation';
     import ProjectComponent from '../../components/ProjectComponent.svelte';
     import { writable } from 'svelte/store';
     import { PlusCircle, Filter } from 'lucide-svelte';
+    import type { Project } from '../../models/Project';
+    import { fetchInactiveProjects, deleteProject } from '../../stores/projectsList';
   
-    /**
-     * @typedef {Object} Project
-     * @property {boolean} isSent
-     * @property {string} grade
-     * @property {string} formattedDateTime
-     * @property {string} imagePath
-     * @property {number} attempts
-     * @property {number} _id
-     */
-  
-    const projectsList = writable([]);
+     export const projectsList = writable<Project[]>([]);
   
     const navigateToNewProject = () => {
       goto('/projectDetails');
     };
   
     const fetchProjects = async () => {
-      const response = await fetch('/api/projects');
-      const data = await response.json();
-      projectsList.set(data.projects);
+      try {
+        const projectsData = await fetchInactiveProjects();
+        projectsList.set(projectsData);  // projectsData should be Project[]
+        console.log('Fetched projects successfully:', projectsData);
+      } catch (error) {
+        console.error('Error fetching active projects:', error);
+      }
     };
   
     onMount(() => {
@@ -36,6 +32,19 @@
     const toggleFilter = () => {
       filterActive = !filterActive;
     };
+
+    // Refresh project list after deletion
+    async function handleDeleteProject(projectId: string) {
+      try {
+        // Call delete function from the store
+        await deleteProject(projectId);
+
+        // Fetch the updated project list after deletion
+        fetchProjects(); // Manually re-fetch projects
+      } catch (error) {
+        console.error('Error deleting project:', error);
+      }
+    }
   </script>
   
   <style>

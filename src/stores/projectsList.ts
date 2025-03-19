@@ -4,9 +4,7 @@ import { writable, type Writable } from 'svelte/store';
 import { invoke } from '@tauri-apps/api/core';
 import { Project } from '../models/Project';
 
-/**
- * Type definition for a MongoDB Project.
- */
+// Define the shape of a MongoDB project object.
 export interface MongoDBProject {
   _id: string | { $oid: string };
   date_time: number;
@@ -15,24 +13,31 @@ export interface MongoDBProject {
   is_sent: boolean;
   attempts: number;
   is_active: boolean;
+  coordinates?: { lat: number; lng: number }[];
 }
 
-// Initialize the project list as a Svelte store
-export const projectsList: Writable<Project[]> = writable([]);
+// Initialize the project list as a Svelte store.
+export const projectsList: Writable<Project[]> = writable([]); // projectsList: Stores an array of Project instances.
+export const annotations = writable<{ [key: string]: { x: string; y: string }[] }>({});
 
-// Store to hold the sends count by grade
-export const sendsCount: Writable<Record<string, number>> = writable({});
+// Store for sends count (by grade and total)
+export const sendsSummary = writable<{ total: number; byGrade: Record<string, number> }>({
+  total: 0,
+  byGrade: {},
+});
 
-// Function to initialize projects from the database
+// Initialize projects list.
 export async function initializeProjectsList(): Promise<void> {
   try {
-    // Invoke Rust command to get all projects
+    // Invoke Rust command to get all projects.
     const result: unknown = await invoke('get_all_projects');
 
+    // Ensures the response is an array.
     if (!Array.isArray(result)) {
       throw new Error('Unexpected response format');
     }
 
+    // Convert MongoDB-style objects into Project instances.
     const projects: Project[] = result.map((projectMap: MongoDBProject) =>
       Project.fromMap({
         ...projectMap,
@@ -40,70 +45,53 @@ export async function initializeProjectsList(): Promise<void> {
           typeof projectMap._id === 'object' && projectMap._id !== null && '$oid' in projectMap._id
             ? projectMap._id.$oid
             : String(projectMap._id || ''),
+        coordinates: projectMap.coordinates || [],
       })
     );
 
-    // Set the projects list in the Svelte store
+    // Update the projectsList store with the fetched projects.
     projectsList.set(projects);
   } catch (error) {
     console.error('Error initializing projects list:', error);
   }
 }
 
-// Function to fetch active projects from MongoDB
-export async function getActiveProjects(): Promise<Project[]> {
-  try {
-    const projectsData = await invoke('get_active_projects');
-    if (Array.isArray(projectsData)) {
-      console.log("Raw projects data:", projectsData);
-      return projectsData.map(Project.fromMap);
-    }
-    console.error('Data format unexpected:', projectsData);
-    return [];
-  } catch (error) {
-    console.error('Error fetching active projects:', error);
-    return [];
-  }
-}
-
-// Function to delete a project by its ID
+// Delete a project by its ID.
 export async function deleteProject(_id: string): Promise<void> {
   try {
     await invoke('delete_project', { id: _id });
+    // Refresh the projectsList store by re-fetching all projects.
     await initializeProjectsList();
   } catch (error) {
     console.error('Error deleting project:', error);
   }
 }
 
-// Function to fetch the sends count by grade
-export async function fetchSendsCount(grade: string): Promise<void> {
+// Fetch sends summary from backend
+export async function fetchSendsSummary(): Promise<void> {
   try {
-    let projects: Project[] = [];
-    const unsubscribe = projectsList.subscribe((value) => {
-      projects = value;
-    });
-    unsubscribe(); // Cleanup subscription
+    const [total, gradeCounts] = await invoke<[number, [string, number][]]>('get_sends_summary');
 
-    if (projects.length > 0) {
-      const count = projects.filter((project) => project.is_sent && project.grade === grade).length;
 
-      // Update sends count store
-      sendsCount.update((currentCount) => ({ ...currentCount, [grade]: count }));
+    console.log('Backend returned data:', { total, gradeCounts }); // Debugging log
+
+    // Ensure gradeCounts is defined and an array
+    if (Array.isArray(gradeCounts)) {
+      const byGrade: Record<string, number> = {};
+      gradeCounts.forEach(([grade, count]) => {
+        byGrade[grade] = count;
+      });
+
+      sendsSummary.set({ total, byGrade });
     } else {
-      console.error('No projects found');
+      console.error('Invalid data format for gradeCounts:', gradeCounts);
     }
   } catch (error) {
-    console.error('Error fetching sends count:', error);
+    console.error('Error fetching sends summary:', error);
   }
 }
 
-// Function to initialize the sends count store
-export function initializeSendsCount(): void {
-  sendsCount.set({});
-}
-
-// Function to fetch active projects
+// Fetch the active projects.
 export async function fetchActiveProjects(): Promise<Project[]> {
   try {
     const projectsData: unknown = await invoke('get_active_projects');
@@ -122,6 +110,44 @@ export async function fetchActiveProjects(): Promise<Project[]> {
           typeof data._id === 'object' && data._id !== null && '$oid' in data._id
             ? data._id.$oid
             : String(data._id || ''),
+        coordinates: Array.isArray(data.coordinates)
+        ? data.coordinates.map((coord) =>
+            typeof coord.lat === 'number' && typeof coord.lng === 'number'
+              ? coord
+              : { lat: 0, lng: 0 } // Default invalid coordinates
+          )
+        : [],
+      });
+    });
+
+    console.log('Processed Project IDs:', projectInstances.map((p) => p._id));
+    return projectInstances;
+  } catch (error) {
+    console.error('Error fetching active projects:', error);
+    return [];
+  }
+}
+
+// Function to fetch inactive projects
+export async function fetchInactiveProjects(): Promise<Project[]> {
+  try {
+    const projectsData: unknown = await invoke('get_inactive_projects');
+
+    if (!Array.isArray(projectsData)) {
+      console.error('Unexpected response format:', projectsData);
+      return [];
+    }
+
+    const typedProjectsData: MongoDBProject[] = projectsData;
+
+    const projectInstances: Project[] = typedProjectsData.map((data) => {
+      return new Project({
+        ...data,
+        _id:
+          typeof data._id === 'object' && data._id !== null && '$oid' in data._id
+            ? data._id.$oid
+            : String(data._id || ''),
+        coordinates: data.coordinates || [],
       });
     });
 
@@ -184,6 +210,7 @@ export async function addProject(newProject: Project, imageFile: File): Promise<
     const projectWithImage = new Project({
       ...newProject,
       image_path: imagePath, // Store the Cloudinary URL here
+      coordinates: newProject.coordinates || [],
     });
 
     // Convert project to map and send to Rust backend to insert
@@ -193,5 +220,137 @@ export async function addProject(newProject: Project, imageFile: File): Promise<
     await initializeProjectsList();
   } catch (error) {
     console.error('Error adding project:', error);
+  }
+}
+
+// Fetch a project by its ID
+export async function fetchProjectById(projectId: string): Promise<Project | null> {
+  try {
+    const projectData: unknown = await invoke('get_project_by_id', { id: projectId });
+
+    if (!projectData || typeof projectData !== 'object') {
+      console.error('Unexpected response format:', projectData);
+      return null;
+    }
+
+    const data = projectData as MongoDBProject;
+
+    // Convert MongoDB-style object into a Project instance
+    return new Project({
+      ...data,
+      _id:
+        typeof data._id === 'object' && data._id !== null && '$oid' in data._id
+          ? data._id.$oid
+          : String(data._id || ''),
+    });
+  } catch (error) {
+    console.error('Error fetching project by ID:', error);
+    return null;
+  }
+}
+
+export async function editProject(updatedProject: Project, imageFile?: File): Promise<void> {
+  try {
+    console.log("Editing project, current coordinates:", updatedProject.coordinates);
+
+    let savedImagePath: string = updatedProject.image_path;
+
+    // If a new image is selected, upload it and get the new image URL
+    if (imageFile) {
+      console.log("Uploading image to Cloudinary...");
+      const uploadedImageUrl = await uploadImageToCloudinary(imageFile);
+      if (uploadedImageUrl) {
+        savedImagePath = uploadedImageUrl;
+      }
+    }
+
+    console.log("Updating project:", updatedProject);
+
+    // Ensure correct formatting before sending to Rust
+    const formattedProject = {
+      _id: updatedProject._id,
+      date_time: typeof updatedProject.date_time === "number" 
+        ? updatedProject.date_time 
+        : new Date(updatedProject.date_time).getTime(), // Convert to timestamp
+      image_path: savedImagePath,
+      is_sent: updatedProject.is_sent ? 1 : 0, // Convert boolean to integer
+      attempts: updatedProject.attempts,
+      grade: updatedProject.grade,
+      is_active: updatedProject.is_active ? 1 : 0, // Convert boolean to integer
+      coordinates: updatedProject.coordinates || [],
+    };
+
+    console.log("Project details being sent to backend:", formattedProject);
+
+    await invoke("update_project", { project: formattedProject });
+    console.log("Project updated successfully.");
+
+    // Refresh project list
+    await initializeProjectsList();
+  } catch (error) {
+    console.error("Error updating project:", error);
+  }
+}
+
+// Function to save annotations to the store and persist them if needed
+export async function updateAnnotations(projectId: string, annotationsData: { lat: string; lng: string }[]): Promise<void> {
+  try {
+    // Convert x and y values to f64 (number type)
+    const annotationsDataAsNumbers = annotationsData.map(({ lat, lng }) => ({
+      lat: parseFloat(lat),
+      lng: parseFloat(lng),
+    }));
+
+    // Send the annotations to the backend for persistence
+    await invoke('save_annotations', {
+      request: {  // wrap the projectId and annotationsData inside the request object
+        project_id: projectId,
+        annotations: annotationsDataAsNumbers,
+      },
+    });
+
+    console.log(`Annotations for project ${projectId} saved successfully.`);
+  } catch (error) {
+    console.error('Error saving annotations:', error);
+  }
+}
+
+// Add or update a project (CURRENTLY NOT IN USE)
+export async function saveProject(project: Project, imageFile?: File): Promise<void> {
+  try {
+    let updatedImagePath = project.image_path;
+
+    // If a new image is provided, upload it.
+    if (imageFile) {
+      const uploadedUrl = await uploadImageToCloudinary(imageFile);
+      if (!uploadedUrl) throw new Error("Image upload failed");
+      updatedImagePath = uploadedUrl;
+    }
+
+    if (project._id) {
+      // Prepare project for update
+      const formattedProject = {
+        _id: project._id,
+        date_time: typeof project.date_time === "number" ? project.date_time : new Date(project.date_time).getTime(),
+        image_path: updatedImagePath,
+        is_sent: project.is_sent ? 1 : 0,
+        attempts: project.attempts,
+        grade: project.grade,
+        is_active: project.is_active ? 1 : 0,
+      };
+      await invoke("update_project", { project: formattedProject });
+    } else {
+      // Create new project with image URL
+      const projectWithImage = new Project({
+        ...project,
+        image_path: updatedImagePath,
+      });
+      await invoke('insert_project', { project: projectWithImage.toMap() });
+    }
+
+    // Refresh the projects list if needed.
+    await initializeProjectsList();
+  } catch (error) {
+    console.error("Error saving project:", error);
   }
 }

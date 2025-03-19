@@ -1,102 +1,116 @@
 <!-- src/routes/projectDetails/+page.svelte -->
 
 <script lang="ts">
-  import { invoke } from '@tauri-apps/api/core';
-  import { addProject, uploadImageToCloudinary, sanitizeFileName } from '../../stores/projectsList';
-  import { Project } from '../../models/Project';
+  import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
-  import { Camera, Upload } from 'lucide-svelte';
-  import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera'; // Import Capacitor Camera
+  import { invoke } from '@tauri-apps/api/core';
+  import { Camera } from 'lucide-svelte';
+  import { Camera as CapacitorCamera, CameraResultType } from '@capacitor/camera';
   import { Capacitor } from '@capacitor/core';
+  import { addProject, editProject, fetchProjectById, sanitizeFileName, annotations, initializeProjectsList } from '../../stores/projectsList';
+  import { Project } from '../../models/Project';
 
+  // Form state and mode indicator
+  let projectId: string | undefined = undefined;  // Changed to undefined instead of null
+  let isEditMode = false;
+  let project: Project | null = null;
+  let projectCoordinates: { lat: number; lng: number }[] = [];
   let imagePath: string = 'No Image';
-  let imagePreview = '/images/default-girl.jpg'; // Default image
-  let attempts = '0';
-  let grade = 'Unknown';
-  let isSent = false;
-  let selectedOption = 'Unknown';
-  let dateTime = new Date();
-  let isActive = true;
-  let message = '';
-  let imageFile: File | null = null; // Store the image as a File object
+  let imagePreview: string = '/images/default-girl.jpg';
+  let attempts: string = '0';
+  let selectedOption: string = ''; // grade
+  let dateTime: Date = new Date();
+  let isSent: boolean = false;
+  let isActive: boolean = true;
+  let message: string = '';
+  let imageFile: File | null = null;
   const options = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10'];
 
-  const navigateToHome = () => {
-    goto('/'); // Navigate to home page
-  };
+  // Helper function to format the Date to "YYYY-MM-DDThh:mm"
+  function formatDateForInput(date: Date): string {
+    const pad = (n: number) => n < 10 ? '0' + n : n;
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
 
-  async function submitData() {
-  try {
-    let savedImagePath: string = '';
+  // A reactive variable that holds the formatted date string
+  $: formattedDateTime = formatDateForInput(dateTime);
 
-    // Create project object
-    const dateTimeObj = new Date(dateTime);
-    const attemptsNumber = parseInt(attempts, 10);
-    const project = new Project({
-      date_time: dateTimeObj,
-      image_path: savedImagePath,
-      is_sent: isSent,
-      attempts: attemptsNumber,
-      grade: selectedOption,
-      is_active: isActive,
+  // When the input changes, update the dateTime variable
+  function updateDateTime(e: Event) {
+    const target = e.target as HTMLInputElement;
+    dateTime = new Date(target.value);
+  }
+  
+  // Fetch query params for projectId
+  $: {
+    const urlParams = new URLSearchParams(window.location.search);
+    projectId = urlParams.get('id') || '';
+  }
+
+  // On mount, check if we are editing an existing project.
+  onMount(async () => {
+    annotations.subscribe(store => {
+      if (projectId && store[projectId]) {
+        // Convert string coordinates to numbers
+        projectCoordinates = store[projectId].map(coord => ({
+          lat: parseFloat(coord.x),  // Convert x to a number
+          lng: parseFloat(coord.y),  // Convert y to a number
+        }));
+        console.log('Project Coordinates:', projectCoordinates);
+      } else {
+        projectCoordinates = []; // Ensure empty array for "new_project"
+        console.log('No coordinates for this project, initializing empty coordinates array.');
+      }
     });
 
-    // Add project (handles image internally)
-    if (imageFile) {
-      await addProject(project, imageFile);
-    } else {
-      console.error('No file selected.');
+    const urlParams = new URLSearchParams(window.location.search);
+    projectId = urlParams.get('id') ?? undefined; // Use undefined for new project
+    if (projectId) {
+      isEditMode = true;
+      try {
+        project = await fetchProjectById(projectId);
+        if (project) {
+          imagePath = project.image_path || 'No Image';
+          imagePreview = project.image_path || '/images/default-girl.jpg';
+          attempts = project.attempts ? project.attempts.toString() : '0';
+          selectedOption = project.grade || '';
+          isSent = project.is_sent || false;
+          dateTime = project.date_time ? new Date(project.date_time) : new Date();
+          isActive = project.is_active || true;
+          projectCoordinates = project.coordinates || [];
+
+          // Log project data to verify everything is fetched correctly
+          console.log('Fetched Project:', project);
+        }
+      } catch (error) {
+        console.error("Error fetching project:", error);
+        message = "Error fetching project data";
+      }
     }
+  });
 
-    message = 'Project added successfully!';
-    resetForm();
-  } catch (error) {
-    console.error('Error adding project:', error);
-    message = 'Failed to add project.';
-  }
-}
-
-  // Reset the form after successful submission
-  function resetForm() {
-    imagePath = 'No Image';
-    imagePreview = '/images/default-girl.jpg';
-    attempts = '0';
-    grade = 'Unknown';
-    isSent = false;
-    selectedOption = 'Unknown';
-    dateTime = new Date();
-    isActive = true;
-  }
-
-  // Function to open the camera and capture an image
+  // Function to capture/upload an image
   const pickImage = async () => {
     try {
       const image = await CapacitorCamera.getPhoto({
         quality: 90,
         allowEditing: true,
-        resultType: CameraResultType.Uri, // Use URI to display image
+        resultType: CameraResultType.Uri,
       });
-
-      console.log("Captured image:", image); // Log image object to inspect properties
-      
-      const sanitizedFileName = sanitizeFileName(image); // Generate the sanitized name here
-
-      // Set the image preview to the captured image
-      imagePreview = image.webPath || '/images/default-girl.jpg';; // Set the image path for preview
-      imagePath = image.path || image.webPath || ''; // Store the image path in imagePath
-      imageFile = await fetchImageFile(image, sanitizedFileName); // Fetch image file for storage
+      const sanitizedFileName = sanitizeFileName(image);
+      imagePreview = image.webPath || '/images/default-girl.jpg';
+      imagePath = image.path || image.webPath || '';
+      imageFile = await fetchImageFile(image, sanitizedFileName);
     } catch (error) {
       // @ts-ignore
-      if (error.code !== 'CANCELLED') { // Check if the action was cancelled
+      if (error.code !== 'CANCELLED') {
         console.error('Error capturing image:', error);
         message = 'Error capturing image.';
-      } else {
-        console.log('Camera action was cancelled.');
       }
     }
   };
 
-  // Helper function to fetch the image as a File object
+  // Helper to convert the captured image into a File object.
   async function fetchImageFile(image: any, fileName: string): Promise<File | null> {
     try {
       const response = await fetch(image.webPath);
@@ -109,6 +123,64 @@
     }
   }
 
+  // Unified submit function
+  async function submitData() {
+    try {
+      const dateTimeObj = new Date(dateTime);
+      const attemptsNumber = parseInt(attempts, 10);
+
+      // Log the coordinates before submitting
+      console.log('Submitting Coordinates:', projectCoordinates);
+
+      // Create a new Project instance; include _id only if editing.
+      const currentProject = new Project({
+        _id: projectId ? projectId : undefined,
+        date_time: dateTimeObj,
+        image_path: imagePath, // this may be replaced after image upload
+        is_sent: isSent,
+        attempts: attemptsNumber,
+        grade: selectedOption,
+        is_active: isActive,
+        coordinates: projectCoordinates,
+      });
+
+      if (isEditMode) {
+        // Update project: pass imageFile if a new image was captured.
+        await editProject(currentProject, imageFile ?? undefined);
+        message = 'Project updated successfully!';
+      } else {
+        // Add project: imageFile is required.
+        if (imageFile) {
+          await addProject(currentProject, imageFile);
+          message = 'Project added successfully!';
+        } else {
+          console.error('No image file selected for new project.');
+          message = 'Please select an image.';
+          return;
+        }
+      }
+      resetForm();
+    } catch (error) {
+      console.error('Error submitting project:', error);
+      message = isEditMode ? 'Failed to update project.' : 'Failed to add project.';
+    }
+  }
+
+  // Reset form fields after submission.
+  function resetForm() {
+    imagePath = 'No Image';
+    imagePreview = '/images/default-girl.jpg';
+    attempts = '0';
+    selectedOption = '';
+    dateTime = new Date();
+    isSent = false;
+    isActive = true;
+    imageFile = null;
+  }
+
+  function navigateToHome() {
+    goto('/');
+  }
 </script>
 
 <style>
@@ -117,23 +189,29 @@
     margin: 0 auto;
     font-family: Arial, sans-serif;
     padding: 2rem;
-    padding-bottom: 4rem; /* Space for the bottom navbar */
+    padding-bottom: 4rem;
   }
-
-  h1 {
-    text-align: center;
+  .image-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;  /* Ensure it scales with the width of the container */
   }
-
-  .form-group {
-    margin-bottom: 15px;
-  }
-
-  label {
+  img {
+    width: 100%;  /* Ensures image scales with its container */
+    height: auto;
     display: block;
-    font-weight: bold;
-    margin-bottom: 5px;
   }
-
+  .marker {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background-color: red;
+    border-radius: 50%;
+    transform: translate(-50%, -50%); /* Center the marker at the coordinates */
+  }
+  h1 { text-align: center; }
+  .form-group { margin-bottom: 15px; }
+  label { display: block; font-weight: bold; margin-bottom: 5px; }
   input[type='text'],
   input[type='number'],
   input[type='datetime-local'],
@@ -144,11 +222,7 @@
     border-radius: 4px;
     box-sizing: border-box;
   }
-
-  input[type='checkbox'] {
-    margin-right: 5px;
-  }
-
+  input[type='checkbox'] { margin-right: 5px; }
   button {
     display: block;
     width: 100%;
@@ -160,34 +234,16 @@
     cursor: pointer;
     font-size: 16px;
     margin-top: 10px;
+    margin-bottom: 10px;
   }
-
-  button:hover {
-    background-color: #0056b3;
-  }
-
-  .button-row {
-    display: flex;
-    justify-content: space-between;
-    gap: 10px; /* Space between buttons */
-  }
-
-  .image-preview {
-    width: 100%;
-    height: auto;
-    margin: 15px 0;
-    display: block;
-  }
-
-  .message {
-    color: green;
-    text-align: center;
-    margin-top: 10px;
-  }
+  button:hover { background-color: #0056b3; }
+  .button-row { display: flex; justify-content: space-between; gap: 10px; }
+  .image-preview { width: 100%; height: auto; margin: 15px 0; display: block; }
+  .message { color: green; text-align: center; margin-top: 10px; }
 </style>
 
 <div class="container">
-  <h1>Project Details</h1>
+  <h1>{isEditMode ? "Edit Project" : "Add Project"}</h1>
 
   {#if message}
     <p class="message">{message}</p>
@@ -203,15 +259,37 @@
     <img src={imagePreview} alt="Selected Image" class="image-preview" />
   {/if}
 
-  <div class="form-group">
-    <label for="dateTime">Date & Time</label>
-    <input type="datetime-local" id="dateTime" bind:value={dateTime} />
+  {#if isEditMode}
+  <button on:click={() => goto(`/annotate?id=${projectId}&image=${encodeURIComponent(imagePath)}`)}>
+    Annotate
+  </button>
+  {/if}
+
+  <div>
+    {#if isEditMode}
+      {#if projectCoordinates.length > 0}
+        <h3>Coordinates:</h3>
+        <ul>
+          {#each projectCoordinates as coord}
+            <li>Latitude: {coord.lat}, Longitude: {coord.lng}</li>
+          {/each}
+        </ul>
+      {:else}
+        <p>No coordinates yet available for this project.</p>
+      {/if}
+    {/if}
+    
   </div>
 
-  <!-- <div class="form-group">
-    <label for="imagePath">Image Path</label>
-    <input type="text" id="imagePath" bind:value={imagePath} placeholder="Image Path" />
-  </div> -->
+  <div class="form-group">
+    <label for="dateTime">Date & Time</label>
+    <input
+      type="datetime-local"
+      id="dateTime"
+      bind:value={formattedDateTime}
+      on:change={updateDateTime}
+    />
+  </div>
 
   <div class="form-group">
     <label for="grade">Grade</label>
@@ -225,7 +303,7 @@
 
   <div class="form-group">
     <label for="attempts">Attempts</label>
-    <input type="number" id="attempts" bind:value={attempts} placeholder="Attempts" />
+    <input type="number" id="attempts" bind:value={attempts} />
   </div>
 
   <div class="form-group">
@@ -238,5 +316,13 @@
     <input type="checkbox" id="isActive" bind:checked={isActive} />
   </div>
 
-  <button on:click={submitData}>Add Project</button>
+  <div class="form-group">
+    <button on:click={submitData}>
+      {isEditMode ? "Update Project" : "Add Project"}
+    </button>
+  </div>
+
+  <div class="button-row">
+    <button on:click={navigateToHome}>Back to Home</button>
+  </div>
 </div>
