@@ -6,6 +6,13 @@ use serde::{Deserialize, Serialize};
 use mongodb::{Client, bson::{self, doc}, Collection};
 use bson::oid::ObjectId;
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")] // Ensures MongoDB field names match
+pub struct Coordinate {
+    pub lat: f64,
+    pub lng: f64,
+}
+
 // Define the Project struct.
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Project {
@@ -17,6 +24,7 @@ pub struct Project {
     pub attempts: i32,
     pub grade: String,
     pub is_active: i32,
+    pub coordinates: Vec<Coordinate>,
 }
 
 // Define the DatabaseHelper struct.

@@ -16,8 +16,6 @@
     // Navigation to edit the project
     async function editProject() {
       // Navigate to the edit project page
-      //goto('/editProject');
-      // goto(`/editProject?id=${project._id}`);
       goto(`/projectDetails?id=${project._id}`);
     }
     
@@ -109,6 +107,18 @@
     <p class="project-label">Sent: {project.is_sent ? "Yes" : "No"}</p>
 
     <p class="project-label">Attempts: {project.attempts}</p>
+
+    <!-- {#if !project.coordinates || project.coordinates.length === 0}
+      <p class="project-label">Coords: No Coords</p>
+    {:else}
+      <p class="project-label">Coords: {project.coordinates}</p>
+    {/if} -->
+    {#if project.coordinates && project.coordinates.length > 0}
+      <!-- <p class="project-label">Coords: {project.coordinates.map(coord => `(${coord.x}, ${coord.y})`).join(", ")}</p> -->
+      <p class="project-label">Coords: {project.coordinates.map(coord => `(${coord.lat}, ${coord.lng})`).join(", ")}</p>
+    {:else}
+      <p class="project-label">Coords: No Coords</p>
+    {/if}
   
     <button class="button" on:click={editProject}>
       Edit Project

@@ -10,7 +10,8 @@ mod database_helper;
 use database_helper::{DatabaseHelper, Project};
 use tauri::{Manager, State}; // Manager: Provides app management features like accessing state. State: Allows sharing state (like database connections) between Tauri commands.
 use mongodb::{Client as MongoClient, options::ClientOptions}; // MongoClient: The main MongoDB client for database interactions. ClientOptions: For configuring MongoDB connection options.
-use mongodb::bson::{self, doc, Document, oid::ObjectId}; // bson: MongoDB’s binary JSON format. doc: Macro for creating BSON documents. 
+use mongodb::bson::{self, Document, oid::ObjectId}; // bson: MongoDB’s binary JSON format. doc: Macro for creating BSON documents. 
+use bson::{Bson, doc};
 use futures_util::stream::TryStreamExt; // Provides asynchronous streaming methods.
 use std::sync::Arc; // Enables thread-safe reference counting.
 use tokio::sync::Mutex; // Allows safe sharing and mutation of data in async code.
@@ -69,6 +70,7 @@ async fn main() {
             insert_project,
             get_all_projects,
             update_project,
+            save_annotations,
             delete_project,
             get_sends_count,
             get_sends_summary,
@@ -153,6 +155,9 @@ async fn get_inactive_projects(client: State<'_, MongoClient>) -> Result<Vec<Pro
 async fn update_project(client: State<'_, MongoClient>, project: Project) -> Result<(), String> {
     let collection = client.database("hooked_db").collection::<Document>("projects");
 
+    // Log received project data
+    println!("Received project data: {:?}", project);
+
     if let Some(_id) = project._id {
         let filter = doc! {"_id": _id};
 
@@ -174,6 +179,27 @@ async fn update_project(client: State<'_, MongoClient>, project: Project) -> Res
             update_doc.insert("is_sent", bson::Bson::Int32(if *is_sent { 1 } else { 0 }));
         }
 
+        // Ensure `coordinates` field is properly handled as an array of floats
+        if let Some(bson::Bson::Array(coordinates)) = update_doc.get("coordinates") {
+            // Log the received coordinates
+            println!("Received coordinates: {:?}", coordinates);
+            
+            // We assume that coordinates is an array of numbers (floats or integers).
+            let coordinates: Vec<f64> = coordinates.iter()
+                .filter_map(|bson| match bson {
+                    bson::Bson::Double(val) => Some(*val),
+                    bson::Bson::Int32(val) => Some(*val as f64),
+                    bson::Bson::Int64(val) => Some(*val as f64),
+                    _ => None, // Ignore invalid types
+                })
+                .collect();
+
+            // Log the coordinates before updating
+            println!("Processed coordinates: {:?}", coordinates);
+            
+            update_doc.insert("coordinates", bson::Bson::Array(coordinates.iter().map(|&x| bson::Bson::Double(x)).collect()));
+        }
+
         let update = doc! {"$set": update_doc};
 
         match collection.update_one(filter, update, None).await {
@@ -182,6 +208,69 @@ async fn update_project(client: State<'_, MongoClient>, project: Project) -> Res
         }
     } else {
         Err("Project ID is required for update".to_string())
+    }
+}
+
+
+
+// Define the Annotation struct
+// #[derive(Serialize, Deserialize, Debug)]
+// struct Annotation {
+//     x: f64,
+//     y: f64,
+// }
+
+// // Define the SaveAnnotationsRequest struct
+#[derive(Serialize, Deserialize, Debug)]
+pub struct SaveAnnotationsRequest {
+    pub project_id: String,
+    pub annotations: Vec<Annotation>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Annotation {
+    pub lat: f64,
+    pub lng: f64,
+}
+
+// Updates the annotations for a project by _id if it exists.
+#[tauri::command]
+async fn save_annotations(client: State<'_, MongoClient>, request: SaveAnnotationsRequest) -> Result<(), String> {
+    let collection = client.database("hooked_db").collection::<Document>("projects");
+
+    // Log received project annotations data
+    println!("Received project annotations: {:?}", request);
+
+    let project_id = &request.project_id;
+    if !project_id.is_empty() {
+        let filter = doc! { "_id": bson::oid::ObjectId::parse_str(project_id).map_err(|e| e.to_string())? };
+
+        // Convert annotations to BSON based on their number type
+        let annotations: Vec<Bson> = request.annotations.iter().map(|annotation| {
+            Bson::Document(doc! {
+                "lat": annotation.lat,
+                "lng": annotation.lng
+            })
+        }).collect();
+
+        let update_doc = doc! {
+            "$set": {
+                "coordinates": annotations,
+            },
+        };
+
+        match collection.update_one(filter, update_doc, None).await {
+            Ok(_) => {
+                println!("Annotations for project {} saved successfully!", project_id);
+                Ok(())
+            },
+            Err(e) => {
+                println!("Failed to save annotations for project {}: {}", project_id, e);
+                Err(e.to_string())
+            }
+        }
+    } else {
+        Err("Project ID is required".to_string())
     }
 }
 

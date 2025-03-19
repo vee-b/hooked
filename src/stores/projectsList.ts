@@ -13,10 +13,13 @@ export interface MongoDBProject {
   is_sent: boolean;
   attempts: number;
   is_active: boolean;
+  //coordinates?: { x: string; y: string }[];
+  coordinates?: { lat: number; lng: number }[];
 }
 
 // Initialize the project list as a Svelte store.
 export const projectsList: Writable<Project[]> = writable([]); // projectsList: Stores an array of Project instances.
+export const annotations = writable<{ [key: string]: { x: string; y: string }[] }>({});
 
 // Store for sends count (by grade and total)
 export const sendsSummary = writable<{ total: number; byGrade: Record<string, number> }>({
@@ -43,6 +46,7 @@ export async function initializeProjectsList(): Promise<void> {
           typeof projectMap._id === 'object' && projectMap._id !== null && '$oid' in projectMap._id
             ? projectMap._id.$oid
             : String(projectMap._id || ''),
+        coordinates: projectMap.coordinates || [],
       })
     );
 
@@ -107,6 +111,14 @@ export async function fetchActiveProjects(): Promise<Project[]> {
           typeof data._id === 'object' && data._id !== null && '$oid' in data._id
             ? data._id.$oid
             : String(data._id || ''),
+        //coordinates: data.coordinates || [],
+        coordinates: Array.isArray(data.coordinates)
+        ? data.coordinates.map((coord) =>
+            typeof coord.lat === 'number' && typeof coord.lng === 'number'
+              ? coord
+              : { lat: 0, lng: 0 } // Default invalid coordinates
+          )
+        : [],
       });
     });
 
@@ -137,6 +149,7 @@ export async function fetchInactiveProjects(): Promise<Project[]> {
           typeof data._id === 'object' && data._id !== null && '$oid' in data._id
             ? data._id.$oid
             : String(data._id || ''),
+        coordinates: data.coordinates || [],
       });
     });
 
@@ -199,6 +212,7 @@ export async function addProject(newProject: Project, imageFile: File): Promise<
     const projectWithImage = new Project({
       ...newProject,
       image_path: imagePath, // Store the Cloudinary URL here
+      coordinates: newProject.coordinates || [],
     });
 
     // Convert project to map and send to Rust backend to insert
@@ -239,6 +253,8 @@ export async function fetchProjectById(projectId: string): Promise<Project | nul
 
 export async function editProject(updatedProject: Project, imageFile?: File): Promise<void> {
   try {
+    console.log("Editing project, current coordinates:", updatedProject.coordinates);
+
     let savedImagePath: string = updatedProject.image_path;
 
     // If a new image is selected, upload it and get the new image URL
@@ -263,7 +279,10 @@ export async function editProject(updatedProject: Project, imageFile?: File): Pr
       attempts: updatedProject.attempts,
       grade: updatedProject.grade,
       is_active: updatedProject.is_active ? 1 : 0, // Convert boolean to integer
+      coordinates: updatedProject.coordinates || [],
     };
+
+    console.log("Project details being sent to backend:", formattedProject);
 
     await invoke("update_project", { project: formattedProject });
     console.log("Project updated successfully.");
@@ -272,6 +291,39 @@ export async function editProject(updatedProject: Project, imageFile?: File): Pr
     await initializeProjectsList();
   } catch (error) {
     console.error("Error updating project:", error);
+  }
+}
+
+// Function to save annotations to the store and persist them if needed
+export async function updateAnnotations(projectId: string, annotationsData: { lat: string; lng: string }[]): Promise<void> {
+  try {
+    // Convert x and y values to f64 (number type)
+    const annotationsDataAsNumbers = annotationsData.map(({ lat, lng }) => ({
+      lat: parseFloat(lat),
+      lng: parseFloat(lng),
+    }));
+
+    // Save the annotations to the annotations store
+    // annotations.update((currentAnnotations) => {
+    //   return {
+    //     ...currentAnnotations,
+    //     [projectId]: annotationsData,
+    //   };
+    // });
+
+    // Send the annotations to the backend for persistence
+    await invoke('save_annotations', {
+      // projectId,
+      // annotations: annotationsData,
+      request: {  // wrap the projectId and annotationsData inside the request object
+        project_id: projectId,
+        annotations: annotationsDataAsNumbers,
+      },
+    });
+
+    console.log(`Annotations for project ${projectId} saved successfully.`);
+  } catch (error) {
+    console.error('Error saving annotations:', error);
   }
 }
 

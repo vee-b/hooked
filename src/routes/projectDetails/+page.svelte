@@ -7,14 +7,14 @@
   import { Camera } from 'lucide-svelte';
   import { Camera as CapacitorCamera, CameraResultType } from '@capacitor/camera';
   import { Capacitor } from '@capacitor/core';
-  import { addProject, editProject, fetchProjectById, sanitizeFileName, initializeProjectsList } from '../../stores/projectsList';
+  import { addProject, editProject, fetchProjectById, sanitizeFileName, annotations, initializeProjectsList } from '../../stores/projectsList';
   import { Project } from '../../models/Project';
 
   // Form state and mode indicator
-  let projectId: string | null = null;
+  let projectId: string | undefined = undefined;  // Changed to undefined instead of null
   let isEditMode = false;
   let project: Project | null = null;
-
+  let projectCoordinates: { lat: number; lng: number }[] = [];
   let imagePath: string = 'No Image';
   let imagePreview: string = '/images/default-girl.jpg';
   let attempts: string = '0';
@@ -28,23 +28,43 @@
 
   // Helper function to format the Date to "YYYY-MM-DDThh:mm"
   function formatDateForInput(date: Date): string {
-      const pad = (n: number) => n < 10 ? '0' + n : n;
-      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
-    }
+    const pad = (n: number) => n < 10 ? '0' + n : n;
+    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
 
-    // A reactive variable that holds the formatted date string
-    $: formattedDateTime = formatDateForInput(dateTime);
+  // A reactive variable that holds the formatted date string
+  $: formattedDateTime = formatDateForInput(dateTime);
 
-    // When the input changes, update the dateTime variable
-    function updateDateTime(e: Event) {
-      const target = e.target as HTMLInputElement;
-      dateTime = new Date(target.value);
-    }
-    
+  // When the input changes, update the dateTime variable
+  function updateDateTime(e: Event) {
+    const target = e.target as HTMLInputElement;
+    dateTime = new Date(target.value);
+  }
+  
+  // Fetch query params for projectId
+  $: {
+    const urlParams = new URLSearchParams(window.location.search);
+    projectId = urlParams.get('id') || '';
+  }
+
   // On mount, check if we are editing an existing project.
   onMount(async () => {
+    annotations.subscribe(store => {
+      if (projectId && store[projectId]) {
+        // Convert string coordinates to numbers
+        projectCoordinates = store[projectId].map(coord => ({
+          lat: parseFloat(coord.x),  // Convert x to a number
+          lng: parseFloat(coord.y),  // Convert y to a number
+        }));
+        console.log('Project Coordinates:', projectCoordinates);
+      } else {
+        projectCoordinates = []; // Ensure empty array for "new_project"
+        console.log('No coordinates for this project, initializing empty coordinates array.');
+      }
+    });
+
     const urlParams = new URLSearchParams(window.location.search);
-    projectId = urlParams.get('id');
+    projectId = urlParams.get('id') ?? undefined; // Use undefined for new project
     if (projectId) {
       isEditMode = true;
       try {
@@ -57,6 +77,10 @@
           isSent = project.is_sent || false;
           dateTime = project.date_time ? new Date(project.date_time) : new Date();
           isActive = project.is_active || true;
+          projectCoordinates = project.coordinates || [];
+
+          // Log project data to verify everything is fetched correctly
+          console.log('Fetched Project:', project);
         }
       } catch (error) {
         console.error("Error fetching project:", error);
@@ -104,8 +128,16 @@
     try {
       const dateTimeObj = new Date(dateTime);
       const attemptsNumber = parseInt(attempts, 10);
+
+      // Log the coordinates before submitting
+      console.log('Submitting Coordinates:', projectCoordinates);
+
+      // Ensure that projectId is properly assigned, converting null to undefined
+      const safeProjectId: string | undefined = projectId ?? undefined; // Use undefined for new project
+
       // Create a new Project instance; include _id only if editing.
       const currentProject = new Project({
+        //_id: safeProjectId, // Only use if updating
         _id: projectId ? projectId : undefined,
         date_time: dateTimeObj,
         image_path: imagePath, // this may be replaced after image upload
@@ -113,6 +145,7 @@
         attempts: attemptsNumber,
         grade: selectedOption,
         is_active: isActive,
+        coordinates: projectCoordinates,
       });
 
       if (isEditMode) {
@@ -162,6 +195,24 @@
     padding: 2rem;
     padding-bottom: 4rem;
   }
+  .image-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;  /* Ensure it scales with the width of the container */
+  }
+  img {
+    width: 100%;  /* Ensures image scales with its container */
+    height: auto;
+    display: block;
+  }
+  .marker {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background-color: red;
+    border-radius: 50%;
+    transform: translate(-50%, -50%); /* Center the marker at the coordinates */
+  }
   h1 { text-align: center; }
   .form-group { margin-bottom: 15px; }
   label { display: block; font-weight: bold; margin-bottom: 5px; }
@@ -187,6 +238,7 @@
     cursor: pointer;
     font-size: 16px;
     margin-top: 10px;
+    margin-bottom: 10px;
   }
   button:hover { background-color: #0056b3; }
   .button-row { display: flex; justify-content: space-between; gap: 10px; }
@@ -211,14 +263,30 @@
     <img src={imagePreview} alt="Selected Image" class="image-preview" />
   {/if}
 
+  {#if isEditMode}
   <button on:click={() => goto(`/annotate?id=${projectId}&image=${encodeURIComponent(imagePath)}`)}>
     Annotate
   </button>
-  
+  {/if}
+
+  <div>
+    {#if isEditMode}
+      {#if projectCoordinates.length > 0}
+        <h3>Coordinates:</h3>
+        <ul>
+          {#each projectCoordinates as coord}
+            <li>Latitude: {coord.lat}, Longitude: {coord.lng}</li>
+          {/each}
+        </ul>
+      {:else}
+        <p>No coordinates yet available for this project.</p>
+      {/if}
+    {/if}
+    
+  </div>
 
   <div class="form-group">
     <label for="dateTime">Date & Time</label>
-    <!-- Using ISO string slice to match "YYYY-MM-DDThh:mm" format -->
     <input
       type="datetime-local"
       id="dateTime"
@@ -226,9 +294,6 @@
       on:change={updateDateTime}
     />
   </div>
-
-  <!-- bind:value={dateTime.toISOString().slice(0,16)} -->
-  <!-- on:change={updateDateTime(e) => dateTime = new Date(e.target.value)} -->
 
   <div class="form-group">
     <label for="grade">Grade</label>
@@ -242,7 +307,7 @@
 
   <div class="form-group">
     <label for="attempts">Attempts</label>
-    <input type="number" id="attempts" bind:value={attempts} placeholder="Attempts" />
+    <input type="number" id="attempts" bind:value={attempts} />
   </div>
 
   <div class="form-group">
@@ -255,5 +320,13 @@
     <input type="checkbox" id="isActive" bind:checked={isActive} />
   </div>
 
-  <button on:click={submitData}>{isEditMode ? "Update Project" : "Add Project"}</button>
+  <div class="form-group">
+    <button on:click={submitData}>
+      {isEditMode ? "Update Project" : "Add Project"}
+    </button>
+  </div>
+
+  <div class="button-row">
+    <button on:click={navigateToHome}>Back to Home</button>
+  </div>
 </div>
