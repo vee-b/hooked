@@ -11,13 +11,21 @@
     let projectId = '';
     let points: { lat: string; lng: string }[] = [];
 
-  
-    // Extract query parameters
-    $: {
-      const urlParams = new URLSearchParams($page.url.search);
-      imagePath = urlParams.get('image') || '';
-      projectId = urlParams.get('id') || '';
-    }
+    // Fetch project details on mount
+    onMount(async () => {
+      // Extract query parameters
+      const urlParams = new URLSearchParams(window.location.search);
+        imagePath = urlParams.get('image') || '';
+        projectId = urlParams.get('id') || '';
+        
+        try {
+            const rawPoints = urlParams.get('points');
+            points = rawPoints ? JSON.parse(decodeURIComponent(rawPoints)) : [];
+        } catch (error) {
+            console.error('Error parsing points:', error);
+            points = [];
+        }
+    });
   
     function handleClick(event: MouseEvent) {
       // Get click coordinates relative to the image
@@ -108,7 +116,7 @@
         <div class="image-wrapper">
             <img src={imagePath} alt="Annotate Image" on:click={handleClick} />
             
-            <!-- Markers for clicked points -->
+            <!-- Render saved points -->
             {#each points as { lat, lng }}
                 <div class="marker" style="left: {parseFloat(lat) * 100}%; top: {parseFloat(lng) * 100}%;"></div>
             {/each}
@@ -130,4 +138,3 @@
         <button on:click={() => goto(`/projectDetails?id=${projectId}`)}>Cancel</button>
     </div>
   </div>
-  
