@@ -108,13 +108,7 @@
 
     <p class="project-label">Attempts: {project.attempts}</p>
 
-    <!-- {#if !project.coordinates || project.coordinates.length === 0}
-      <p class="project-label">Coords: No Coords</p>
-    {:else}
-      <p class="project-label">Coords: {project.coordinates}</p>
-    {/if} -->
     {#if project.coordinates && project.coordinates.length > 0}
-      <!-- <p class="project-label">Coords: {project.coordinates.map(coord => `(${coord.x}, ${coord.y})`).join(", ")}</p> -->
       <p class="project-label">Coords: {project.coordinates.map(coord => `(${coord.lat}, ${coord.lng})`).join(", ")}</p>
     {:else}
       <p class="project-label">Coords: No Coords</p>

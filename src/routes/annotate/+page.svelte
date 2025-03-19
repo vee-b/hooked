@@ -49,14 +49,6 @@
     function clearAnnotations() {
         points = []; // Reset points array
     }
-  
-//     async function saveAnnotations() {
-//         annotations.update(currentAnnotations => {
-//             return { ...currentAnnotations, [projectId]: points };
-//         });
-//         //alert('Annotations saved!');
-//         goto(`/projectDetails?id=${projectId}`);
-//     }
 
     // Function to update annotations in MongoDB
     async function saveAnnotations() {
@@ -66,7 +58,6 @@
         try {
             // Make an API call or invoke Tauri command to update the MongoDB database
             await updateAnnotations(projectId, annotationsData);
-            //alert('Annotations saved!');
             goto(`/projectDetails?id=${projectId}`);
         } catch (error) {
             console.error('Error saving annotations:', error);

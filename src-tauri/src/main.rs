@@ -211,15 +211,6 @@ async fn update_project(client: State<'_, MongoClient>, project: Project) -> Res
     }
 }
 
-
-
-// Define the Annotation struct
-// #[derive(Serialize, Deserialize, Debug)]
-// struct Annotation {
-//     x: f64,
-//     y: f64,
-// }
-
 // // Define the SaveAnnotationsRequest struct
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SaveAnnotationsRequest {

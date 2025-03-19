@@ -13,7 +13,6 @@ export interface MongoDBProject {
   is_sent: boolean;
   attempts: number;
   is_active: boolean;
-  //coordinates?: { x: string; y: string }[];
   coordinates?: { lat: number; lng: number }[];
 }
 
@@ -111,7 +110,6 @@ export async function fetchActiveProjects(): Promise<Project[]> {
           typeof data._id === 'object' && data._id !== null && '$oid' in data._id
             ? data._id.$oid
             : String(data._id || ''),
-        //coordinates: data.coordinates || [],
         coordinates: Array.isArray(data.coordinates)
         ? data.coordinates.map((coord) =>
             typeof coord.lat === 'number' && typeof coord.lng === 'number'
@@ -303,18 +301,8 @@ export async function updateAnnotations(projectId: string, annotationsData: { la
       lng: parseFloat(lng),
     }));
 
-    // Save the annotations to the annotations store
-    // annotations.update((currentAnnotations) => {
-    //   return {
-    //     ...currentAnnotations,
-    //     [projectId]: annotationsData,
-    //   };
-    // });
-
     // Send the annotations to the backend for persistence
     await invoke('save_annotations', {
-      // projectId,
-      // annotations: annotationsData,
       request: {  // wrap the projectId and annotationsData inside the request object
         project_id: projectId,
         annotations: annotationsDataAsNumbers,

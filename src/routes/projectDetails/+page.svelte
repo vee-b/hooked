@@ -132,12 +132,8 @@
       // Log the coordinates before submitting
       console.log('Submitting Coordinates:', projectCoordinates);
 
-      // Ensure that projectId is properly assigned, converting null to undefined
-      const safeProjectId: string | undefined = projectId ?? undefined; // Use undefined for new project
-
       // Create a new Project instance; include _id only if editing.
       const currentProject = new Project({
-        //_id: safeProjectId, // Only use if updating
         _id: projectId ? projectId : undefined,
         date_time: dateTimeObj,
         image_path: imagePath, // this may be replaced after image upload
