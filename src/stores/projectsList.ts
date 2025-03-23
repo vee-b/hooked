@@ -27,12 +27,13 @@ export const sendsSummary = writable<{ total: number; byGrade: Record<string, nu
 });
 
 // Initialize projects list.
+// 'export' Makes this function available for import in other files.
 export async function initializeProjectsList(): Promise<void> {
   try {
-    // Invoke Rust command to get all projects.
+    // Invoke Rust command to get all projects. 'result' is typed as 'unknown' because the function does not initially know what type the backend will return.
     const result: unknown = await invoke('get_all_projects');
 
-    // Ensures the response is an array.
+    // Ensure the response is an array (if not an array, throw error). 
     if (!Array.isArray(result)) {
       throw new Error('Unexpected response format');
     }
