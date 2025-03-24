@@ -260,8 +260,8 @@
   {/if}
 
   {#if isEditMode}
-  <button on:click={() => goto(`/annotate?id=${projectId}&image=${encodeURIComponent(imagePath)}`)}>
-    Annotate
+  <button on:click={() => goto(`/annotations?id=${projectId}&image=${encodeURIComponent(imagePath)}&points=${JSON.stringify(projectCoordinates)}`)}>
+    Annotations
   </button>
   {/if}
 

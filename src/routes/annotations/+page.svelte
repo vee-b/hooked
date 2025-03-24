@@ -1,16 +1,17 @@
 <!-- src/routes/annotate/+page.svelte -->
- <!-- To be replaced by 'annotations' page, which will handle both coordinates and note adding -->
+ <!-- To be main branch page for adding coords/notes to coords -->
 
-<script lang="ts">
+ <script lang="ts">
     import { onMount } from 'svelte';
     import { goto } from '$app/navigation';
     import { page } from '$app/stores';
     import { invoke } from '@tauri-apps/api/core';
     import { updateAnnotations, annotations } from '../../stores/projectsList';
-  
+    
     let imagePath = '';
     let projectId = '';
     let points: { lat: string; lng: string }[] = [];
+    let editCoordsMode = false; // Toggle for enabling/disabling coordinates editing
 
     // Fetch project details on mount
     onMount(async () => {
@@ -27,20 +28,28 @@
             points = [];
         }
     });
+
+    function toggleEditMode() {
+        editCoordsMode = !editCoordsMode;
+    }
   
     function handleClick(event: MouseEvent) {
-      // Get click coordinates relative to the image
-      const img = event.target as HTMLImageElement;
-      const rect = img.getBoundingClientRect();
-      const lat = ((event.clientX - rect.left) / rect.width).toFixed(4);
-      const lng = ((event.clientY - rect.top) / rect.height).toFixed(4);
-  
-      if (!removePoint(parseFloat(lat), parseFloat(lng))) {
-            points = [...points, { lat, lng }];
-        }
+        if (!editCoordsMode) return; // Prevent changes if coordinates editing is disabled
+
+        // Get click coordinates relative to the image
+        const img = event.target as HTMLImageElement;
+        const rect = img.getBoundingClientRect();
+        const lat = ((event.clientX - rect.left) / rect.width).toFixed(4);
+        const lng = ((event.clientY - rect.top) / rect.height).toFixed(4);
+    
+        if (!removePoint(parseFloat(lat), parseFloat(lng))) {
+                points = [...points, { lat, lng }];
+            }
     }
 
     function removePoint(lat: number, lng: number): boolean {
+        if (!editCoordsMode) return false; // Prevent removing points if coordinates editing is disabled
+
         const tolerance = 0.02; // 2% tolerance for clicking accuracy
 
         const index = points.findIndex(p =>
@@ -111,7 +120,7 @@
   </style>
   
   <div class="container">
-    <h1>Annotate Image</h1>
+    <h1>Annotations</h1>
     
     {#if imagePath}
         <div class="image-wrapper">
@@ -123,6 +132,10 @@
             {/each}
         </div>
     {/if}
+
+    <button on:click={toggleEditMode}>
+        {editCoordsMode ? 'Disable Coordinates Editing' : 'Edit Coordinates'}
+      </button>
   
     <div class="coordinates">
       <h3>Coordinates:</h3>
@@ -133,9 +146,11 @@
       </ul>
     </div>
   
-    <div class="button-group">
-        <button on:click={saveAnnotations}>Save Annotations</button>
-        <button on:click={clearAnnotations}>Clear</button>
-        <button on:click={() => goto(`/projectDetails?id=${projectId}`)}>Cancel</button>
-    </div>
+    {#if editCoordsMode}
+        <div class="button-group">
+            <button on:click={saveAnnotations}>Save Annotations</button>
+            <button on:click={clearAnnotations}>Clear</button>
+            <button on:click={() => goto(`/projectDetails?id=${projectId}`)}>Cancel</button>
+        </div>
+    {/if}
   </div>

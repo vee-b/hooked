@@ -38,10 +38,10 @@
 
       // Optionally, navigate to the same page to refresh the UI (optional)
       // goto(window.location.pathname);
-    } catch (error) {
-      console.error('Error deleting project:', error);
+      } catch (error) {
+        console.error('Error deleting project:', error);
+      }
     }
-  }
     
     // // Helper function to format text like in the Flutter method
     // /**
