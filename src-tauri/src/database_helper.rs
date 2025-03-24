@@ -11,6 +11,7 @@ use bson::oid::ObjectId;
 pub struct Coordinate {
     pub lat: f64,
     pub lng: f64,
+    pub note: Vec<String>,
 }
 
 // Define the Project struct.

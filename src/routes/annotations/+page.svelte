@@ -10,7 +10,7 @@
     
     let imagePath = '';
     let projectId = '';
-    let points: { lat: string; lng: string }[] = [];
+    let points: { lat: string; lng: string; note: string[] }[] = [];
     let editCoordsMode = false; // Toggle for enabling/disabling coordinates editing
 
     // Fetch project details on mount
@@ -41,9 +41,12 @@
         const rect = img.getBoundingClientRect();
         const lat = ((event.clientX - rect.left) / rect.width).toFixed(4);
         const lng = ((event.clientY - rect.top) / rect.height).toFixed(4);
+
+        // Initialize the note as an empty array (or use dynamic input)
+        const note: string[] = []; 
     
         if (!removePoint(parseFloat(lat), parseFloat(lng))) {
-                points = [...points, { lat, lng }];
+                points = [...points, { lat, lng, note }];
             }
     }
 

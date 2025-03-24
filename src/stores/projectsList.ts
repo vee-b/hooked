@@ -13,7 +13,7 @@ export interface MongoDBProject {
   is_sent: boolean;
   attempts: number;
   is_active: boolean;
-  coordinates?: { lat: number; lng: number }[];
+  coordinates?: { lat: number; lng: number; note?: string[] }[];
 }
 
 // Initialize the project list as a Svelte store.
@@ -294,12 +294,13 @@ export async function editProject(updatedProject: Project, imageFile?: File): Pr
 }
 
 // Function to save annotations to the store and persist them if needed
-export async function updateAnnotations(projectId: string, annotationsData: { lat: string; lng: string }[]): Promise<void> {
+export async function updateAnnotations(projectId: string, annotationsData: { lat: string; lng: string, note: string[] }[]): Promise<void> {
   try {
     // Convert x and y values to f64 (number type)
-    const annotationsDataAsNumbers = annotationsData.map(({ lat, lng }) => ({
+    const annotationsDataAsNumbers = annotationsData.map(({ lat, lng, note }) => ({
       lat: parseFloat(lat),
       lng: parseFloat(lng),
+      note,
     }));
 
     // Send the annotations to the backend for persistence

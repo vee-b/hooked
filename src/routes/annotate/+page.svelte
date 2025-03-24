@@ -1,7 +1,7 @@
 <!-- src/routes/annotate/+page.svelte -->
  <!-- To be replaced by 'annotations' page, which will handle both coordinates and note adding -->
 
-<script lang="ts">
+<!-- <script lang="ts">
     import { onMount } from 'svelte';
     import { goto } from '$app/navigation';
     import { page } from '$app/stores';
@@ -73,9 +73,9 @@
             alert('Failed to save annotations.');
         }
     }
-      </script>
+      </script> -->
   
-  <style>
+  <!-- <style>
     .container {
       text-align: center;
       padding: 20px;
@@ -108,17 +108,17 @@
         gap: 10px;
         justify-content: center;
     }
-  </style>
+  </style> -->
   
-  <div class="container">
+  <!-- <div class="container">
     <h1>Annotate Image</h1>
     
     {#if imagePath}
         <div class="image-wrapper">
             <img src={imagePath} alt="Annotate Image" on:click={handleClick} />
             
-            <!-- Render saved points -->
-            {#each points as { lat, lng }}
+            
+            {#each points as { lat, lng }} 
                 <div class="marker" style="left: {parseFloat(lat) * 100}%; top: {parseFloat(lng) * 100}%;"></div>
             {/each}
         </div>
@@ -138,4 +138,4 @@
         <button on:click={clearAnnotations}>Clear</button>
         <button on:click={() => goto(`/projectDetails?id=${projectId}`)}>Cancel</button>
     </div>
-  </div>
+  </div> -->
