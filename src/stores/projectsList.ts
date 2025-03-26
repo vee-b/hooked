@@ -13,7 +13,7 @@ export interface MongoDBProject {
   is_sent: boolean;
   attempts: number;
   is_active: boolean;
-  coordinates?: { lat: number; lng: number }[];
+  coordinates?: { lat: number; lng: number; note?: string[] }[];
 }
 
 // Initialize the project list as a Svelte store.
@@ -225,8 +225,35 @@ export async function addProject(newProject: Project, imageFile: File): Promise<
 }
 
 // Fetch a project by its ID
+// export async function fetchProjectById(projectId: string): Promise<Project | null> {
+//   try {
+//     const projectData: unknown = await invoke('get_project_by_id', { id: projectId });
+
+//     if (!projectData || typeof projectData !== 'object') {
+//       console.error('Unexpected response format:', projectData);
+//       return null;
+//     }
+
+//     const data = projectData as MongoDBProject;
+
+//     // Convert MongoDB-style object into a Project instance
+//     return new Project({
+//       ...data,
+//       _id:
+//         typeof data._id === 'object' && data._id !== null && '$oid' in data._id
+//           ? data._id.$oid
+//           : String(data._id || ''),
+//     });
+    
+//   } catch (error) {
+//     console.error('Error fetching project by ID:', error);
+//     return null;
+//   }
+// }
+// Function to fetch all project details, including annotations and other data
 export async function fetchProjectById(projectId: string): Promise<Project | null> {
   try {
+    // Call the Tauri backend to get the project details
     const projectData: unknown = await invoke('get_project_by_id', { id: projectId });
 
     if (!projectData || typeof projectData !== 'object') {
@@ -234,18 +261,23 @@ export async function fetchProjectById(projectId: string): Promise<Project | nul
       return null;
     }
 
+    // Assume the MongoDB response is structured to include all columns
     const data = projectData as MongoDBProject;
 
-    // Convert MongoDB-style object into a Project instance
-    return new Project({
+    // Create a new Project instance and include all project data
+    const project = new Project({
       ...data,
       _id:
         typeof data._id === 'object' && data._id !== null && '$oid' in data._id
           ? data._id.$oid
           : String(data._id || ''),
     });
+
+    // Return the full project data including annotations (coordinates)
+    return project;
+
   } catch (error) {
-    console.error('Error fetching project by ID:', error);
+    console.error('Error fetching project details:', error);
     return null;
   }
 }
@@ -294,12 +326,13 @@ export async function editProject(updatedProject: Project, imageFile?: File): Pr
 }
 
 // Function to save annotations to the store and persist them if needed
-export async function updateAnnotations(projectId: string, annotationsData: { lat: string; lng: string }[]): Promise<void> {
+export async function updateAnnotations(projectId: string, annotationsData: { lat: string; lng: string, note: string[] }[]): Promise<void> {
   try {
     // Convert x and y values to f64 (number type)
-    const annotationsDataAsNumbers = annotationsData.map(({ lat, lng }) => ({
+    const annotationsDataAsNumbers = annotationsData.map(({ lat, lng, note }) => ({
       lat: parseFloat(lat),
       lng: parseFloat(lng),
+      note,
     }));
 
     // Send the annotations to the backend for persistence

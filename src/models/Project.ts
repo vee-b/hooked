@@ -12,7 +12,7 @@ export class Project {
   attempts: number;
   grade: string;
   is_active: boolean;
-  coordinates: { lat: number; lng: number }[];
+  coordinates: { lat: number; lng: number; note?: string[] }[];
 
   constructor({ 
     _id,

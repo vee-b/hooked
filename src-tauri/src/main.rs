@@ -88,14 +88,29 @@ async fn main() {
 #[tauri::command] // Marks the function as a Tauri command, allowing the frontend (e.g., SvelteKit) to invoke the function asynchronously.
 // client: State<'_, MongoClient>: State: This is Tauri's way of sharing state across different commands.MongoClient: The MongoDB client instance, which provides access to the database. '_': A lifetime specifier. This indicates that the MongoClient reference is tied to the application's state lifetime. 
 async fn insert_project(client: State<'_, MongoClient>, project: Project) -> Result<(), String> {
-    // Access MongoDB collection.
     let collection = client.database("hooked_db").collection("projects");
-    // Insert project document into the MongoDB collection.
-    match collection.insert_one(bson::to_document(&project).unwrap(), None).await { // match: Pattern matching in Rust, used here to handle success (Ok) and error (Err) cases. None: This argument specifies options for the insert operation (e.g., write concern). None means the default options are used.
-        Ok(_) => Ok(()), // Means the operation succeeded, returning nothing.
-        Err(e) => Err(e.to_string()), // Means the operation failed and returns an error message as a String.
+
+    // Convert project to BSON document
+    let doc = match bson::to_document(&project) {
+        Ok(doc) => doc,
+        Err(e) => return Err(format!("Serialization error: {}", e)),
+    };
+
+    // Insert into MongoDB
+    match collection.insert_one(doc, None).await {
+        Ok(_) => Ok(()),
+        Err(e) => Err(e.to_string()),
     }
 }
+// async fn insert_project(client: State<'_, MongoClient>, project: Project) -> Result<(), String> {
+//     // Access MongoDB collection.
+//     let collection = client.database("hooked_db").collection("projects");
+//     // Insert project document into the MongoDB collection.
+//     match collection.insert_one(bson::to_document(&project).unwrap(), None).await { // match: Pattern matching in Rust, used here to handle success (Ok) and error (Err) cases. None: This argument specifies options for the insert operation (e.g., write concern). None means the default options are used.
+//         Ok(_) => Ok(()), // Means the operation succeeded, returning nothing.
+//         Err(e) => Err(e.to_string()), // Means the operation failed and returns an error message as a String.
+//     }
+// }
 
 // Fetches all project documents from the database and converts them to Project objects.
 #[tauri::command]
@@ -211,7 +226,7 @@ async fn update_project(client: State<'_, MongoClient>, project: Project) -> Res
     }
 }
 
-// // Define the SaveAnnotationsRequest struct
+// Define the SaveAnnotationsRequest struct
 #[derive(Serialize, Deserialize, Debug)]
 pub struct SaveAnnotationsRequest {
     pub project_id: String,
@@ -222,6 +237,7 @@ pub struct SaveAnnotationsRequest {
 pub struct Annotation {
     pub lat: f64,
     pub lng: f64,
+    pub note: Vec<String>,
 }
 
 // Updates the annotations for a project by _id if it exists.
@@ -240,7 +256,8 @@ async fn save_annotations(client: State<'_, MongoClient>, request: SaveAnnotatio
         let annotations: Vec<Bson> = request.annotations.iter().map(|annotation| {
             Bson::Document(doc! {
                 "lat": annotation.lat,
-                "lng": annotation.lng
+                "lng": annotation.lng,
+                "note": &annotation.note
             })
         }).collect();
 
