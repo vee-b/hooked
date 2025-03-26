@@ -66,8 +66,49 @@
       toggleEditMode(); // Enable edit mode after the first click
   }
 
+  // ...
+
+  // function handleClick(event: MouseEvent) {
+  //   if (editNotesMode) return; // Prevent adding new points if in edit mode
+
+  //   const img = event.target as HTMLImageElement;
+  //   const rect = img.getBoundingClientRect();
+  //   const clickLat = ((event.clientX - rect.left) / rect.width).toFixed(4);
+  //   const clickLng = ((event.clientY - rect.top) / rect.height).toFixed(4);
+
+  //   // Convert lat/lng to float for comparison
+  //   const clickLatNum = parseFloat(clickLat);
+  //   const clickLngNum = parseFloat(clickLng);
+
+  //   // Define the tolerance (2% of the image width/height)
+  //   const tolerance = 0.02;
+
+  //   // Check if click is near an existing point
+  //   let clickedPointIndex = points.findIndex(({ lat, lng }) => {
+  //       const latNum = parseFloat(lat);
+  //       const lngNum = parseFloat(lng);
+  //       return (
+  //           Math.abs(latNum - clickLatNum) <= tolerance &&
+  //           Math.abs(lngNum - clickLngNum) <= tolerance
+  //       );
+  //   });
+
+  //   if (clickedPointIndex !== -1) {
+  //       // If user clicked near an existing marker, enable edit mode for that point
+  //       editNotesMode = true;
+  //       currentNote = points[clickedPointIndex].note.join(', '); // Load existing note
+  //   } else {
+  //       // Otherwise, add a new point
+  //       points = [...points, { lat: clickLat, lng: clickLng, note: [] }];
+  //       toggleEditMode(); // Enable edit mode for new point
+  //   }
+  // }
+
+
   function cancelAnnotations() {
-    points = []; // Remove all markers added
+    if (points.length > 0) {
+        points = points.slice(0, -1); // Remove only the last added marker
+    }
     currentNote = ''; // Clear any entered note
     toggleEditMode(); // Exit edit mode
   }
@@ -106,6 +147,32 @@
         alert('Please enter a note before saving.');
     }
   }
+
+  // ...
+
+  // async function saveNote() {
+  //   if (!currentNote.trim()) {
+  //       alert('Please enter a note before saving.');
+  //       return;
+  //   }
+
+  //   const selectedPointIndex = points.findIndex(point => point.note.join(', ') === currentNote);
+
+  //   if (selectedPointIndex !== -1) {
+  //       points[selectedPointIndex].note = [currentNote]; // Update the existing note
+  //   }
+
+  //   try {
+  //       await updateAnnotations(projectId, points);
+  //       currentNote = ''; // Clear input
+  //       toggleEditMode(); // Exit edit mode
+  //       await goto(`/annotations?id=${projectId}&image=${imagePath}`);
+  //   } catch (error) {
+  //       console.error('Error saving annotations:', error);
+  //       alert('Failed to save annotations.');
+  //   }
+  // }
+
     </script>
 
 <style>
@@ -155,7 +222,11 @@
           
           
           {#each points as { lat, lng }}
-              <div class="marker" style="left: {parseFloat(lat) * 100}%; top: {parseFloat(lng) * 100}%;"></div>
+              <div 
+                class="marker" 
+                style="left: {parseFloat(lat) * 100}%; top: {parseFloat(lng) * 100}%;"
+                on:click={(event) => handleClick(event)}
+                ></div>
           {/each}
       </div>
   {/if}
