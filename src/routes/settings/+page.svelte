@@ -1,7 +1,12 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { onMount } from 'svelte';
-  import { checkLoginStatus } from '../../controllers/accountsController';
+  import { checkLoginStatus, logoutAccount } from '../../controllers/accountsController';
+
+  // Handle logout on button click
+  const handleLogout = () => {
+    logoutAccount();
+  };
 
   // Function to navigate to the home page
   const navigateToHome = () => {
@@ -23,3 +28,6 @@
   </div>
 
 <button class="button" on:click={navigateToHome}>Home</button>
+<button on:click={handleLogout} class="bg-red-500 px-4 py-2 rounded hover:bg-red-700">
+  Logout
+</button>

@@ -19,6 +19,7 @@
     text-align: center;
     padding: 2rem;
     font-family: Arial, sans-serif;
+    padding-bottom: 4rem;
   }
 </style>
 
