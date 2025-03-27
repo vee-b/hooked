@@ -2,7 +2,8 @@
     import { createEventDispatcher } from 'svelte';
     import { deleteProject, projectsList } from "../stores/projectsList";
     import type { Project } from '../models/Project';
-    import { goto, invalidate } from '$app/navigation'; // Import goto for navigation
+    import { goto } from '$app/navigation'; // Import goto for navigation
+    import { gradeSystem, convertVScaleGrade } from '../stores/settingsStore'; // Import grade system store
 
     // /**
     //  * @type {{ id: any; formatted_date_time: any; image_path: any; grade: any; is_sent: any; attempts: any; is_active: any; }}
@@ -14,49 +15,45 @@
   //  */
   export let project: Project; // Receive project object as prop
     
-    // Navigation to edit the project
-    async function editProject() {
-      // Navigate to the edit project page
-      goto(`/projectDetails?id=${project._id}`);
-    }
+  const dispatch = createEventDispatcher();
 
-    const dispatch = createEventDispatcher();
+   // Reactive: get current system value
+   $: currentSystem = $gradeSystem;
+  $: displayedGrade = convertVScaleGrade(project.grade, currentSystem);
+
+  // Navigation to edit the project
+  async function editProject() {
+    // Navigate to the edit project page
+    goto(`/projectDetails?id=${project._id}`);
+  }
     
-    // Function to delete the project
-    async function handleDeleteProject() {
-        console.log(`Project ID to delete:`, project?._id); // Debugging
-        if (!project?._id) {
-            console.error("Error: Project ID is undefined or invalid.");
-            return;
-        }
+  // Function to delete the project
+  async function handleDeleteProject() {
+    console.log(`Project ID to delete:`, project?._id); // Debugging
+    if (!project?._id) {
+      console.error("Error: Project ID is undefined or invalid.");
+      return;
+    }
         
-        try {
-          // Call delete function from the projectsList store
-          await deleteProject(project._id);
+    try {
+      // Call delete function from the projectsList store
+      await deleteProject(project._id);
 
-          // Update the store manually by filtering out the deleted project
-          projectsList.update((projects) => {
-            return projects.filter((p) => p._id !== project._id);
-          });
+      // Update the store manually by filtering out the deleted project
+      projectsList.update((projects) => {
+        return projects.filter((p) => p._id !== project._id);
+      });
 
-          // Dispatch an event to notify parent about deletion
-          dispatch('projectDeleted', project._id);
+      // Dispatch an event to notify parent about deletion
+      dispatch('projectDeleted', project._id);
 
-          // Force UI refresh by navigating to the same page
-          await goto(window.location.pathname);
+      // Force UI refresh by navigating to the same page
+      await goto(window.location.pathname);
 
-        } catch (error) {
-          console.error('Error deleting project:', error);
-        }
+      } catch (error) {
+        console.error('Error deleting project:', error);
+      }
     }
-    
-    // // Helper function to format text like in the Flutter method
-    // /**
-    //  * @param {string} text
-    //  */
-    // function buildText(text) {
-    //   return text;
-    // }
     
   </script>
   
@@ -111,7 +108,11 @@
       <p class="loading" style="display: none;">Loading Image from Cloudinary...</p>
     {/if}
 
-    <p class="project-label">Grade: {project.grade}</p>
+    <!-- <p class="project-label">Grade: {project.grade}</p> -->
+    <p class="project-label">
+      Grade: { displayedGrade }
+      <!-- {isValidGrade(project.grade) ? project.grade : 'Unknown Grade'} -->
+    </p>
 
     <p class="project-label">Sent: {project.is_sent ? "Yes" : "No"}</p>
 

@@ -16,12 +16,6 @@
 
   const fetchProjects = async () => {
     try {
-      // const token = localStorage.getItem('token'); // Retrieve JWT token
-      // if (!token) {
-      //   goto('/login'); // Redirect if not logged in
-      //   return;
-      // }
-
       const projectsData = await fetchActiveProjects(); // Send token in API request (ToDo)
       projectsList.set(projectsData);  // projectsData should be Project[]
       console.log('Fetched projects successfully:', projectsData);
