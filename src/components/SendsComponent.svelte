@@ -3,9 +3,8 @@
   import { writable } from 'svelte/store';
   import { sendsSummary, fetchSendsSummary } from '../stores/projectsList';
   import { Project } from '../models/Project'; // Import the Project type from the same module
+  import { convertVScaleGrade, vScale, fontScale, gradeSystem } from '../stores/settingsStore'
   
-  const grades = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10'];
-
   // On mount, initialize sends count for each grade
   onMount(async () => {
     console.log('Fetching sends summary...');
@@ -39,12 +38,12 @@
     Total Sends: {$sendsSummary.total} 
   </div>
 
-  {#each grades as grade}
+  {#each vScale as grade}
     <div class="sends-text">
       {#if $sendsSummary.byGrade[grade] !== undefined}
-        {grade} Sends: {$sendsSummary.byGrade[grade]}
+        {convertVScaleGrade(grade, $gradeSystem)} Sends: {$sendsSummary.byGrade[grade]}
       {:else}
-        {grade} Sends: 0
+        {convertVScaleGrade(grade, $gradeSystem)} Sends: 0
       {/if}
     </div>
   {/each}

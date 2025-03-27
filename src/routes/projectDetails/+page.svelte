@@ -10,6 +10,7 @@
   import { addProject, editProject, fetchProjectById, sanitizeFileName, annotations, initializeProjectsList } from '../../stores/projectsList';
   import { Project } from '../../models/Project';
   import { checkLoginStatus } from '../../controllers/accountsController';
+  import { gradeSystem, getCurrentGrades, convertVScaleGrade, convertFontScaleGrade } from '../../stores/settingsStore';
 
   // Form state and mode indicator
   let projectId: string | undefined = undefined;  // Changed to undefined instead of null
@@ -25,7 +26,10 @@
   let isActive: boolean = true;
   let message: string = '';
   let imageFile: File | null = null;
-  const options = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10'];
+  const options = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15', 'V16', 'V17'];
+
+  $: currentGrades = getCurrentGrades($gradeSystem);
+  $: selectedOption = convertVScaleGrade(selectedOption, $gradeSystem);
 
   // Helper function to format the Date to "YYYY-MM-DDThh:mm"
   function formatDateForInput(date: Date): string {
@@ -81,6 +85,7 @@
           imagePreview = project.image_path || '/images/default-girl.jpg';
           attempts = project.attempts ? project.attempts.toString() : '0';
           selectedOption = project.grade || '';
+          //selectedOption = convertVScaleGrade(project.grade, $gradeSystem);
           isSent = project.is_sent || false;
           dateTime = project.date_time ? new Date(project.date_time) : new Date();
           isActive = project.is_active || true;
@@ -136,6 +141,13 @@
       const dateTimeObj = new Date(dateTime);
       const attemptsNumber = parseInt(attempts, 10);
 
+      // Before creating the project, if the current grade system is "Font Scale",
+      // convert the selected grade back to its v-scale equivalent.
+      let gradeToStore = selectedOption;
+      if ($gradeSystem === "Font Scale") {
+        gradeToStore = convertFontScaleGrade(selectedOption, $gradeSystem);
+      }
+
       // Log the coordinates before submitting
       console.log('Submitting Coordinates:', projectCoordinates);
 
@@ -146,7 +158,7 @@
         image_path: imagePath, // this may be replaced after image upload
         is_sent: isSent,
         attempts: attemptsNumber,
-        grade: selectedOption,
+        grade: gradeToStore,
         is_active: isActive,
         coordinates: projectCoordinates,
       });
@@ -298,8 +310,11 @@
     <label for="grade">Grade</label>
     <select id="grade" bind:value={selectedOption}>
       <option value="" disabled selected>Select grade</option>
-      {#each options as option}
+      <!-- {#each options as option}
         <option value={option}>{option}</option>
+      {/each} -->
+      {#each currentGrades as grade}
+        <option value={grade}>{grade}</option>
       {/each}
     </select>
   </div>

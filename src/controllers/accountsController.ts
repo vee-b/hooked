@@ -43,4 +43,12 @@ export const checkLoginStatus = (): boolean => {
     return false; // No token found, return false
   }
   return true; // Token exists, return true
-};
+}
+
+/**
+ * Logs out the user by removing the token and redirecting to login.
+ */
+export function logoutAccount() {
+  localStorage.removeItem('token'); // Remove token from localStorage
+  goto('/login'); // Redirect to login page
+}

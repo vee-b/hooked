@@ -74,7 +74,15 @@
       color: green;
       margin-bottom: 1rem;
     }
+
+    .button-container {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-top: 1rem;
+    }
   
+    .login-button,
     .submit-button {
       padding: 1rem;
       background-color: #007bff;
@@ -87,6 +95,15 @@
   
     .submit-button:hover {
       background-color: #0056b3;
+    }
+
+    .login-button {
+      background-color: #6c757d;
+      color: white;
+    }
+  
+    .login-button:hover {
+      background-color: #5a6268;
     }
   </style>
   
@@ -126,7 +143,11 @@
         required
       />
       
-      <button type="submit" class="submit-button">Register</button>
+      <!-- <button type="submit" class="submit-button">Register</button> -->
+      <div class="button-container">
+        <button type="submit" class="submit-button">Register</button>
+        <button type="button" class="login-button" on:click={() => goto('/login')}>Login</button>
+      </div>
     </form>
   </div>
   

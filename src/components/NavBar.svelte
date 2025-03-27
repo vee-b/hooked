@@ -1,6 +1,6 @@
 <script>
     import { goto } from '$app/navigation';
-    import { Home, ChartBar, ChartPie, ChartLine, Filter, Camera, Upload, Clock, PlusCircle, Activity, User, CalendarDays } from 'lucide-svelte'; // Example icons, adjust as needed
+    import { Home, ChartLine, CalendarDays, Settings, ChartBar, ChartPie, Filter, Camera, Upload, Clock, PlusCircle, Activity, User, LogOut } from 'lucide-svelte'; // Example icons, adjust as needed
   </script>
   
   <style>
@@ -49,10 +49,6 @@
       <Home class="icon" />
       <span>Home</span>
     </a>
-    <!-- <a href="/camera">
-      <PlusCircle class="icon" />
-      <span>Add Project</span>
-    </a> -->
     <a href="/inactiveProjects">
       <CalendarDays class="icon" />
       <span>Inactive<br>Projects</span>
@@ -61,8 +57,8 @@
       <ChartLine class="icon" />
       <span>Stats</span>
     </a>
-    <!-- <a href="/profile">
-      <User class="icon" />
-      <span>Profile</span>
-    </a> -->
+    <a href="/settings">
+      <Settings class="icon" />
+      <span>Settings</span>
+    </a>
   </nav>
