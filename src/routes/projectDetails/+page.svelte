@@ -153,6 +153,7 @@
         if (imageFile) {
           await addProject(currentProject, imageFile);
           message = 'Project added successfully!';
+          goto(`/`);
         } else {
           console.error('No image file selected for new project.');
           message = 'Please select an image.';

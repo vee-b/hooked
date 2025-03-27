@@ -1,7 +1,8 @@
 <script lang="ts">
+    import { createEventDispatcher } from 'svelte';
     import { deleteProject, projectsList } from "../stores/projectsList";
     import type { Project } from '../models/Project';
-    import { goto } from '$app/navigation'; // Import goto for navigation
+    import { goto, invalidate } from '$app/navigation'; // Import goto for navigation
 
     // /**
     //  * @type {{ id: any; formatted_date_time: any; image_path: any; grade: any; is_sent: any; attempts: any; is_active: any; }}
@@ -18,6 +19,8 @@
       // Navigate to the edit project page
       goto(`/projectDetails?id=${project._id}`);
     }
+
+    const dispatch = createEventDispatcher();
     
     // Function to delete the project
     async function handleDeleteProject() {
@@ -28,19 +31,23 @@
         }
         
         try {
-      // Call delete function from the projectsList store
-      await deleteProject(project._id);
+          // Call delete function from the projectsList store
+          await deleteProject(project._id);
 
-      // Update the store manually by filtering out the deleted project
-      projectsList.update((projects) => {
-        return projects.filter((p) => p._id !== project._id);
-      });
+          // Update the store manually by filtering out the deleted project
+          projectsList.update((projects) => {
+            return projects.filter((p) => p._id !== project._id);
+          });
 
-      // Optionally, navigate to the same page to refresh the UI (optional)
-      // goto(window.location.pathname);
-      } catch (error) {
-        console.error('Error deleting project:', error);
-      }
+          // Dispatch an event to notify parent about deletion
+          dispatch('projectDeleted', project._id);
+
+          // Force UI refresh by navigating to the same page
+          await goto(window.location.pathname);
+
+        } catch (error) {
+          console.error('Error deleting project:', error);
+        }
     }
     
     // // Helper function to format text like in the Flutter method
@@ -50,6 +57,7 @@
     // function buildText(text) {
     //   return text;
     // }
+    
   </script>
   
   <style>

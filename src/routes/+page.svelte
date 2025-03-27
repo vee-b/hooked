@@ -5,7 +5,7 @@
   import { writable } from 'svelte/store';
   import { PlusCircle, Filter } from 'lucide-svelte';
   import type { Project } from '../models/Project';
-  import { fetchActiveProjects, deleteProject } from '../stores/projectsList';
+  import { fetchActiveProjects } from '../stores/projectsList';
 
   export const projectsList = writable<Project[]>([]);
 
@@ -32,19 +32,6 @@
   const toggleFilter = () => {
     filterActive = !filterActive;
   };
-
-  // Refresh project list after deletion
-  async function handleDeleteProject(projectId: string) {
-    try {
-      // Call delete function from the store
-      await deleteProject(projectId);
-
-      // Fetch the updated project list after deletion
-      fetchProjects(); // Manually re-fetch projects
-    } catch (error) {
-      console.error('Error deleting project:', error);
-    }
-  }
 </script>
 
 <style>
@@ -107,6 +94,6 @@
   <div class="divider"></div>
 
   {#each $projectsList as project (project._id)}
-    <ProjectComponent {project} />
+    <ProjectComponent {project} on:projectDeleted={fetchProjects} />
   {/each}
 </div>
