@@ -59,6 +59,7 @@
       margin: 12px 0;
       border-radius: 8px;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      padding-bottom: 2rem;
     }
 
     .project-label {
@@ -109,9 +110,9 @@
     <p class="project-label">Attempts: {project.attempts}</p>
 
     {#if project.coordinates && project.coordinates.length > 0}
-      <p class="project-label">Coords: {project.coordinates.map(coord => `(${coord.lat}, ${coord.lng})`).join(", ")}</p>
+      <p class="project-label">Notes: {project.coordinates.length}</p>
     {:else}
-      <p class="project-label">Coords: No Coords</p>
+      <p class="project-label">Notes: 0</p>
     {/if}
   
     <button class="button" on:click={editProject}>

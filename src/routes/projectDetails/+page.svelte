@@ -269,14 +269,9 @@
   <div>
     {#if isEditMode}
       {#if projectCoordinates.length > 0}
-        <h3>Coordinates:</h3>
-        <ul>
-          {#each projectCoordinates as coord}
-            <li>Latitude: {coord.lat}, Longitude: {coord.lng}</li>
-          {/each}
-        </ul>
+        <p>Notes: {projectCoordinates.length}</p>
       {:else}
-        <p>No coordinates yet available for this project.</p>
+        <p>Notes: 0</p>
       {/if}
     {/if}
     
