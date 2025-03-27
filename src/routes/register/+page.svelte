@@ -1,7 +1,8 @@
 <script lang="ts">
     import { writable } from 'svelte/store';
     import { goto } from '$app/navigation';
-  
+    import { registerAccount } from '../../controllers/accountsController';
+
     let email = '';
     let password = '';
     let confirmPassword = '';
@@ -22,26 +23,16 @@
         return;
       }
   
-      // Simulate an API request (Replace this with your real API call)
       try {
-        const response = await fetch('/api/register', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email, password })
-        });
-  
-        if (!response.ok) {
-          throw new Error('Registration failed. Try again.');
-        }
-  
+        // Directly invoke the Rust function via Tauri
+        //const userId = await invoke('create_account', { email, password });
+
+        const accountId = await registerAccount(email, password);
         successMessage.set('Registration successful! Redirecting...');
         setTimeout(() => goto('/login'), 2000); // Redirect after 2 seconds
       } catch (error) {
-        if (error instanceof Error) {
-            errorMessage.set(error.message);
-        } else {
-            errorMessage.set('An unknown error occurred.');
-        }
+        console.error('Registration error:', error);
+        errorMessage.set('Registration failed. Please try again.');
       }
     };
   </script>
