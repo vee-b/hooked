@@ -6,6 +6,7 @@
   import { PlusCircle, Filter } from 'lucide-svelte';
   import type { Project } from '../models/Project';
   import { fetchActiveProjects } from '../stores/projectsList';
+  import { checkLoginStatus } from '../controllers/accountsController';
 
   export const projectsList = writable<Project[]>([]);
 
@@ -15,11 +16,11 @@
 
   const fetchProjects = async () => {
     try {
-      const token = localStorage.getItem('token'); // Retrieve JWT token
-      if (!token) {
-        goto('/login'); // Redirect if not logged in
-        return;
-      }
+      // const token = localStorage.getItem('token'); // Retrieve JWT token
+      // if (!token) {
+      //   goto('/login'); // Redirect if not logged in
+      //   return;
+      // }
 
       const projectsData = await fetchActiveProjects(); // Send token in API request (ToDo)
       projectsList.set(projectsData);  // projectsData should be Project[]
@@ -30,10 +31,12 @@
   };
 
   onMount(() => {
-    // TEMP NAV FOR LOGIN/REGISTER UI
-    // goto(`/login`);
-
-    fetchProjects();
+    const isLoggedIn = checkLoginStatus();  // Check login status when the component mounts
+    if (isLoggedIn) {
+      fetchProjects();  // Fetch projects only if the user is logged in
+    } else {
+      goto('/login'); // Redirect if not logged in
+    }
   });
 
   let filterActive = false;

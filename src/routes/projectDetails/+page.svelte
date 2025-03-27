@@ -9,6 +9,7 @@
   import { Capacitor } from '@capacitor/core';
   import { addProject, editProject, fetchProjectById, sanitizeFileName, annotations, initializeProjectsList } from '../../stores/projectsList';
   import { Project } from '../../models/Project';
+  import { checkLoginStatus } from '../../controllers/accountsController';
 
   // Form state and mode indicator
   let projectId: string | undefined = undefined;  // Changed to undefined instead of null
@@ -49,6 +50,12 @@
 
   // On mount, check if we are editing an existing project.
   onMount(async () => {
+    // Check if user if logged in
+    const isLoggedIn = checkLoginStatus();
+    if (!isLoggedIn) {
+      goto('/login'); // Redirect if not logged in
+    }
+    
     annotations.subscribe(store => {
       if (projectId && store[projectId]) {
         // Convert string coordinates to numbers

@@ -8,6 +8,7 @@
   import { invoke } from '@tauri-apps/api/core';
   import { Project } from '../../models/Project';
   import { updateAnnotations, annotations, fetchProjectById } from '../../stores/projectsList';
+  import { checkLoginStatus } from '../../controllers/accountsController';
   
   let imagePath = '';
   let projectId = '';
@@ -18,6 +19,12 @@
 
   // Fetch project details on mount
   onMount(async () => {
+    // Check if user if logged in
+    const isLoggedIn = checkLoginStatus();
+    if (!isLoggedIn) {
+      goto('/login'); // Redirect if not logged in
+    }
+
     // Extract query parameters
     const urlParams = new URLSearchParams(window.location.search);
       imagePath = urlParams.get('image') || '';

@@ -1,4 +1,5 @@
 import { invoke } from '@tauri-apps/api/core';
+import { goto } from '$app/navigation';
 
 /**
  * Registers a new account by invoking the Rust backend command.
@@ -33,3 +34,13 @@ export async function loginAccount(email: string, password: string): Promise<str
     throw error;
   }
 }
+
+// Check login status once
+export const checkLoginStatus = (): boolean => {
+  const token = localStorage.getItem('token'); // Retrieve JWT token
+  if (!token) {
+    goto('/login'); // Redirect to login if not logged in
+    return false; // No token found, return false
+  }
+  return true; // Token exists, return true
+};

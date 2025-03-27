@@ -495,10 +495,10 @@ async fn create_account(email: String, password: String, db: State<'_, Arc<Mutex
 }
 
 #[tauri::command]
-async fn login(email: String, password: String, db: State<'_, DatabaseHelper>) -> Result<String, String> {
-  // Uncomment and adjust the login logic as needed
-  // db.login(&email, &password)
-  //   .await
-  //   .map_err(|e| format!("Error logging in: {:?}", e))
-  Err("Not implemented".into())
+async fn login(email: String, password: String, db: State<'_, Arc<Mutex<DatabaseHelper>>>) -> Result<String, String> {
+  // Lock the Mutex asynchronously
+  let db = db.lock().await;
+  db.login(&email, &password)
+    .await
+    .map_err(|e| format!("Error logging in: {:?}", e))
 }
