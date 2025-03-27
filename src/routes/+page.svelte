@@ -24,6 +24,9 @@
   };
 
   onMount(() => {
+    // TEMP NAV FOR LOGIN/REGISTER UI
+    goto(`/login`);
+
     fetchProjects();
   });
 
