@@ -32,6 +32,8 @@ mongodb = "2.1"
 futures = "0.3"
 futures-util = "0.3"
 base64 = "0.21"
-chrono = "0.4"
+argon2 = "0.5"
+chrono = { version = "0.4", features = ["serde"] }
 sha1 = "0.10"
 bson = "2"
+jsonwebtoken = "9.2"  # JWT token generation

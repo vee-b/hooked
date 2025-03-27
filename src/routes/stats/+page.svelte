@@ -1,5 +1,17 @@
 <script lang="ts">
+  import { goto } from "$app/navigation";
+  import { onMount } from 'svelte';
   import SendsComponent from '../../components/SendsComponent.svelte'; // Adjust the path as necessary
+  import { checkLoginStatus } from '../../controllers/accountsController';
+
+  // Fetch project details on mount
+  onMount(async () => {
+    // Check if user if logged in
+    const isLoggedIn = checkLoginStatus();
+    if (!isLoggedIn) {
+      goto('/login'); // Redirect if not logged in
+    }
+  })
 </script>
 
 <style>

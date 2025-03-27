@@ -6,6 +6,7 @@
     import { PlusCircle, Filter } from 'lucide-svelte';
     import type { Project } from '../../models/Project';
     import { fetchInactiveProjects, deleteProject } from '../../stores/projectsList';
+    import { checkLoginStatus } from '../../controllers/accountsController';
   
      export const projectsList = writable<Project[]>([]);
   
@@ -20,7 +21,12 @@
     };
   
     onMount(() => {
-      fetchProjects();
+      const isLoggedIn = checkLoginStatus();  // Check login status when the component mounts
+      if (isLoggedIn) {
+        fetchProjects();  // Fetch projects only if the user is logged in
+      } else {
+        goto('/login'); // Redirect if not logged in
+      }
     });
   
     let filterActive = false;

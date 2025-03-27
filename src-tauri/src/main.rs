@@ -7,7 +7,7 @@
 // Import database_helper (assuming `database_helper.rs` is in the same directory)
 mod database_helper; 
 
-use database_helper::{DatabaseHelper, Project};
+use database_helper::{DatabaseHelper, Project, Account};
 use tauri::{Manager, State}; // Manager: Provides app management features like accessing state. State: Allows sharing state (like database connections) between Tauri commands.
 use mongodb::{Client as MongoClient, options::ClientOptions}; // MongoClient: The main MongoDB client for database interactions. ClientOptions: For configuring MongoDB connection options.
 use mongodb::bson::{self, Document, oid::ObjectId}; // bson: MongoDB’s binary JSON format. doc: Macro for creating BSON documents. 
@@ -77,7 +77,9 @@ async fn main() {
             get_active_projects,
             get_inactive_projects,
             upload_image,
-            get_project_by_id
+            get_project_by_id,
+            create_account,
+            login,
         ])
         // Start the Tauri application.
         .run(tauri::generate_context!())
@@ -102,15 +104,6 @@ async fn insert_project(client: State<'_, MongoClient>, project: Project) -> Res
         Err(e) => Err(e.to_string()),
     }
 }
-// async fn insert_project(client: State<'_, MongoClient>, project: Project) -> Result<(), String> {
-//     // Access MongoDB collection.
-//     let collection = client.database("hooked_db").collection("projects");
-//     // Insert project document into the MongoDB collection.
-//     match collection.insert_one(bson::to_document(&project).unwrap(), None).await { // match: Pattern matching in Rust, used here to handle success (Ok) and error (Err) cases. None: This argument specifies options for the insert operation (e.g., write concern). None means the default options are used.
-//         Ok(_) => Ok(()), // Means the operation succeeded, returning nothing.
-//         Err(e) => Err(e.to_string()), // Means the operation failed and returns an error message as a String.
-//     }
-// }
 
 // Fetches all project documents from the database and converts them to Project objects.
 #[tauri::command]
@@ -489,4 +482,23 @@ async fn get_project_by_id(state: State<'_, Arc<Mutex<DatabaseHelper>>>, id: Str
         Ok(none) => Ok(none),
         Err(err) => Err(format!("Error fetching project: {}", err)),
     }
+}
+
+#[tauri::command]
+async fn create_account(email: String, password: String, db: State<'_, Arc<Mutex<DatabaseHelper>>>) -> Result<String, String> {
+  // Lock the Mutex asynchronously
+  let db = db.lock().await;
+  db.create_account(&email, &password)
+    .await
+    .map(|oid| oid.to_hex())
+    .map_err(|e| format!("Error creating account: {:?}", e))
+}
+
+#[tauri::command]
+async fn login(email: String, password: String, db: State<'_, Arc<Mutex<DatabaseHelper>>>) -> Result<String, String> {
+  // Lock the Mutex asynchronously
+  let db = db.lock().await;
+  db.login(&email, &password)
+    .await
+    .map_err(|e| format!("Error logging in: {:?}", e))
 }
