@@ -9,10 +9,6 @@
   
      export const projectsList = writable<Project[]>([]);
   
-    const navigateToNewProject = () => {
-      goto('/projectDetails');
-    };
-  
     const fetchProjects = async () => {
       try {
         const projectsData = await fetchInactiveProjects();
@@ -103,7 +99,7 @@
     <div class="divider"></div>
   
     {#each $projectsList as project (project._id)}
-      <ProjectComponent {project} />
+      <ProjectComponent {project} on:projectDeleted={fetchProjects} />
     {/each}
   </div>
   
