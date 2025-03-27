@@ -1,3 +1,5 @@
+<!-- src/components/gradeSystem.svelte -->
+
 <script lang="ts">
     import { gradeSystem, fontScale, vScale } from '../stores/settingsStore';
     

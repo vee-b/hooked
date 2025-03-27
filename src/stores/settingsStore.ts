@@ -1,3 +1,5 @@
+// src/stores/settingsStore.ts
+
 import { writable } from 'svelte/store';
 
 // Check localStorage for the user's last selection
@@ -15,7 +17,7 @@ export function getCurrentGrades(currentSystem: string): string[] {
     return currentSystem === "Font Scale" ? fontScale : vScale;
   }
 
-// Helper function to convert a v-scale grade to a font-scale grade
+// Convert a v-scale grade to a font-scale grade
 export function convertVScaleGrade(grade: string, currentSystem: string): string {
     if (currentSystem === "Font Scale") {
       const index = vScale.indexOf(grade);
@@ -23,6 +25,17 @@ export function convertVScaleGrade(grade: string, currentSystem: string): string
     }
     return grade;
   }
+
+// Convert a font-scale grade to a v-scale grade.
+export function convertFontScaleGrade(grade: string, currentSystem: string): string {
+  if (currentSystem === "Font Scale") {
+    // Find the index in the fontScale array
+    const index = fontScale.indexOf(grade);
+    return index !== -1 ? vScale[index] : grade;
+  }
+  // If not in Font Scale mode, return the grade unchanged.
+  return grade;
+}
 
 // Toggle function to switch between grading systems
 export const setGradeSystem = (system: string) => {
