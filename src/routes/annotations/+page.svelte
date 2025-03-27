@@ -50,64 +50,52 @@
   }
 
   function handleClick(event: MouseEvent) {
-      //if (!editNotesMode) return; // Prevent changes if coordinates editing is disabled
-      if (editNotesMode) return; // Only toggle on click if editMode is off
+    if (editNotesMode) return; // Prevent adding new points if in edit mode
 
-      // Get click coordinates relative to the image
-      const img = event.target as HTMLImageElement;
-      const rect = img.getBoundingClientRect();
-      const lat = ((event.clientX - rect.left) / rect.width).toFixed(4);
-      const lng = ((event.clientY - rect.top) / rect.height).toFixed(4);
+    const img = event.target as HTMLImageElement;
+    const rect = img.getBoundingClientRect();
+    const clickLat = ((event.clientX - rect.left) / rect.width).toFixed(4);
+    const clickLng = ((event.clientY - rect.top) / rect.height).toFixed(4);
 
-      // Initialize the note as an empty array (or use dynamic input)
-      const note: string[] = []; 
+    // Convert lat/lng to float for comparison
+    const clickLatNum = parseFloat(clickLat);
+    const clickLngNum = parseFloat(clickLng);
 
-      points = [...points, { lat, lng, note }];
-      toggleEditMode(); // Enable edit mode after the first click
+    // Define the tolerance (2% of the image width/height)
+    const tolerance = 0.02;
+
+    // Check if click is near an existing point
+    let clickedPointIndex = points.findIndex(({ lat, lng }) => {
+      const latNum = parseFloat(lat);
+      const lngNum = parseFloat(lng);
+      return (
+        Math.abs(latNum - clickLatNum) <= tolerance &&
+        Math.abs(lngNum - clickLngNum) <= tolerance
+      );
+    });
+
+    if (clickedPointIndex !== -1) {
+      // If user clicked near an existing marker, enable edit mode for that point
+      editNotesMode = true;
+      currentNote = points[clickedPointIndex].note.join(', '); // Load existing note
+    } else {
+      // Otherwise, add a new point
+      points = [...points, { lat: clickLat, lng: clickLng, note: [] }];
+      toggleEditMode(); // Enable edit mode for new point
+    }
   }
-
-  // ...
-
-  // function handleClick(event: MouseEvent) {
-  //   if (editNotesMode) return; // Prevent adding new points if in edit mode
-
-  //   const img = event.target as HTMLImageElement;
-  //   const rect = img.getBoundingClientRect();
-  //   const clickLat = ((event.clientX - rect.left) / rect.width).toFixed(4);
-  //   const clickLng = ((event.clientY - rect.top) / rect.height).toFixed(4);
-
-  //   // Convert lat/lng to float for comparison
-  //   const clickLatNum = parseFloat(clickLat);
-  //   const clickLngNum = parseFloat(clickLng);
-
-  //   // Define the tolerance (2% of the image width/height)
-  //   const tolerance = 0.02;
-
-  //   // Check if click is near an existing point
-  //   let clickedPointIndex = points.findIndex(({ lat, lng }) => {
-  //       const latNum = parseFloat(lat);
-  //       const lngNum = parseFloat(lng);
-  //       return (
-  //           Math.abs(latNum - clickLatNum) <= tolerance &&
-  //           Math.abs(lngNum - clickLngNum) <= tolerance
-  //       );
-  //   });
-
-  //   if (clickedPointIndex !== -1) {
-  //       // If user clicked near an existing marker, enable edit mode for that point
-  //       editNotesMode = true;
-  //       currentNote = points[clickedPointIndex].note.join(', '); // Load existing note
-  //   } else {
-  //       // Otherwise, add a new point
-  //       points = [...points, { lat: clickLat, lng: clickLng, note: [] }];
-  //       toggleEditMode(); // Enable edit mode for new point
-  //   }
-  // }
-
-
+  
+  // Currently broken
   function cancelAnnotations() {
+    if (!editNotesMode) return; // Only allow canceling if in edit mode
+
     if (points.length > 0) {
-        points = points.slice(0, -1); // Remove only the last added marker
+        const lastPoint = points[points.length - 1];
+
+        // Check if note is empty
+        if (lastPoint.note && lastPoint.note.length === 0) {
+            points = points.slice(0, -1); // Remove last added marker
+        }
     }
     currentNote = ''; // Clear any entered note
     toggleEditMode(); // Exit edit mode
@@ -121,58 +109,42 @@
       await goto(`/annotations?id=${projectId}&image=${imagePath}`);
   }
 
-  // Function to update annotations in MongoDB
   async function saveNote() {
-    // Ensure that the point has a note before saving
-    if (points.length > 0 && currentNote.trim()) {
-        // Add the note to the first point (since we are only dealing with one point at a time)
-        points[0].note = [currentNote]; // Assign the note to the point
-
-        // Clear the current note after saving
-        const annotationsData = points;
-        currentNote = ''; // Clear the input
-
-        try {
-            // Save the annotations in the database
-            await updateAnnotations(projectId, annotationsData);
-            // Toggle editMode to false
-            toggleEditMode();
-            // Refresh the current page to reload the data
-            await goto(`/annotations?id=${projectId}&image=${imagePath}`);
-        } catch (error) {
-            console.error('Error saving annotations:', error);
-            alert('Failed to save annotations.');
-        }
-    } else {
+    if (!currentNote.trim()) {
         alert('Please enter a note before saving.');
+        return;
+    }
+
+    // Find the last clicked marker (or currently edited one)
+    const selectedPointIndex = points.findIndex(point => point.note.join(', ') === currentNote);
+
+    if (selectedPointIndex !== -1) {
+        points[selectedPointIndex].note = [currentNote]; // Update the correct point's note
+    } else {
+        console.error('No matching point found. Adding new one.');
+        // Optionally: Add the note to the last added point if no match is found
+        if (points.length > 0) {
+            points[points.length - 1].note = [currentNote];
+        }
+    }
+
+    try {
+        // Save the updated points array to the database
+        await updateAnnotations(projectId, points);
+        currentNote = ''; // Clear input
+        toggleEditMode(); // Exit edit mode
+        await goto(`/annotations?id=${projectId}&image=${imagePath}`);
+    } catch (error) {
+        console.error('Error saving annotations:', error);
+        alert('Failed to save annotations.');
     }
   }
 
-  // ...
-
-  // async function saveNote() {
-  //   if (!currentNote.trim()) {
-  //       alert('Please enter a note before saving.');
-  //       return;
-  //   }
-
-  //   const selectedPointIndex = points.findIndex(point => point.note.join(', ') === currentNote);
-
-  //   if (selectedPointIndex !== -1) {
-  //       points[selectedPointIndex].note = [currentNote]; // Update the existing note
-  //   }
-
-  //   try {
-  //       await updateAnnotations(projectId, points);
-  //       currentNote = ''; // Clear input
-  //       toggleEditMode(); // Exit edit mode
-  //       await goto(`/annotations?id=${projectId}&image=${imagePath}`);
-  //   } catch (error) {
-  //       console.error('Error saving annotations:', error);
-  //       alert('Failed to save annotations.');
-  //   }
-  // }
-
+  function autoResize(event: Event) {
+    const target = event.target as HTMLTextAreaElement; // Type assertion
+    target.style.height = "auto"; // Reset height
+    target.style.height = target.scrollHeight + "px"; // Adjust height
+  }
     </script>
 
 <style>
@@ -210,6 +182,16 @@
   }
   .note-input {
     margin-top: 10px;
+    width: 90%;           /* Match image width */
+    min-height: 50px;      /* Start small */
+    max-width: 100%;
+    font-size: 16px;       /* Bigger text */
+    padding: 10px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    resize: none;          /* Prevent manual resizing */
+    overflow: hidden;      /* Hide scrollbar */
+    line-height: 1.5;      /* Better readability */
   }
 </style>
 
@@ -235,24 +217,29 @@
       {editNotesMode ? 'Disable Note Editing' : 'Add Notes'}
     </button> -->
 
-  <div class="coordinates">
+  <!-- <div class="coordinates">
     <h3>Coordinates:</h3>
     <ul>
       {#each points as { lat, lng}, i}
         <li>Point {i + 1}: X: {lat}, Y: {lng}</li>
       {/each}
     </ul>
-  </div>
+  </div> -->
 
   {#if !editNotesMode}
     <button on:click={clearAnnotations}>Clear All Notes</button>
   {/if}
 
   {#if editNotesMode}
-    <div class="note-input">
+    <!-- <div class="note-input">
       <input type="text" bind:value={currentNote} placeholder="Enter your note" />
-      <!-- <button on:click={addNote}>Add Note</button> -->
-    </div>
+    </div> -->
+    <textarea 
+      bind:value={currentNote} 
+      placeholder="Enter your note" 
+      class="note-input"
+      on:input={autoResize}
+    ></textarea>
     <div class="button-group">
         <button on:click={saveNote}>Save Note</button>
         <!-- <button on:click={() => goto(`/annotations?id=${projectId}&image=${imagePath}`)}>Cancel</button> -->
