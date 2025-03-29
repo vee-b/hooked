@@ -160,6 +160,90 @@ export async function fetchInactiveProjects(): Promise<Project[]> {
   }
 }
 
+// Fetch the active projects with filters.
+export async function fetchActiveFilteredProjects(
+  grade: string = '',
+  sentStatus: string = ''
+): Promise<Project[]> {
+  try {
+    console.log('Sending to Rust:', { grade, sentStatus }); // Log filters
+
+    const projectsData: unknown = await invoke('get_active_filtered_projects', {
+      grade,
+      sentStatus,
+    });
+
+    console.log('Received from Rust:', projectsData); // Log what comes back
+
+    if (!Array.isArray(projectsData)) {
+      console.error('Unexpected response format:', projectsData);
+      return [];
+    }
+
+    const typedProjectsData: MongoDBProject[] = projectsData;
+
+    const projectInstances: Project[] = typedProjectsData.map((data) => {
+      return new Project({
+        ...data,
+        _id:
+          typeof data._id === 'object' && data._id !== null && '$oid' in data._id
+            ? data._id.$oid
+            : String(data._id || ''),
+        coordinates: Array.isArray(data.coordinates)
+          ? data.coordinates.map((coord) =>
+              typeof coord.lat === 'number' && typeof coord.lng === 'number'
+                ? coord
+                : { lat: 0, lng: 0 } // Default invalid coordinates
+            )
+          : [],
+      });
+    });
+
+    console.log('Processed Project IDs:', projectInstances.map((p) => p._id));
+    return projectInstances;
+  } catch (error) {
+    console.error('Error fetching active projects:', error);
+    return [];
+  }
+}
+
+// Function to fetch inactive projects with filters
+export async function fetchInactiveFilteredProjects(
+  grade: string = '',
+  sentStatus: string = ''
+): Promise<Project[]> {
+  try {
+    const projectsData: unknown = await invoke('get_inactive_projects', {
+      grade,
+      sentStatus,
+    });
+
+    if (!Array.isArray(projectsData)) {
+      console.error('Unexpected response format:', projectsData);
+      return [];
+    }
+
+    const typedProjectsData: MongoDBProject[] = projectsData;
+
+    const projectInstances: Project[] = typedProjectsData.map((data) => {
+      return new Project({
+        ...data,
+        _id:
+          typeof data._id === 'object' && data._id !== null && '$oid' in data._id
+            ? data._id.$oid
+            : String(data._id || ''),
+        coordinates: data.coordinates || [],
+      });
+    });
+
+    console.log('Processed Project IDs:', projectInstances.map((p) => p._id));
+    return projectInstances;
+  } catch (error) {
+    console.error('Error fetching inactive projects:', error);
+    return [];
+  }
+}
+
 // Sanitize file name - key change to prevent double uploads
 export const sanitizeFileName = (image: any): string => {
   const timestamp = Date.now();
