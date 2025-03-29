@@ -17,7 +17,6 @@
 
   const fetchProjects = async (filters: { grade: string, isSent: boolean }) => {
     try {
-      //const projectsData = await fetchActiveProjects(); // Send token in API request (ToDo)
       const projectsData = await fetchActiveFilteredProjects(filters.grade, String(filters.isSent));
       projectsList.set(projectsData);  // projectsData should be Project[]
       console.log('Fetched projects successfully:', projectsData);
@@ -53,9 +52,7 @@
     
     const filters = {
       grade: selectedGrade,
-      //isSent: isSent,
       isSent: isSent ?? false, // Defaults to false if null/undefined
-
     };
 
     console.log('Filters Object:', filters);
@@ -157,7 +154,6 @@
       </div>
 
       <button class="button" on:click={applyFilters}>Apply Filters</button>
-      <!-- <button class="button">Apply Filters</button> -->
     </div>
   {/if}
 

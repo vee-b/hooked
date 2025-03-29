@@ -213,10 +213,14 @@ export async function fetchInactiveFilteredProjects(
   sentStatus: string = ''
 ): Promise<Project[]> {
   try {
-    const projectsData: unknown = await invoke('get_inactive_projects', {
+    console.log('Sending to Rust:', { grade, sentStatus }); // Log filters
+
+    const projectsData: unknown = await invoke('get_inactive_filtered_projects', {
       grade,
       sentStatus,
     });
+
+    console.log('Received from Rust:', projectsData); // Log what comes back
 
     if (!Array.isArray(projectsData)) {
       console.error('Unexpected response format:', projectsData);
@@ -232,7 +236,13 @@ export async function fetchInactiveFilteredProjects(
           typeof data._id === 'object' && data._id !== null && '$oid' in data._id
             ? data._id.$oid
             : String(data._id || ''),
-        coordinates: data.coordinates || [],
+        coordinates: Array.isArray(data.coordinates)
+          ? data.coordinates.map((coord) =>
+              typeof coord.lat === 'number' && typeof coord.lng === 'number'
+                ? coord
+                : { lat: 0, lng: 0 } // Default invalid coordinates
+            )
+          : [],
       });
     });
 
