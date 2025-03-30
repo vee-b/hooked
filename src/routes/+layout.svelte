@@ -1,3 +1,5 @@
+<!-- <link rel="stylesheet" href="/styles/global.css" /> -->
+
 <script lang="ts">
     import NavBar from '../components/NavBar.svelte';
     import { page } from '$app/stores';

@@ -203,7 +203,7 @@
   }
 </script>
 
-<style>
+<!-- <style>
   .container {
     max-width: 400px;
     margin: 0 auto;
@@ -260,6 +260,114 @@
   .button-row { display: flex; justify-content: space-between; gap: 10px; }
   .image-preview { width: 100%; height: auto; margin: 15px 0; display: block; }
   .message { color: green; text-align: center; margin-top: 10px; }
+</style> -->
+
+<style>
+  .container {
+    max-width: 400px;
+    margin: 0 auto;
+    font-family: Arial, sans-serif;
+    padding: 2rem;
+    padding-bottom: 4rem;
+  }
+
+  .image-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;  /* Ensure it scales with the width of the container */
+  }
+
+  img {
+    width: 100%;  /* Ensures image scales with its container */
+    height: auto;
+    display: block;
+  }
+
+  .marker {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background-color: #ff8000b9;
+    border-radius: 50%;
+    transform: translate(-50%, -50%); /* Center the marker at the coordinates */
+  }
+
+  h1 { 
+    text-align: center; 
+  }
+
+  .form-group { 
+    margin-bottom: 15px; 
+  }
+
+  label { 
+    display: block; 
+    font-weight: bold; 
+    margin-bottom: 5px; 
+  }
+
+  input[type='text'],
+  input[type='number'],
+  input[type='datetime-local'],
+
+  select {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+
+  input[type='checkbox'] { margin-right: 5px; }
+
+  button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+
+    padding: 1rem;
+    border: none;
+    border-radius: 10px;
+    cursor: pointer;
+    font-size: 1rem;
+    width: 100%;
+    transition: background-color 0.3s ease, transform 0.3s ease;
+
+    border: 2px solid #00ff8092; /* Thin green outline */
+    background-color: transparent; /* No background color */
+  }
+
+  button:hover { 
+    transform: scale(1.05); 
+  }
+
+  .button-row { 
+    display: flex; 
+    justify-content: 
+    space-between; 
+    gap: 10px; 
+  }
+
+  .image-preview { 
+    width: 100%; 
+    height: auto; 
+    margin: 15px 0; 
+    display: block; 
+  }
+
+  .message { 
+    color: green; 
+    text-align: center; 
+    margin-top: 10px; 
+  }
 </style>
 
 <div class="container">

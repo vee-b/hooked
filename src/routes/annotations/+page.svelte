@@ -174,6 +174,8 @@
       width: 10px;
       height: 10px;
       background-color: red;
+      /* background-color: black;
+      background-color: greenyellow; */
       border-radius: 50%;
       transform: translate(-50%, -50%);
       pointer-events: none; /* ✅ Allows clicks to pass through */

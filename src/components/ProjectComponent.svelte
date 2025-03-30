@@ -14,11 +14,13 @@
   //  * @type {{ id: any; formatted_date_time: string; image_path: any; grade: any; is_sent: any; attempts: any; }}
   //  */
   export let project: Project; // Receive project object as prop
-    
+  const shortened_time = project.formatted_date_time.slice(10)
+  const shortened_date = project.formatted_date_time.slice(0, 10)
+  
   const dispatch = createEventDispatcher();
 
-   // Reactive: get current system value
-   $: currentSystem = $gradeSystem;
+  // Reactive: get current system value
+  $: currentSystem = $gradeSystem;
   $: displayedGrade = convertVScaleGrade(project.grade, currentSystem);
 
   // Navigation to edit the project
@@ -54,10 +56,9 @@
         console.error('Error deleting project:', error);
       }
     }
-    
   </script>
   
-  <style>
+  <!-- <style>
     .project-card {
       background-color: #f9f9f9;
       padding: 16px;
@@ -98,10 +99,79 @@
       margin-top: 8px;
     }
     
+  </style> -->
+
+  <style>
+    body {
+      background-color: #121212; /* Dark background */
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #f5f5f5; /* Light text */
+    }
+
+    .project-card {
+      background-color: #1e1e1e;
+      padding: 20px;
+      margin: 20px auto;
+      border-radius: 10px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+      text-align: center;
+      max-width: 500px;
+    }
+
+    .project-label {
+      font-weight: bold;
+      color: #f5f5f5;
+      font-size: 1.2rem;
+      margin-bottom: 8px;
+    }
+
+    .text-content {
+      font-size: 1rem;
+      margin-bottom: 10px;
+      color: #d3d3d3;
+    }
+
+    .button {
+      width: 100%;
+      padding: 12px;
+      margin-top: 10px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: bold;
+      /* text-transform: uppercase; */
+      cursor: pointer;
+      transition: all 0.3s ease-in-out;
+    }
+
+    .button:hover {
+      transform: scale(1.05);
+    }
+
+    .button:first-of-type {
+      background-color: transparent;
+      border: 2px solid #00ff8092;
+      color: white;
+    }
+
+    .button:last-of-type {
+      background-color: transparent;
+      border: 2px solid #ff8000b9;
+      color: white;
+    }
+
+    img {
+      max-width: 100%;
+      max-height: 300px;
+      border-radius: 8px;
+      margin-top: 15px;
+    }
   </style>
 
   <div class="project-card">
-      <p class="project-label">Date & Time: {project.formatted_date_time}</p>
+      <p class="project-label">{shortened_date}</p>
+      <p class="project-label">{shortened_time}</p>
 
     {#if project.image_path}
       <img src={project.image_path} alt="Project Image" />

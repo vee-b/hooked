@@ -34,15 +34,34 @@
     };
   </script>
   
-  <style>
+  <style global>
+    /* Body and Background */
+    body {
+      background-color: #121212; /* Dark background */
+      font-family: 'Poppins', sans-serif;
+      margin: 0;
+      padding: 0;
+      color: #f5f5f5; /* Light text for contrast */
+    }
+
     .login-container {
-      max-width: 400px;
-      margin: 50px auto;
-      padding: 20px;
-      background-color: #f9f9f9;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      max-width: 450px;
+      margin: 100px auto;
+      padding-left: 40px;
+      padding-right: 40px;
+      margin-top: 40px;
+      border-radius: 10px;
+      /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
       text-align: center;
+      box-sizing: border-box; /* Ensure padding doesn't affect width */
+    }
+
+    h2 {
+      font-size: 2rem;
+      color: white;
+      margin-bottom: 20px;
+      font-weight: bold;
+      -webkit-text-stroke: 1px #00000048;
     }
   
     .login-form {
@@ -52,27 +71,35 @@
   
     .input-field {
       margin-bottom: 1rem;
-      padding: 0.75rem;
+      padding: 1rem;
       font-size: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+      border: 2px solid #444;
+      border-radius: 10px;
       width: 100%;
+      max-width: 100%; /* Ensures full width within the container */
+      box-sizing: border-box; /* Prevents padding from affecting width */
+      background-color: #333; /* Dark input background */
+      color: #f5f5f5; /* Light text inside the input fields */
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
     }
   
     .input-field:focus {
-      border-color: #007bff;
+      border-color: #00ff8092;
+      /* box-shadow: 0 0 5px rgba(0, 123, 255, 0.5); */
       outline: none;
     }
   
     .error-message {
       color: red;
-      margin-bottom: 1rem;
+      font-size: 0.875rem;
+      margin-bottom: 10px;
+      animation: fadeIn 0.5s ease;
     }
   
     .button-container {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 1rem;
       margin-top: 1rem;
     }
   
@@ -80,33 +107,62 @@
     .register-button {
       padding: 1rem;
       border: none;
-      border-radius: 5px;
+      border-radius: 10px;
       cursor: pointer;
       font-size: 1rem;
       width: 100%;
+      transition: background-color 0.3s ease, transform 0.3s ease;
     }
   
     .submit-button {
-      background-color: #007bff;
+      border: 2px solid #00ff8092; /* Thin green outline */
+      background-color: transparent; /* No background color */
+      /* background-color: #00ff8092; */
+      /* background-color: #ff8000b9; */
       color: white;
     }
   
     .submit-button:hover {
-      background-color: #0056b3;
+      /* border: 2px solid #00ff8000; */
+      /* background-color: #00ff8000; */
+      transform: scale(1.05);
     }
   
     .register-button {
-      background-color: #6c757d;
+      /* background-color: #6c757d; */
+      border: 2px solid #ff8000b9; /* Thin green outline */
+      background-color: transparent; /* No background color */
       color: white;
     }
   
     .register-button:hover {
-      background-color: #5a6268;
+      background-color: #00ff8000;
+      transform: scale(1.05);
+    }
+
+    /* Animation for error message */
+    @keyframes fadeIn {
+      0% {
+        opacity: 0;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+
+    .logo {
+      width: 100%;
+      max-width: 200px;
+      margin-bottom: 20px;
+      border-radius: 10px;
     }
   </style>
   
   <div class="login-container">
-    <h2>Login</h2>
+    <!-- <h2>Hooked</h2> -->
+
+    <!-- Logo Image -->
+    <img src="/images/hooked-logo.png" alt="Logo" class="logo" />
   
     <!-- Conditional rendering for error message -->
     {#if $errorMessage}
@@ -132,7 +188,7 @@
   
       <div class="button-container">
         <button type="submit" class="submit-button">Login</button>
-        <button type="button" class="register-button" on:click={() => goto('/register')}>Register</button>
+        <button type="button" class="register-button" on:click={() => goto('/register')}>Sign Up</button>
       </div>
     </form>
   </div>

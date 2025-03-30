@@ -39,12 +39,23 @@
   
   <style>
     .register-container {
-      max-width: 400px;
-      margin: 50px auto;
-      padding: 20px;
-      background-color: #f9f9f9;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      max-width: 450px;
+      margin: 100px auto;
+      padding-left: 40px;
+      padding-right: 40px;
+      margin-top: 40px;
+      border-radius: 10px;
+      /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); */
+      text-align: center;
+      box-sizing: border-box; /* Ensure padding doesn't affect width */
+    }
+
+    h2 {
+      font-size: 2rem;
+      color: white;
+      margin-bottom: 20px;
+      font-weight: bold;
+      -webkit-text-stroke: 1px #00000048;
     }
   
     .register-form {
@@ -54,61 +65,93 @@
   
     .input-field {
       margin-bottom: 1rem;
-      padding: 0.75rem;
+      padding: 1rem;
       font-size: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 5px;
+      border: 2px solid #444;
+      border-radius: 10px;
+      width: 100%;
+      max-width: 100%; /* Ensures full width within the container */
+      box-sizing: border-box; /* Prevents padding from affecting width */
+      background-color: #333; /* Dark input background */
+      color: #f5f5f5; /* Light text inside the input fields */
+      transition: border-color 0.3s ease, box-shadow 0.3s ease;
     }
   
     .input-field:focus {
-      border-color: #007bff;
+      border-color: #00ff8092;
+      box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
       outline: none;
     }
   
     .error-message {
       color: red;
-      margin-bottom: 1rem;
+      font-size: 0.875rem;
+      margin-bottom: 10px;
+      animation: fadeIn 0.5s ease;
     }
   
-    .success-message {
-      color: green;
-      margin-bottom: 1rem;
-    }
-
     .button-container {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 1rem;
       margin-top: 1rem;
     }
   
-    .login-button,
-    .submit-button {
+    .submit-button,
+    .login-button {
       padding: 1rem;
-      background-color: #007bff;
-      color: white;
       border: none;
-      border-radius: 5px;
+      border-radius: 10px;
       cursor: pointer;
       font-size: 1rem;
+      width: 100%;
+      transition: background-color 0.3s ease, transform 0.3s ease;
+    }
+  
+    .submit-button {
+      border: 2px solid #00ff8092; /* Thin green outline */
+      background-color: transparent; /* No background color */
     }
   
     .submit-button:hover {
-      background-color: #0056b3;
+      background-color: #00ff8000;
+      transform: scale(1.05);
     }
-
+  
     .login-button {
-      background-color: #6c757d;
+      border: 2px solid #ff8000b9; /* Thin green outline */
+      background-color: transparent; /* No background color */
       color: white;
     }
   
     .login-button:hover {
-      background-color: #5a6268;
+      background-color: #00ff8000;
+      transform: scale(1.05);
+    }
+
+    /* Animation for error message */
+    @keyframes fadeIn {
+      0% {
+        opacity: 0;
+      }
+      100% {
+        opacity: 1;
+      }
+    }
+
+    .logo {
+      width: 100%;
+      max-width: 200px;
+      margin-bottom: 20px;
+      border-radius: 10px;
     }
   </style>
   
   <div class="register-container">
-    <h2>Register</h2>
+    <!-- <h2>Hooked</h2> -->
+
+    <!-- Logo Image -->
+    <img src="/images/hooked-logo.png" alt="Logo" class="logo" />
   
     {#if $errorMessage}
       <div class="error-message">{$errorMessage}</div>
@@ -145,7 +188,7 @@
       
       <!-- <button type="submit" class="submit-button">Register</button> -->
       <div class="button-container">
-        <button type="submit" class="submit-button">Register</button>
+        <button type="submit" class="submit-button">Sign Up</button>
         <button type="button" class="login-button" on:click={() => goto('/login')}>Login</button>
       </div>
     </form>

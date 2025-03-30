@@ -9,8 +9,8 @@
       bottom: 0;
       left: 0;
       width: 100%;
-      background: #ffffff;
-      border-top: 1px solid #e0e0e0;
+      background: #121212;
+      /* border-top: 1px solid #00ff8092; */
       display: flex;
       justify-content: space-evenly;
       align-items: center;
@@ -23,7 +23,8 @@
       flex-direction: column;
       align-items: center;
       text-decoration: none;
-      color: #666;
+      /* color: #666; */
+      color: white;
       font-size: 0.8rem;
     }
 
@@ -34,7 +35,8 @@
 
   
     a:hover {
-      color: #111;
+      /* color: #111; */
+      color: #00ff8092;
     }
   
     .icon {
