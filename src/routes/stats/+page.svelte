@@ -16,14 +16,21 @@
 
 <style>
   .home {
-    text-align: center;
-    padding: 2rem;
-    font-family: Arial, sans-serif;
+    /* text-align: center; */
+    padding: 1rem;
+    font-family: 'Poppins', sans-serif;
     padding-bottom: 4rem;
+  }
+
+  .title {
+    color: rgb(57, 57, 57);
+    font-weight: lighter;
+    margin-bottom: 20px;
+    letter-spacing: 8px; /* Adjust the value to control the space between letters */
   }
 </style>
 
 <div class="home">
-  <h1>Stats</h1>
+  <h1 class="title">Stats</h1>
   <SendsComponent />
 </div>

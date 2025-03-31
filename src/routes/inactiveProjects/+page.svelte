@@ -61,69 +61,6 @@
     .home {
       text-align: center;
       padding: 2rem;
-      font-family: Arial, sans-serif;
-    }
-  
-    .button {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin: 1rem;
-      padding: 1rem;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      cursor: pointer;
-      font-size: 16px;
-    }
-  
-    .button:hover {
-      background-color: #0056b3;
-    }
-  
-    .button-container {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 1rem;
-    }
-  
-    .divider {
-      height: 30px;
-      border-top: 1px solid #ccc;
-      margin: 20px 0;
-    }
-  
-    .title {
-      font-size: 2rem;
-      font-weight: bold;
-      margin-bottom: 1rem;
-    }
-
-    .filters {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin-top: 1rem;
-  }
-
-  .filter-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  select {
-    padding: 8px;
-    font-size: 14px;
-    width: 200px;
-  }
-  </style> -->
-
-  <style>
-    .home {
-      text-align: center;
-      padding: 2rem;
       font-family: 'Poppins', sans-serif;
       background-color: #121212;
       color: #f5f5f5;
@@ -210,10 +147,129 @@
       font-size: 0.875rem;
       margin-bottom: 10px;
     }
+  </style> -->
+
+  <style global>
+    /* Body and Background */
+    body {
+        background-color: #e6f4fd; /* Dark background */
+        font-family: 'Poppins', sans-serif;
+        margin: 0;
+        padding: 0;
+        color: black; /* Light text for contrast */
+        margin-bottom: 3rem;
+      }
+  
+    .home {
+      text-align: center;
+      padding: 1rem;
+      font-family: 'Poppins', sans-serif;
+      background-color: #e6f4fd;
+      color: black;
+    }
+  
+    .project-components-container {
+      margin-top: 1rem;
+    }
+  
+    .button {
+      padding: 1rem;
+      border: none;
+      width: 100%;
+      border-radius: 10px;
+      font-size: 1rem;
+      cursor: pointer;
+      background: #e6f4fd;
+      box-shadow: 5px 5px 10px #b4d1e3, -5px -5px 10px #ffffff;
+      transition: all 0.3s ease;
+    }
+  
+    .button:hover {
+      box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #ffffff;
+    }
+  
+    .button-container {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 1rem;
+    }
+  
+    .divider {
+      height: 10px;
+      border-top: 1px solid #ccc;
+      margin: 20px 0;
+      border-style: hidden;
+      color: white;
+    }
+  
+    .title {
+      color: rgb(57, 57, 57);
+      font-size: 2rem;
+      font-weight: lighter;
+      margin-bottom: 20px;
+      text-align: start;
+      letter-spacing: 8px; /* Adjust the value to control the space between letters */
+    }
+  
+    .filters {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+  
+    .filter-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  
+    select {
+    padding: 8px;
+    font-size: 14px;
+    width: 200px;
+    background-color: #e6f4fd !important;
+    box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #ffffff !important;
+    color: black !important;
+    border: 2px solid #e6f4fd;
+    border-radius: 10px;
+    transition: border-color 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    select:focus {
+      border-color: #e6f4fd;
+      box-shadow: inset 5px 5px 10px #b4d1e3, inset -5px -5px 10px #ffffff !important;
+      outline: none;
+    }
+  
+    input[type="checkbox"] {
+    width: 22px;
+    height: 22px;
+    appearance: none;
+    background-color: #e6f4fd;
+    position: relative;
+    transition: all 0.3s ease;
+    border-radius: 10px;
+    cursor: pointer;  
+    box-shadow: 5px 5px 10px #b4d1e3, -5px -5px 10px #ffffff;
+    transition: all 0.3s ease;
+    }
+
+    input[type="checkbox"]:checked {
+      box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #ffffff;
+    }
+  
+    .error-message {
+      color: red;
+      font-size: 0.875rem;
+      margin-bottom: 10px;
+    }
   </style>
   
   <div class="home">
     <h1 class="title">Inactive Projects</h1>
+
+    <div class="divider"></div>
   
     <div class="button-container">
       <button class="button" on:click={toggleFilter}>

@@ -15,7 +15,6 @@
   
 <style>
   .sends-card {
-    margin: 16px;
     padding: 12px;
     border: 1px solid #ccc;
     border-radius: 4px;
@@ -25,11 +24,13 @@
     font-size: 18px;
     color: gray;
     margin-bottom: 16px;
+    text-align: start;
   }
   
   .sends-text {
     font-size: 18px;
     color: gray;
+    text-align: start;
   }
 </style>
   

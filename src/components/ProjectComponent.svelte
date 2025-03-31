@@ -57,61 +57,18 @@
       }
     }
   </script>
-  
-  <!-- <style>
-    .project-card {
-      background-color: #f9f9f9;
-      padding: 16px;
-      margin: 12px 0;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      padding-bottom: 2rem;
-    }
-
-    .project-label {
-      font-weight: bold;
-      color: #333;
-    }
-
-    .text-content {
-      font-size: 16px;
-      margin: 4px 0;
-    }
-  
-    .button {
-      margin-top: 8px;
-      padding: 8px 12px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    .button:hover {
-      background-color: #0056b3;
-    }
-
-    img {
-      max-width: 200px;
-      max-height: 200px;
-      border-radius: 4px;
-      margin-top: 8px;
-    }
-    
-  </style> -->
 
   <style>
     body {
-      background-color: #121212; /* Dark background */
+      background-color: #e6f4fd; /* Dark background */
       font-family: 'Poppins', sans-serif;
       margin: 0;
       padding: 0;
-      color: #f5f5f5; /* Light text */
+      color: black; /* Light text */
     }
 
     .project-card {
-      background-color: #1e1e1e;
+      background-color: #e6f4fd;
       padding: 20px;
       margin: 20px auto;
       border-radius: 10px;
@@ -121,10 +78,11 @@
     }
 
     .project-label {
-      font-weight: bold;
-      color: #f5f5f5;
+      font-weight: lighter;
+      color: black;
       font-size: 1.2rem;
       margin-bottom: 8px;
+      text-align: start;
     }
 
     .text-content {
@@ -139,26 +97,16 @@
       margin-top: 10px;
       border-radius: 8px;
       font-size: 1rem;
-      font-weight: bold;
-      /* text-transform: uppercase; */
+      font-weight: lighter;
       cursor: pointer;
-      transition: all 0.3s ease-in-out;
+      border: none;
+      background: #e6f4fd;
+      box-shadow: 5px 5px 10px #b4d1e3, -5px -5px 10px #ffffff;
+      transition: all 0.3s ease;
     }
 
     .button:hover {
-      transform: scale(1.05);
-    }
-
-    .button:first-of-type {
-      background-color: transparent;
-      border: 2px solid #00ff8092;
-      color: white;
-    }
-
-    .button:last-of-type {
-      background-color: transparent;
-      border: 2px solid #ff8000b9;
-      color: white;
+      box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #ffffff;
     }
 
     img {

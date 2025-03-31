@@ -34,7 +34,7 @@
     };
   </script>
   
-  <style global>
+  <!-- <style global>
     /* Body and Background */
     body {
       background-color: #121212; /* Dark background */
@@ -156,13 +156,106 @@
       margin-bottom: 20px;
       border-radius: 10px;
     }
-  </style>
+  </style> -->
+
+  <!-- Poppins
+  SF Pro Display (Apple's system font)
+  Inter
+  Montserrat -->
+
+    <style global>
+      body {
+        background-color: #e6f4fd;
+        font-family: 'Poppins', sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+
+      h2 {
+        color: rgb(57, 57, 57);
+        font-size: 1rem;
+        font-weight: lighter;
+        margin-bottom: 20px;
+        letter-spacing: 8px; /* Adjust the value to control the space between letters */
+      }
+
+      .login-container {
+        max-width: 450px;
+        margin: 100px auto;
+        padding-left: 40px;
+        padding-right: 40px;
+        margin-top: 40px;
+        background: #e6f4fd;
+        border-radius: 20px;
+        text-align: center;
+        transition: all 0.3s ease;
+        box-sizing: border-box; /* Ensure padding doesn't affect width */
+      }
+
+      .input-field {
+        margin-bottom: 1rem;
+        padding: 1rem;
+        border-radius: 10px;
+        border: none;
+        background: #e6f4fd;
+        box-shadow: inset 5px 5px 10px #b4d1e3, inset -5px -5px 10px #ffffff;
+        color: #333;
+        font-size: 1rem;
+        outline: none;
+        width: 100%;
+        max-width: 100%; /* Ensures full width within the container */
+        box-sizing: border-box; /* Prevents padding from affecting width */
+      }
+
+      .input-field:focus {
+        box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #ffffff;
+      }
+
+      .button-container {
+        display: flex;
+        flex-direction: column;
+        gap: 1rem;
+        margin-top: 1rem;
+      }
+
+      .submit-button,
+      .register-button {
+        padding: 1rem;
+        border: none;
+        width: 100%;
+        border-radius: 10px;
+        font-size: 1rem;
+        cursor: pointer;
+        background: #e6f4fd;
+        box-shadow: 5px 5px 10px #b4d1e3, -5px -5px 10px #ffffff;
+        transition: all 0.3s ease;
+      }
+
+      .submit-button:hover,
+      .register-button:hover {
+        box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #ffffff;
+      }
+
+      .error-message {
+        color: red;
+        margin-bottom: 10px;
+      }
+
+      .logo {
+        width: 100%;
+        max-width: 400px;
+        opacity: 0.85;
+        margin-bottom: 20px;
+        border-radius: 10px;
+      }
+</style>
+  
   
   <div class="login-container">
-    <!-- <h2>Hooked</h2> -->
+    <h2>HOOKED</h2>
 
     <!-- Logo Image -->
-    <img src="/images/hooked-logo.png" alt="Logo" class="logo" />
+    <img src="/images/logo.png" alt="Logo" class="logo" />
   
     <!-- Conditional rendering for error message -->
     {#if $errorMessage}
@@ -185,7 +278,7 @@
         bind:value={password} 
         required
       />
-  
+
       <div class="button-container">
         <button type="submit" class="submit-button">Login</button>
         <button type="button" class="register-button" on:click={() => goto('/register')}>Sign Up</button>

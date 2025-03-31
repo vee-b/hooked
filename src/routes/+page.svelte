@@ -60,86 +60,23 @@
   };
 </script>
 
-<!-- <style>
-  .home {
-    text-align: center;
-    padding: 2rem;
-    font-family: Arial, sans-serif;
-  }
-
-  .button {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin: 1rem;
-    padding: 1rem;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-  }
-
-  .button:hover {
-    background-color: #0056b3;
-  }
-
-  .button-container {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 1rem;
-  }
-
-  .divider {
-    height: 30px;
-    border-top: 1px solid #ccc;
-    margin: 20px 0;
-  }
-
-  .title {
-    font-size: 2rem;
-    font-weight: bold;
-    margin-bottom: 1rem;
-  }
-
-  .filters {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    margin-top: 1rem;
-  }
-
-  .filter-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  select {
-    padding: 8px;
-    font-size: 14px;
-    width: 200px;
-  }
-</style> -->
-
 <style global>
   /* Body and Background */
   body {
-      background-color: #121212; /* Dark background */
+      background-color: #e6f4fd; /* Dark background */
       font-family: 'Poppins', sans-serif;
       margin: 0;
       padding: 0;
-      color: #f5f5f5; /* Light text for contrast */
+      color: black; /* Light text for contrast */
       margin-bottom: 3rem;
     }
 
   .home {
     text-align: center;
-    padding: 2rem;
+    padding: 1rem;
     font-family: 'Poppins', sans-serif;
-    background-color: #121212;
-    color: #f5f5f5;
+    background-color: #e6f4fd;
+    color: black;
   }
 
   .project-components-container {
@@ -148,39 +85,44 @@
 
   .button {
     padding: 1rem;
+    margin-bottom: 20px;
     border: none;
-    border-radius: 10px;
-    cursor: pointer;
-    font-size: 1rem;
     width: 100%;
-    transition: background-color 0.3s ease, transform 0.3s ease;
-    border: 2px solid #00ff8092; 
-    background-color: transparent;
-    color: white;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    background: #e6f4fd;
+    box-shadow: 5px 5px 10px #b4d1e3, -5px -5px 10px #ffffff;
+    transition: all 0.3s ease;
   }
 
   .button:hover {
-    background-color: #00ff8000;
-    transform: scale(1.05);
+    box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #ffffff;
   }
 
   .button-container {
     display: flex;
+    flex-direction: column;
+    align-items: center;
     justify-content: space-between;
     margin-top: 1rem;
   }
 
   .divider {
-    height: 30px;
+    height: 10px;
     border-top: 1px solid #ccc;
     margin: 20px 0;
+    border-style: hidden;
+    color: white;
   }
 
   .title {
+    color: rgb(57, 57, 57);
     font-size: 2rem;
-    color: white;
+    font-weight: lighter;
     margin-bottom: 20px;
-    -webkit-text-stroke: 1px #00000048;
+    text-align: start;
+    letter-spacing: 8px; /* Adjust the value to control the space between letters */
   }
 
   .filters {
@@ -200,16 +142,17 @@
     padding: 8px;
     font-size: 14px;
     width: 200px;
-    background-color: #333;
-    color: #f5f5f5;
-    border: 2px solid #444;
+    background-color: #e6f4fd !important;
+    box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #ffffff !important;
+    color: black !important;
+    border: 2px solid #e6f4fd;
     border-radius: 10px;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
   }
 
   select:focus {
-    border-color: #00ff8092;
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    border-color: #e6f4fd;
+    box-shadow: inset 5px 5px 10px #b4d1e3, inset -5px -5px 10px #ffffff !important;
     outline: none;
   }
 
@@ -228,13 +171,15 @@
 <div class="home">
   <h1 class="title">Active Projects</h1>
 
+  <div class="divider"></div>
+
   <div class="button-container">
     <button class="button" on:click={toggleFilter}>
       <Filter /> {filterActive ? 'Hide Filter' : 'Show Filter'}
     </button>
 
     <button class="button" on:click={navigateToNewProject}>
-      <PlusCircle /> Add New Project
+      <PlusCircle /> New Project
     </button>
   </div>
 
