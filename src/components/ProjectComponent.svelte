@@ -73,15 +73,15 @@
       margin: 20px auto;
       border-radius: 10px;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
-      text-align: center;
+      text-align: left;
       max-width: 500px;
     }
 
     .project-label {
       font-weight: lighter;
       color: black;
-      font-size: 1.2rem;
-      margin-bottom: 8px;
+      font-size: 1rem;
+      margin-bottom: 10px;
       text-align: start;
     }
 
@@ -94,7 +94,6 @@
     .button {
       width: 100%;
       padding: 12px;
-      margin-top: 10px;
       border-radius: 8px;
       font-size: 1rem;
       font-weight: lighter;
@@ -111,9 +110,10 @@
 
     img {
       max-width: 100%;
-      max-height: 300px;
+      max-height: 200px;
       border-radius: 8px;
       margin-top: 15px;
+      box-shadow: 5px 5px 10px #b4d1e3, -5px -5px 10px #ffffff;
     }
   </style>
 

@@ -162,14 +162,15 @@ export async function fetchInactiveProjects(): Promise<Project[]> {
 
 // Fetch the active projects with filters.
 export async function fetchActiveFilteredProjects(
-  grade: string = '',
+  // grade: string = '',
+  grades: string[] = [],
   sentStatus: string = ''
 ): Promise<Project[]> {
   try {
-    console.log('Sending to Rust:', { grade, sentStatus }); // Log filters
+    console.log('Sending to Rust:', { grades, sentStatus }); // Log filters
 
     const projectsData: unknown = await invoke('get_active_filtered_projects', {
-      grade,
+      grades,
       sentStatus,
     });
 

@@ -160,7 +160,6 @@
       font-size: 1.5rem;
       font-weight: lighter;
       margin-bottom: 20px;
-      /* -webkit-text-stroke: 1px #00000048; */
     }
 
     .register-container {
@@ -213,6 +212,7 @@
       background: #e6f4fd;
       box-shadow: 5px 5px 10px #b4d1e3, -5px -5px 10px #ffffff;
       transition: all 0.3s ease;
+      color: rgb(57, 57, 57);
     }
 
     .submit-button:hover,

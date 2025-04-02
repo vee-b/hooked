@@ -164,7 +164,8 @@ async fn get_inactive_projects(client: State<'_, MongoClient>) -> Result<Vec<Pro
 #[tauri::command]
 async fn get_active_filtered_projects(
     client: State<'_, MongoClient>,
-    grade: Option<String>,
+    // grade: Option<String>,
+    grades: Option<Vec<String>>,
     sent_status: Option<String>,
 ) -> Result<Vec<Project>, String> {
     let collection = client.database("hooked_db").collection::<Document>("projects");
@@ -173,9 +174,14 @@ async fn get_active_filtered_projects(
     let mut filter = doc! { "is_active": 1 };
 
     // Add grade filter if provided
-    if let Some(g) = grade {
-        if !g.is_empty() {
-            filter.insert("grade", g);
+    // if let Some(g) = grade {
+    //     if !g.is_empty() {
+    //         filter.insert("grade", g);
+    //     }
+    // }
+    if let Some(grades_list) = grades {
+        if !grades_list.is_empty() {
+            filter.insert("grade", doc! { "$in": grades_list }); // Use $in to match multiple grades
         }
     }
 
