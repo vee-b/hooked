@@ -1,3 +1,5 @@
+<!-- src/routes/+page.svelte -->
+
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
@@ -26,8 +28,9 @@
   }
 };
 
-  const fetchFilteredProjects = async (filters: { grades: string[], isSent: boolean }) => {
+  const fetchFilteredProjects = async (filters: { grades: string[], isSent?: boolean }) => {
     try {
+      const isSentParam = filters.isSent !== undefined ? String(filters.isSent) : null;
       const projectsData = await fetchActiveFilteredProjects(filters.grades, String(filters.isSent));
       projectsList.set(projectsData);  // projectsData should be Project[]
       console.log('Fetched projects successfully:', projectsData);
@@ -47,7 +50,10 @@
 
   let filterActive = false;
   let selectedGrades: string[] = []; // Store multiple selected grades
-  let isSent: boolean;
+  //let isSent: boolean;
+  let isSent: boolean | null = null; // null = no filter applied
+  let sentFilterValue: string = 'all';
+
 
   const toggleFilter = () => {
     filterActive = !filterActive;
@@ -60,7 +66,8 @@
     
     const filters = {
       grades: selectedGrades,
-      isSent: isSent ?? false, // Defaults to false if null/undefined
+      //isSent: isSent ?? false, // Defaults to false if null/undefined
+      isSent: isSent !== null ? isSent : undefined // omit if null
     };
 
     console.log('Filters Object:', filters);
@@ -69,7 +76,8 @@
 
   const clearFilters = async () => {
     selectedGrades = [];
-    isSent = false;
+    //isSent = false;
+    isSent = null;
     await tick(); // Ensure UI updates before fetching
     fetchProjects(); // Fetch unfiltered active projects
   }
@@ -98,12 +106,12 @@
     margin-top: 1rem;
   }
 
-  .filter-button,
   .button {
     padding: 1rem;
-    margin-bottom: 5px;
+    /* margin-bottom: 5px; */
     border: none;
-    width: 100%;
+    /* width: 100%; */
+    max-width: 70px;
     border-radius: 10px;
     font-size: 1rem;
     cursor: pointer;
@@ -112,27 +120,27 @@
     transition: all 0.3s ease;
   }
 
-  .filter-button:hover,
   .button:hover {
     box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #e6f4fd;
   }
 
-  /* .filter-button:hover {
-    box-shadow: inset 3px 3px 6px #e6f4fd, inset -3px -3px 6px #e6f4fd;
-  } */
+  .top-buttons-container {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+  }
 
-  .button-container {
+  .filter-button-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: space-between;
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-    /* box-shadow: 5px 5px 10px #b4d1e3, -5px -5px 10px #ffffff; */
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
     box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #e6f4fd;
     transition: all 0.3s ease;
-    padding: 10px;
     border-radius: 10px;
+    max-width: 80%;
   }
 
   .divider {
@@ -155,14 +163,23 @@
   .filters {
     display: flex;
     flex-direction: column;
-    /* gap: 1rem; */
-    /* margin-top: 1rem; */
+    /* max-width: fit-content; */
+    max-width: 100%;
   }
 
   .filter-item {
     display: flex;
     align-items: center;
-    /* gap: 0.5rem; */
+    gap: 0.5rem;
+    /* flex-direction: column; */
+    /* justify-content: space-between; */
+    /* margin-top: 1rem;
+    margin-bottom: 1rem; */
+    transition: all 0.3s ease;
+    padding-left: 20px;
+    padding-right: 20px;
+    /* padding-bottom: 10px; */
+    border-radius: 0px;
   }
 
   .filter-button-div {
@@ -171,7 +188,9 @@
     gap: 10px; /* Adds space between items */
     justify-content: space-between; /* Distributes items evenly */
     align-items: center; /* Aligns items vertically */
-    width: 100%; /* Ensures it takes full width */
+    max-width: 100%; /* Ensures it takes full width */
+    padding: 1rem;
+    flex-wrap: wrap; /* in case buttons get too tight */
   }
 
   select {
@@ -198,10 +217,17 @@
 
   .checkbox-container {
     display: flex;
-    flex-wrap: wrap; /* Wraps checkboxes to the next line when space is filled */
     gap: 10px; /* Spacing between checkboxes */
     justify-content: flex-start; /* Align checkboxes to the left */
+    padding: 10px;
     max-width: 100%; /* Ensures that the container does not overflow */
+    max-height: 250px; 
+    font-size: 0.75rem; /* smaller font size */
+    flex-wrap: wrap; /* Wraps checkboxes to the next line when space is filled */
+    overflow-y: auto;
+
+    /* flex-wrap: nowrap;
+    overflow-y: auto; */
   }
 
   .checkbox-item {
@@ -211,8 +237,10 @@
   }
 
   input[type="checkbox"] {
-    width: 20px;
-    height: 20px;
+    /* width: 15px;
+    height: 15px; */
+    width: 25px !important;
+    height: 15px !important;
   }
 
   /* Style the scrollbar */
@@ -245,46 +273,54 @@
 
   <div class="divider"></div>
 
-  <div class="button-container">
-    <button class="filter-button {filterActive ? 'active' : ''}" on:click={toggleFilter}>
+  <div class=top-buttons-container>
+    <button class="button {filterActive ? 'active' : ''}" on:click={toggleFilter}>
       <Filter /> 
     </button>
+    
+    <div class="filter-button-container">
 
-    {#if filterActive}
-      <div class="filters" transition:slide={{ duration: 300 }}> 
+      {#if filterActive}
+        <div class="filters" transition:slide={{ duration: 300 }}> 
+          
+          <label for="sentFilter">Sent</label>
+          <select id="sentFilter" bind:value={sentFilterValue} on:change={() => {
+            if (sentFilterValue === 'true') isSent = true;
+            else if (sentFilterValue === 'false') isSent = false;
+            else isSent = null;
+          }}>
+            <option value="all">All</option>
+            <option value="true">Sent</option>
+            <option value="false">Not Sent</option>
+          </select>
 
-        <div class="filter-item">
-          <label for="isSent">Sent</label>
-          <input type="checkbox" id="isSent" bind:checked={isSent} />
-        </div>
-
-        <div class="filter-item">
-          <!-- <label>Grade</label> -->
-          <div class="checkbox-container" style="max-height: 150px; overflow-y: auto;">
-            {#each ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15', 'V16', 'V17'] as grade}
-              <div class="checkbox-item">
-                <input 
-                  type="checkbox" 
-                  id={grade} 
-                  value={grade} 
-                  bind:group={selectedGrades} 
-                />
-                <label for={grade}>{grade}</label>
-              </div>
-            {/each}
+          <div class="filter-item">
+            <div class="checkbox-container">
+              {#each ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15', 'V16', 'V17'] as grade}
+                <div class="checkbox-item">
+                  <input 
+                    type="checkbox" 
+                    id={grade} 
+                    value={grade} 
+                    bind:group={selectedGrades} 
+                  />
+                  <label for={grade}>{grade}</label>
+                </div>
+              {/each}
+            </div>
+          </div>
+          
+          <div class="filter-button-div">
+            <button class="button" on:click={applyFilters}>Apply Filters</button> 
+            <button class="button" on:click={clearFilters}>Clear Filters</button>
           </div>
         </div>
-        
-        <div class="filter-button-div">
-          <button class="button" on:click={applyFilters}>Apply Filters</button> 
-          <button class="button" on:click={clearFilters}>Clear Filters</button>
-        </div>
-      </div>
-    {/if}
+      {/if}
+    </div>
   </div>
 
   <button class="button" on:click={navigateToNewProject}>
-    <PlusCircle /> New Project
+    <PlusCircle /> 
   </button>
 
   <div class="divider"></div>
@@ -292,7 +328,6 @@
   <div class="project-components-container">
     {#each $projectsList as project (project._id)}
       <ProjectComponent {project} on:projectDeleted={() => fetchActiveFilteredProjects()} />
-      <!-- <ProjectComponent {project} /> -->
     {/each}
   </div>
 </div>

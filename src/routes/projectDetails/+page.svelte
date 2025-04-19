@@ -18,7 +18,7 @@
   let project: Project | null = null;
   let projectCoordinates: { lat: number; lng: number }[] = [];
   let imagePath: string = 'No Image';
-  let imagePreview: string = '/images/default-girl.jpg';
+  let imagePreview: string = '/images/logo.png';
   let attempts: string = '0';
   let selectedOption: string = ''; // grade
   let dateTime: Date = new Date();
@@ -82,7 +82,7 @@
         project = await fetchProjectById(projectId);
         if (project) {
           imagePath = project.image_path || 'No Image';
-          imagePreview = project.image_path || '/images/default-girl.jpg';
+          imagePreview = project.image_path || '/images/logo.png';
           attempts = project.attempts ? project.attempts.toString() : '0';
           selectedOption = project.grade || '';
           //selectedOption = convertVScaleGrade(project.grade, $gradeSystem);
@@ -110,7 +110,7 @@
         resultType: CameraResultType.Uri,
       });
       const sanitizedFileName = sanitizeFileName(image);
-      imagePreview = image.webPath || '/images/default-girl.jpg';
+      imagePreview = image.webPath || '/images/logo.png';
       imagePath = image.path || image.webPath || '';
       imageFile = await fetchImageFile(image, sanitizedFileName);
     } catch (error) {
@@ -168,16 +168,17 @@
         await editProject(currentProject, imageFile ?? undefined);
         message = 'Project updated successfully!';
       } else {
-        // Add project: imageFile is required.
-        if (imageFile) {
-          await addProject(currentProject, imageFile);
-          message = 'Project added successfully!';
-          goto(`/`);
-        } else {
-          console.error('No image file selected for new project.');
-          message = 'Please select an image.';
-          return;
+        if (!imageFile) {
+          // Fetch and use the default logo image
+          const response = await fetch('/images/logo.png');
+          const blob = await response.blob();
+          imageFile = new File([blob], 'logo.png', { type: blob.type });
+          imagePath = '/images/logo.png';
         }
+        await addProject(currentProject, imageFile);
+        message = 'Project added successfully!';
+        goto(`/`);
+
       }
       resetForm();
     } catch (error) {
@@ -189,7 +190,7 @@
   // Reset form fields after submission.
   function resetForm() {
     imagePath = 'No Image';
-    imagePreview = '/images/default-girl.jpg';
+    imagePreview = '/images/logo.png';
     attempts = '0';
     selectedOption = '';
     dateTime = new Date();
@@ -202,65 +203,6 @@
     goto('/');
   }
 </script>
-
-<!-- <style>
-  .container {
-    max-width: 400px;
-    margin: 0 auto;
-    font-family: Arial, sans-serif;
-    padding: 2rem;
-    padding-bottom: 4rem;
-  }
-  .image-wrapper {
-    position: relative;
-    display: inline-block;
-    width: 100%;  /* Ensure it scales with the width of the container */
-  }
-  img {
-    width: 100%;  /* Ensures image scales with its container */
-    height: auto;
-    display: block;
-  }
-  .marker {
-    position: absolute;
-    width: 15px;
-    height: 15px;
-    background-color: red;
-    border-radius: 50%;
-    transform: translate(-50%, -50%); /* Center the marker at the coordinates */
-  }
-  h1 { text-align: center; }
-  .form-group { margin-bottom: 15px; }
-  label { display: block; font-weight: bold; margin-bottom: 5px; }
-  input[type='text'],
-  input[type='number'],
-  input[type='datetime-local'],
-  select {
-    width: 100%;
-    padding: 10px;
-    border: 1px solid #ddd;
-    border-radius: 4px;
-    box-sizing: border-box;
-  }
-  input[type='checkbox'] { margin-right: 5px; }
-  button {
-    display: block;
-    width: 100%;
-    padding: 12px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    margin-top: 10px;
-    margin-bottom: 10px;
-  }
-  button:hover { background-color: #0056b3; }
-  .button-row { display: flex; justify-content: space-between; gap: 10px; }
-  .image-preview { width: 100%; height: auto; margin: 15px 0; display: block; }
-  .message { color: green; text-align: center; margin-top: 10px; }
-</style> -->
 
 <style>
   .container {
@@ -301,7 +243,7 @@
   }
 
   label { 
-    display: block; 
+    display: inline-block; 
     font-weight: bold; 
     margin-bottom: 5px; 
   }
@@ -318,35 +260,49 @@
     box-sizing: border-box;
   }
 
-  input[type='checkbox'] { margin-right: 5px; }
+  input[type='checkbox'] { 
+    margin-right: 5px; 
+  }
+
+
+
+  /* .checkbox-container {
+    display: flex;
+    gap: 10px; 
+    font-size: 0.75rem; 
+  }
+
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  input[type="checkbox"] {
+    width: 25px !important;
+    height: 15px !important;
+  } */
+
+
+
+
 
   button {
     display: block;
     width: 100%;
     padding: 12px;
-    background-color: #007bff;
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 16px;
-    margin-top: 10px;
-    margin-bottom: 10px;
-
     padding: 1rem;
     border: none;
     border-radius: 10px;
-    cursor: pointer;
     font-size: 1rem;
-    width: 100%;
-    transition: background-color 0.3s ease, transform 0.3s ease;
-
-    border: 2px solid #00ff8092; /* Thin green outline */
-    background-color: transparent; /* No background color */
+    cursor: pointer;
+    background: #e6f4fd;
+    box-shadow: 5px 5px 10px #b4d1e3, -5px -5px 10px #ffffff;
+    transition: all 0.3s ease;
   }
 
   button:hover { 
-    transform: scale(1.05); 
+    box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #e6f4fd;
   }
 
   .button-row { 
@@ -379,7 +335,7 @@
 
   <div class="button-row">
     <button on:click={pickImage}>
-      <Camera /> Capture/Upload Image
+      <Camera /> 
     </button>
   </div>
 
@@ -418,9 +374,6 @@
     <label for="grade">Grade</label>
     <select id="grade" bind:value={selectedOption}>
       <option value="" disabled selected>Select grade</option>
-      <!-- {#each options as option}
-        <option value={option}>{option}</option>
-      {/each} -->
       {#each currentGrades as grade}
         <option value={grade}>{grade}</option>
       {/each}
@@ -433,12 +386,12 @@
   </div>
 
   <div class="form-group">
-    <label for="isSent">Sent</label>
+    <label for="isSent" class="checkbox-item">Sent</label>
     <input type="checkbox" id="isSent" bind:checked={isSent} />
   </div>
 
   <div class="form-group">
-    <label for="isActive">Active</label>
+    <label for="isActive" class="checkbox-item">Active</label>
     <input type="checkbox" id="isActive" bind:checked={isActive} />
   </div>
 

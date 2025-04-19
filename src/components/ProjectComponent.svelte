@@ -113,7 +113,8 @@
       max-height: 200px;
       border-radius: 8px;
       margin-top: 15px;
-      box-shadow: 5px 5px 10px #b4d1e3, -5px -5px 10px #ffffff;
+      /* box-shadow: 5px 5px 10px #b4d1e3, -5px -5px 10px #ffffff; */
+      box-shadow: 10px 10px 20px #b4d1e3, -10px -10px 20px #ffffff;
     }
   </style>
 

@@ -1,230 +1,191 @@
+<!-- src/routes/inactiveProjects/+page.svelte -->
+
 <script lang="ts">
-    import { onMount } from 'svelte';
-    import { goto } from '$app/navigation';
-    import ProjectComponent from '../../components/ProjectComponent.svelte';
-    import { writable } from 'svelte/store';
-    import { PlusCircle, Filter } from 'lucide-svelte';
-    import type { Project } from '../../models/Project';
-    import { fetchInactiveFilteredProjects, deleteProject } from '../../stores/projectsList';
-    import { checkLoginStatus } from '../../controllers/accountsController';
-    import { tick } from 'svelte';
+  import { onMount } from 'svelte';
+  import { goto } from '$app/navigation';
+  import ProjectComponent from '../../components/ProjectComponent.svelte';
+  import { writable } from 'svelte/store';
+  import { PlusCircle, Filter } from 'lucide-svelte';
+  import type { Project } from '../../models/Project';
+  import { fetchInactiveProjects, fetchInactiveFilteredProjects, deleteProject } from '../../stores/projectsList';
+  import { checkLoginStatus } from '../../controllers/accountsController';
+  import { tick } from 'svelte';
+  import { slide } from 'svelte/transition'
   
-    export const projectsList = writable<Project[]>([]);
+  export const projectsList = writable<Project[]>([]);
   
-    const fetchProjects = async (filters: { grade: string, isSent: boolean }) => {
-      try {
-        const projectsData = await fetchInactiveFilteredProjects(filters.grade, String(filters.isSent));
-        projectsList.set(projectsData);  // projectsData should be Project[]
-        console.log('Fetched projects successfully:', projectsData);
-      } catch (error) {
-        console.error('Error fetching inactive projects:', error);
-      }
-    };
-
-    onMount(() => {
-      const isLoggedIn = checkLoginStatus();  // Check login status when the component mounts
-      if (isLoggedIn) {
-        const initialFilters = {
-          grade: selectedGrade,
-          isSent: isSent,
-        };
-        fetchProjects(initialFilters);  // Fetch projects initially with default filters
-      } else {
-        goto('/login'); // Redirect if not logged in
-      }
-    });
+  const fetchProjects = async () => {
+  try {
+    const projectsData = await fetchInactiveProjects();
+    projectsList.set(projectsData);
+    console.log('Fetched active projects:', projectsData);
+  } catch (error) {
+    console.error('Error fetching active projects:', error);
+  }
+};
   
-    let filterActive = false;
-    let selectedGrade: string = '';
-    let isSent: boolean;
-
+  const fetchFilteredProjects = async (filters: { grades: string[], isSent?: boolean }) => {
+    try {
+      const isSentParam = filters.isSent !== undefined ? String(filters.isSent) : null;
+      const projectsData = await fetchInactiveFilteredProjects(filters.grades, String(filters.isSent));
+      projectsList.set(projectsData);  // projectsData should be Project[]
+      console.log('Fetched projects successfully:', projectsData);
+    } catch (error) {
+      console.error('Error fetching active projects:', error);
+    }
+  };
+  
+  onMount(() => {
+    const isLoggedIn = checkLoginStatus();  // Check login status when the component mounts
+    if (isLoggedIn) {
+      fetchProjects();
+    } else {
+      goto('/login'); // Redirect if not logged in
+    }
+  });
+  
+  let filterActive = false;
+  let selectedGrades: string[] = []; // Store multiple selected grades
+  let isSent: boolean | null = null; // null = no filter applied
+  let sentFilterValue: string = 'all';
+    
   const toggleFilter = () => {
     filterActive = !filterActive;
   };
-
+  
   const applyFilters = async () => {
     await tick(); // Wait for UI updates
-    console.log('Applying Filters:', { selectedGrade, isSent });
-    
+    console.log('Selected Grades:', selectedGrades);  // Log selected grades
+    console.log('Applying Filters:', { selectedGrades, isSent });
+      
     const filters = {
-      grade: selectedGrade,
-      isSent: isSent ?? false, // Defaults to false if null/undefined
-
+      grades: selectedGrades,
+      isSent: isSent !== null ? isSent : undefined // omit if null
     };
-
+  
     console.log('Filters Object:', filters);
-    fetchProjects(filters);
+    fetchFilteredProjects(filters);
   };
-  </script>
   
-  <!-- <style>
-    .home {
-      text-align: center;
-      padding: 2rem;
-      font-family: 'Poppins', sans-serif;
-      background-color: #121212;
-      color: #f5f5f5;
-    }
+  const clearFilters = async () => {
+    selectedGrades = [];
+    isSent = null;
+    await tick(); // Ensure UI updates before fetching
+    fetchProjects(); // Fetch unfiltered active projects
+  }
+</script>
   
-    .project-components-container {
-      margin-top: 1rem;
-    }
+<style global>
+  /* Body and Background */
+  body {
+    background-color: #e6f4fd; /* Dark background */
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    color: black; /* Light text for contrast */
+    margin-bottom: 3rem;
+  }
   
-    .button {
-      padding: 1rem;
-      border: none;
-      border-radius: 10px;
-      cursor: pointer;
-      font-size: 1rem;
-      width: 100%;
-      transition: background-color 0.3s ease, transform 0.3s ease;
-      border: 2px solid #00ff8092; 
-      background-color: transparent;
-      color: white;
-    }
+  .home {
+    text-align: center;
+    padding: 1rem;
+    font-family: 'Poppins', sans-serif;
+    background-color: #e6f4fd;
+    color: black;
+  }
   
-    .button:hover {
-      background-color: #00ff8000;
-      transform: scale(1.05);
-    }
-  
-    .button-container {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 1rem;
-    }
-  
-    .divider {
-      height: 30px;
-      border-top: 1px solid #ccc;
-      margin: 20px 0;
-    }
-  
-    .title {
-      font-size: 2rem;
-      color: white;
-      margin-bottom: 20px;
-      -webkit-text-stroke: 1px #00000048;
-    }
-  
-    .filters {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-  
-    .filter-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-  
-    select {
-      padding: 8px;
-      font-size: 14px;
-      width: 200px;
-      background-color: #333;
-      color: #f5f5f5;
-      border: 2px solid #444;
-      border-radius: 10px;
-      transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    }
-  
-    select:focus {
-      border-color: #00ff8092;
-      box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
-      outline: none;
-    }
-  
-    input[type="checkbox"] {
-      width: 20px;
-      height: 20px;
-    }
-  
-    .error-message {
-      color: red;
-      font-size: 0.875rem;
-      margin-bottom: 10px;
-    }
-  </style> -->
+  .project-components-container {
+    margin-top: 1rem;
+  }
 
-  <style global>
-    /* Body and Background */
-    body {
-        background-color: #e6f4fd; /* Dark background */
-        font-family: 'Poppins', sans-serif;
-        margin: 0;
-        padding: 0;
-        color: black; /* Light text for contrast */
-        margin-bottom: 3rem;
-      }
-  
-    .home {
-      text-align: center;
-      padding: 1rem;
-      font-family: 'Poppins', sans-serif;
-      background-color: #e6f4fd;
-      color: black;
-    }
-  
-    .project-components-container {
-      margin-top: 1rem;
-    }
-  
-    .button {
-      padding: 1rem;
-      border: none;
-      width: 100%;
-      border-radius: 10px;
-      font-size: 1rem;
-      cursor: pointer;
-      background: #e6f4fd;
-      box-shadow: 5px 5px 10px #b4d1e3, -5px -5px 10px #ffffff;
-      transition: all 0.3s ease;
-    }
-  
-    .button:hover {
-      box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #ffffff;
-    }
-  
-    .button-container {
-      display: flex;
-      justify-content: space-between;
-      margin-top: 1rem;
-    }
-  
-    .divider {
-      height: 10px;
-      border-top: 1px solid #ccc;
-      margin: 20px 0;
-      border-style: hidden;
-      color: white;
-    }
-  
-    .title {
-      color: rgb(57, 57, 57);
-      font-size: 2rem;
-      font-weight: lighter;
-      margin-bottom: 20px;
-      text-align: start;
-      letter-spacing: 8px; /* Adjust the value to control the space between letters */
-    }
-  
-    .filters {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-      margin-top: 1rem;
-    }
-  
-    .filter-item {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-  
-    select {
+  .button {
+    padding: 1rem;
+    /* margin-bottom: 5px; */
+    border: none;
+    /* width: 100%; */
+    max-width: 70px;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    background: #e6f4fd;
+    box-shadow: 5px 5px 10px #b4d1e3, -5px -5px 10px #ffffff;
+    transition: all 0.3s ease;
+  }
+
+  .button:hover {
+    box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #e6f4fd;
+  }
+
+  .top-buttons-container {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+  }
+
+  .filter-button-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: 0.5rem;
+    margin-bottom: 0.5rem;
+    box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #e6f4fd;
+    transition: all 0.3s ease;
+    border-radius: 10px;
+    max-width: 80%;
+  }
+
+  .divider {
+    height: 10px;
+    border-top: 1px solid #ccc;
+    margin: 20px 0;
+    border-style: hidden;
+    color: white;
+  }
+
+  .title {
+    color: rgb(57, 57, 57);
+    font-size: 2rem;
+    font-weight: lighter;
+    margin-bottom: 20px;
+    text-align: start;
+    letter-spacing: 8px; /* Adjust the value to control the space between letters */
+  }
+
+  .filters {
+    display: flex;
+    flex-direction: column;
+    /* max-width: fit-content; */
+    max-width: 100%;
+  }
+
+  .filter-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    /* flex-direction: column; */
+    /* justify-content: space-between; */
+    /* margin-top: 1rem;
+    margin-bottom: 1rem; */
+    transition: all 0.3s ease;
+    padding-left: 20px;
+    padding-right: 20px;
+    /* padding-bottom: 10px; */
+    border-radius: 0px;
+  }
+
+  .filter-button-div {
+    display: flex;
+    flex-direction: row;
+    gap: 10px; /* Adds space between items */
+    justify-content: space-between; /* Distributes items evenly */
+    align-items: center; /* Aligns items vertically */
+    max-width: 100%; /* Ensures it takes full width */
+    padding: 1rem;
+    flex-wrap: wrap; /* in case buttons get too tight */
+  }
+
+  select {
     padding: 8px;
     font-size: 14px;
     width: 200px;
@@ -234,73 +195,127 @@
     border: 2px solid #e6f4fd;
     border-radius: 10px;
     transition: border-color 0.3s ease, box-shadow 0.3s ease;
-    }
+  }
 
-    select:focus {
-      border-color: #e6f4fd;
-      box-shadow: inset 5px 5px 10px #b4d1e3, inset -5px -5px 10px #ffffff !important;
-      outline: none;
-    }
-  
-    input[type="checkbox"] {
-    width: 22px;
-    height: 22px;
-    appearance: none;
-    background-color: #e6f4fd;
-    position: relative;
-    transition: all 0.3s ease;
-    border-radius: 10px;
-    cursor: pointer;  
-    box-shadow: 5px 5px 10px #b4d1e3, -5px -5px 10px #ffffff;
-    transition: all 0.3s ease;
-    }
+  select:focus {
+    border-color: #e6f4fd;
+    box-shadow: inset 5px 5px 10px #b4d1e3, inset -5px -5px 10px #ffffff !important;
+    outline: none;
+  }
 
-    input[type="checkbox"]:checked {
-      box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #ffffff;
-    }
-  
-    .error-message {
-      color: red;
-      font-size: 0.875rem;
-      margin-bottom: 10px;
-    }
-  </style>
-  
-  <div class="home">
-    <h1 class="title">Inactive Projects</h1>
+  select[multiple] {
+    height: 150px; /* Adjust height to show multiple options */
+  }
 
-    <div class="divider"></div>
-  
-    <div class="button-container">
-      <button class="button" on:click={toggleFilter}>
-        <Filter /> {filterActive ? 'Hide Filter' : 'Show Filter'}
-      </button>
-    </div>
+  .checkbox-container {
+    display: flex;
+    gap: 10px; /* Spacing between checkboxes */
+    justify-content: flex-start; /* Align checkboxes to the left */
+    padding: 10px;
+    max-width: 100%; /* Ensures that the container does not overflow */
+    max-height: 250px; 
+    font-size: 0.75rem; /* smaller font size */
+    flex-wrap: wrap; /* Wraps checkboxes to the next line when space is filled */
+    overflow-y: auto;
 
-    {#if filterActive}
-      <div class="filters">
-        <div class="filter-item">
-          <label for="grade">Grade</label>
-          <select id="grade" bind:value={selectedGrade}>
-            <option value="">All Grades</option>
-            {#each ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15', 'V16', 'V17'] as grade}
-              <option value={grade}>{grade}</option>
-            {/each}
+    /* flex-wrap: nowrap;
+    overflow-y: auto; */
+  }
+
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  input[type="checkbox"] {
+    /* width: 15px;
+    height: 15px; */
+    width: 25px !important;
+    height: 15px !important;
+  }
+
+  /* Style the scrollbar */
+  .checkbox-container::-webkit-scrollbar {
+    width: 8px;  /* Adjust the width of the scrollbar */
+  }
+
+  /* Style the thumb (the draggable part of the scrollbar) */
+  .checkbox-container::-webkit-scrollbar-thumb {
+    background-color: #b4d1e3;  /* Set a background color for the thumb */
+    border-radius: 4px;  /* Round the edges of the thumb */
+    border: 2px solid #e6f4fd;  /* Optional: Add a border around the thumb */
+  }
+
+  /* Style the track (the area the thumb moves within) */
+  .checkbox-container::-webkit-scrollbar-track {
+    background-color: #e6f4fd;  /* Set a background color for the track */
+    border-radius: 4px;  /* Round the edges of the track */
+  }
+
+  .error-message {
+    color: red;
+    font-size: 0.875rem;
+    margin-bottom: 10px;
+  }
+</style>
+  
+<div class="home">
+  <h1 class="title">Inactive Projects</h1>
+
+  <div class="divider"></div>
+
+  <div class=top-buttons-container>
+    <button class="button {filterActive ? 'active' : ''}" on:click={toggleFilter}>
+      <Filter /> 
+    </button>
+    
+    <div class="filter-button-container">
+
+      {#if filterActive}
+        <div class="filters" transition:slide={{ duration: 300 }}> 
+          
+          <label for="sentFilter">Sent</label>
+          <select id="sentFilter" bind:value={sentFilterValue} on:change={() => {
+            if (sentFilterValue === 'true') isSent = true;
+            else if (sentFilterValue === 'false') isSent = false;
+            else isSent = null;
+          }}>
+            <option value="all">All</option>
+            <option value="true">Sent</option>
+            <option value="false">Not Sent</option>
           </select>
-        </div>
 
-        <div class="filter-item">
-          <label for="isSent">Sent</label>
-          <input type="checkbox" id="isSent" bind:checked={isSent} />
+          <div class="filter-item">
+            <div class="checkbox-container">
+              {#each ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15', 'V16', 'V17'] as grade}
+                <div class="checkbox-item">
+                  <input 
+                    type="checkbox" 
+                    id={grade} 
+                    value={grade} 
+                    bind:group={selectedGrades} 
+                  />
+                  <label for={grade}>{grade}</label>
+                </div>
+              {/each}
+            </div>
+          </div>
+          
+          <div class="filter-button-div">
+            <button class="button" on:click={applyFilters}>Apply Filters</button> 
+            <button class="button" on:click={clearFilters}>Clear Filters</button>
+          </div>
         </div>
+      {/if}
+    </div>
+  </div>
 
-        <button class="button" on:click={applyFilters}>Apply Filters</button>
-      </div>
-    {/if}
-  
-    <div class="divider"></div>
-  
+  <div class="divider"></div>
+
+  <div class="project-components-container">
     {#each $projectsList as project (project._id)}
-      <ProjectComponent {project} on:projectDeleted={() => fetchProjects({ grade: selectedGrade, isSent })} />
+      <ProjectComponent {project} on:projectDeleted={() => fetchInactiveFilteredProjects()} />
     {/each}
   </div>
+</div>
