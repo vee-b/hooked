@@ -11,6 +11,7 @@
   import { Project } from '../../models/Project';
   import { checkLoginStatus, logoutAccount } from '../../controllers/accountsController';
   import { gradeSystem, getCurrentGrades, convertVScaleGrade, convertFontScaleGrade } from '../../stores/settingsStore';
+  import { fade } from 'svelte/transition';
 
   // Form state and mode indicator
   let projectId: string | undefined = undefined;  // Changed to undefined instead of null
@@ -22,6 +23,8 @@
   let attempts: string = '0';
   let selectedOption: string = ''; // grade
   let dateTime: Date = new Date();
+  let inputDateTime = formatDateForInput(dateTime);
+
   let isSent: boolean = false;
   let isActive: boolean = true;
   let message: string = '';
@@ -36,19 +39,24 @@
     logoutAccount();
   };
 
-  // Helper function to format the Date to "YYYY-MM-DDThh:mm"
   function formatDateForInput(date: Date): string {
-    const pad = (n: number) => n < 10 ? '0' + n : n;
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+    const pad = (n: number) => n.toString().padStart(2, "0");
+
+    const year = date.getFullYear();
+    const month = pad(date.getMonth() + 1);
+    const day = pad(date.getDate());
+    const hours = pad(date.getHours());
+    const minutes = pad(date.getMinutes());
+
+    return `${year}-${month}-${day}T${hours}:${minutes}`;
   }
 
-  // A reactive variable that holds the formatted date string
-  $: formattedDateTime = formatDateForInput(dateTime);
-
-  // When the input changes, update the dateTime variable
-  function updateDateTime(e: Event) {
+  function handleInputChange(e: Event) {
     const target = e.target as HTMLInputElement;
-    dateTime = new Date(target.value);
+    inputDateTime = target.value;
+    if (inputDateTime) {
+      dateTime = new Date(inputDateTime);
+    }
   }
   
   // Fetch query params for projectId
@@ -93,6 +101,7 @@
           //selectedOption = convertVScaleGrade(project.grade, $gradeSystem);
           isSent = project.is_sent || false;
           dateTime = project.date_time ? new Date(project.date_time) : new Date();
+          inputDateTime = formatDateForInput(dateTime);
           isActive = project.is_active || true;
           projectCoordinates = project.coordinates || [];
 
@@ -172,6 +181,7 @@
         // Update project: pass imageFile if a new image was captured.
         await editProject(currentProject, imageFile ?? undefined);
         message = 'Project updated successfully!';
+        setTimeout(() => message = '', 3000);
       } else {
         if (!imageFile) {
           // Fetch and use the default logo image
@@ -433,8 +443,8 @@
     <input
       type="datetime-local"
       id="dateTime"
-      bind:value={formattedDateTime}
-      on:change={updateDateTime}
+      bind:value={inputDateTime}
+      on:change={handleInputChange}
     />
   </div>
 
@@ -463,13 +473,13 @@
     <input type="checkbox" id="isActive" bind:checked={isActive} />
   </div>
 
-  {#if message}
-    <p class="message">{message}</p>
-  {/if}
-
   <div class="form-group">
     <button on:click={submitData}>
       {isEditMode ? "Update Project" : "Add Project"}
     </button>
   </div>
+
+  {#if message}
+    <p class="message" transition:fade>{typeof message === 'string' ? message : JSON.stringify(message)}</p>
+  {/if}
 </div>
