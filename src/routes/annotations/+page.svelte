@@ -8,7 +8,8 @@
   import { invoke } from '@tauri-apps/api/core';
   import { Project } from '../../models/Project';
   import { updateAnnotations, annotations, fetchProjectById } from '../../stores/projectsList';
-  import { checkLoginStatus } from '../../controllers/accountsController';
+  import { checkLoginStatus, logoutAccount } from '../../controllers/accountsController';
+  import { ArrowLeft } from 'lucide-svelte';
   
   let imagePath = '';
   let projectId = '';
@@ -16,6 +17,11 @@
   let points: { lat: string; lng: string; note: string[] }[] = [];
   let editNotesMode = false; // Toggle for enabling/disabling coordinates editing
   let currentNote = ''; // Stores the current note entered by the user
+
+  // Handle logout on button click
+  const handleLogout = () => {
+    logoutAccount();
+  };
 
   // Fetch project details on mount
   onMount(async () => {
@@ -152,9 +158,65 @@
     target.style.height = "auto"; // Reset height
     target.style.height = target.scrollHeight + "px"; // Adjust height
   }
-    </script>
+
+  function navigateBack() {
+    if (history.length > 1) {
+      history.back(); // Navigate to previous page
+    } else {
+      goto('/projectDetails');
+    }
+  }
+</script>
 
 <style>
+  .back-button-wrapper {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+  }
+
+  .back-button {
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    width: 45px;
+    height: 45px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+    margin-left: 1rem;
+  }
+
+  .logout-button-wrapper {
+    position: absolute;
+    top: 1rem;
+    right: 1rem; /* Place the logout button at the top right */
+  }
+
+  .logout-button {
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    width: 80px;
+    height: 45px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+    margin-right: 1rem;
+  }
+
+  .title {
+    color: rgb(57, 57, 57);
+    font-size: 2rem;
+    font-weight: lighter;
+    margin-bottom: 20px;
+    margin-top: 40px;
+    text-align: start;
+    letter-spacing: 8px; 
+  }
+
   .container {
     text-align: center;
     padding: 20px;
@@ -205,7 +267,19 @@
 </style>
 
 <div class="container">
-  <h1>Annotations</h1>
+  <h1 class="title">Annotations</h1>
+
+  <div class="back-button-wrapper">
+    <button class="back-button" on:click={navigateBack}>
+      <ArrowLeft />
+    </button>
+  </div>
+
+  <div class="logout-button-wrapper">
+    <button class="logout-button" on:click={handleLogout}>
+      Logout
+    </button>
+  </div>
   
   {#if imagePath}
       <div class="image-wrapper">

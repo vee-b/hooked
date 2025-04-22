@@ -8,12 +8,17 @@
   import { PlusCircle, Filter } from 'lucide-svelte';
   import type { Project } from '../models/Project';
   import { fetchActiveProjects, fetchActiveFilteredProjects } from '../stores/projectsList';
-  import { checkLoginStatus } from '../controllers/accountsController';
+  import { checkLoginStatus, logoutAccount } from '../controllers/accountsController';
   import { tick } from 'svelte';
   import { slide } from 'svelte/transition'
   import { afterNavigate } from '$app/navigation';
 
   export const projectsList = writable<Project[]>([]);
+
+  // Handle logout on button click
+  const handleLogout = () => {
+    logoutAccount();
+  };
 
   const navigateToNewProject = () => {
     goto('/projectDetails');
@@ -105,6 +110,26 @@
     font-family: 'Poppins', sans-serif;
     background-color: #e6f4fd;
     color: black;
+  }
+
+  .logout-button-wrapper {
+    display: inline;
+    position: absolute;
+    top: 1rem;
+    right: 1rem; /* Place the logout button at the top right */
+  }
+
+  .logout-button {
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    width: 80px;
+    height: 45px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+    margin-right: 1rem;
   }
 
   .project-components-container {
@@ -289,6 +314,12 @@
 
 <div class="home">
   <h1 class="title">Active Projects</h1>
+
+  <div class="logout-button-wrapper">
+    <button class="logout-button" on:click={handleLogout}>
+      Logout
+    </button>
+  </div>
 
   <div class="divider"></div>
 

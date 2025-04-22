@@ -4,12 +4,12 @@
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { invoke } from '@tauri-apps/api/core';
-  import { Camera } from 'lucide-svelte';
+  import { Camera, ArrowLeft, LogOut } from 'lucide-svelte';
   import { Camera as CapacitorCamera, CameraResultType } from '@capacitor/camera';
   import { Capacitor } from '@capacitor/core';
   import { addProject, editProject, fetchProjectById, sanitizeFileName, annotations, initializeProjectsList } from '../../stores/projectsList';
   import { Project } from '../../models/Project';
-  import { checkLoginStatus } from '../../controllers/accountsController';
+  import { checkLoginStatus, logoutAccount } from '../../controllers/accountsController';
   import { gradeSystem, getCurrentGrades, convertVScaleGrade, convertFontScaleGrade } from '../../stores/settingsStore';
 
   // Form state and mode indicator
@@ -30,6 +30,11 @@
 
   $: currentGrades = getCurrentGrades($gradeSystem);
   $: selectedOption = convertVScaleGrade(selectedOption, $gradeSystem);
+
+  // Handle logout on button click
+  const handleLogout = () => {
+    logoutAccount();
+  };
 
   // Helper function to format the Date to "YYYY-MM-DDThh:mm"
   function formatDateForInput(date: Date): string {
@@ -200,11 +205,64 @@
   }
 
   function navigateToHome() {
-    goto('/');
+    if (history.length > 1) {
+      history.back(); // Navigate to previous page
+    } else {
+      goto('/');
+    }
   }
 </script>
 
 <style>
+  .back-button-wrapper {
+    /* display: inline; */
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+  }
+
+  .back-button {
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    width: 45px;
+    height: 45px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+    margin-left: 1rem;
+  }
+
+  .logout-button-wrapper {
+    position: absolute;
+    top: 1rem;
+    right: 1rem; /* Place the logout button at the top right */
+  }
+
+  .logout-button {
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    width: 80px;
+    height: 45px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+    margin-right: 1rem;
+  }
+
+  .title {
+    color: rgb(57, 57, 57);
+    font-size: 2rem;
+    font-weight: lighter;
+    margin-bottom: 20px;
+    margin-top: 40px;
+    text-align: start;
+    letter-spacing: 8px; 
+  }
+
   .container {
     max-width: 400px;
     margin: 0 auto;
@@ -264,29 +322,6 @@
     margin-right: 5px; 
   }
 
-
-
-  /* .checkbox-container {
-    display: flex;
-    gap: 10px; 
-    font-size: 0.75rem; 
-  }
-
-  .checkbox-item {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-  }
-
-  input[type="checkbox"] {
-    width: 25px !important;
-    height: 15px !important;
-  } */
-
-
-
-
-
   button {
     display: block;
     width: 100%;
@@ -326,12 +361,24 @@
   }
 </style>
 
-<div class="container">
-  <h1>{isEditMode ? "Edit Project" : "Add Project"}</h1>
+<div class="container">  
+  <h1 class="title">{isEditMode ? "Edit Project" : "Add Project"}</h1>
 
   {#if message}
     <p class="message">{message}</p>
   {/if}
+
+  <div class="back-button-wrapper">
+    <button class="back-button" on:click={navigateToHome}>
+      <ArrowLeft />
+    </button>
+  </div>
+
+  <div class="logout-button-wrapper">
+    <button class="logout-button" on:click={handleLogout}>
+      Logout
+    </button>
+  </div>
 
   <div class="button-row">
     <button on:click={pickImage}>
@@ -399,9 +446,5 @@
     <button on:click={submitData}>
       {isEditMode ? "Update Project" : "Add Project"}
     </button>
-  </div>
-
-  <div class="button-row">
-    <button on:click={navigateToHome}>Back to Home</button>
   </div>
 </div>

@@ -42,6 +42,25 @@
     letter-spacing: 8px; /* Adjust the value to control the space between letters */
   }
 
+  .logout-button-wrapper {
+    position: absolute;
+    top: 1rem;
+    left: 1.5rem; /* Place the logout button at the top right */
+  }
+
+  .logout-button {
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    width: 80px;
+    height: 45px;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background 0.3s ease;
+    margin-right: 1rem;
+  }
+
   .grade-dropdown {
     border: p-2 rounded;
     width: 40%;
@@ -68,6 +87,12 @@
 </style>
 
 <div class="settings">
+  <div class="logout-button-wrapper">
+    <button class="logout-button" on:click={handleLogout}>
+      Logout
+    </button>
+  </div>
+  
   <h1 class="title">Settings</h1>
 
   <!-- Dropdown for Grade System -->
@@ -83,8 +108,4 @@
   </select>
 
   <!-- <p>Grade System: {$gradeSystem}</p> -->
-
-  <button on:click={handleLogout} class="logout-button">
-    Logout
-  </button>
 </div>
