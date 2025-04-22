@@ -182,26 +182,51 @@
         }
         await addProject(currentProject, imageFile);
         message = 'Project added successfully!';
-        goto(`/`);
+        // goto(`/`);
 
+        // if (history.length > 1) {
+        //   history.back(); // Navigate to previous page
+        // } else {
+        //   goto('/');
+        // }
       }
-      resetForm();
+      await resetForm();
     } catch (error) {
       console.error('Error submitting project:', error);
       message = isEditMode ? 'Failed to update project.' : 'Failed to add project.';
     }
   }
 
-  // Reset form fields after submission.
-  function resetForm() {
-    imagePath = 'No Image';
-    imagePreview = '/images/logo.png';
-    attempts = '0';
-    selectedOption = '';
-    dateTime = new Date();
-    isSent = false;
-    isActive = true;
-    imageFile = null;
+  // Reset from with updated project details
+  async function resetForm() {
+    if (!projectId) {
+      console.warn('No projectId provided for reset.');
+      return;
+    }
+
+    try {
+      const updatedProject = await fetchProjectById(projectId);
+
+      if (!updatedProject) {
+        console.warn('Updated project not found.');
+        return;
+      }
+
+      project = updatedProject;
+      imagePath = updatedProject.image_path || 'No Image';
+      imagePreview = updatedProject.image_path || '/images/logo.png';
+      attempts = updatedProject.attempts?.toString() || '0';
+      selectedOption = updatedProject.grade || '';
+      isSent = updatedProject.is_sent ?? false;
+      dateTime = updatedProject.date_time ? new Date(updatedProject.date_time) : new Date();
+      isActive = updatedProject.is_active ?? true;
+      projectCoordinates = updatedProject.coordinates || [];
+
+      console.log('Form populated with updated project.');
+    } catch (error) {
+      console.error('Error fetching updated project:', error);
+      message = 'Error fetching updated project data.';
+    }
   }
 
   function navigateToHome() {
@@ -364,10 +389,6 @@
 <div class="container">  
   <h1 class="title">{isEditMode ? "Edit Project" : "Add Project"}</h1>
 
-  {#if message}
-    <p class="message">{message}</p>
-  {/if}
-
   <div class="back-button-wrapper">
     <button class="back-button" on:click={navigateToHome}>
       <ArrowLeft />
@@ -441,6 +462,10 @@
     <label for="isActive" class="checkbox-item">Active</label>
     <input type="checkbox" id="isActive" bind:checked={isActive} />
   </div>
+
+  {#if message}
+    <p class="message">{message}</p>
+  {/if}
 
   <div class="form-group">
     <button on:click={submitData}>
