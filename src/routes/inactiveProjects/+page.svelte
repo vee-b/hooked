@@ -11,6 +11,7 @@
   import { checkLoginStatus } from '../../controllers/accountsController';
   import { tick } from 'svelte';
   import { slide } from 'svelte/transition'
+  import { afterNavigate } from '$app/navigation';
   
   export const projectsList = writable<Project[]>([]);
   
@@ -42,6 +43,10 @@
     } else {
       goto('/login'); // Redirect if not logged in
     }
+  });
+
+  afterNavigate(() => {
+    fetchProjects(); // or fetchFilteredProjects if filters should persist
   });
   
   let filterActive = false;

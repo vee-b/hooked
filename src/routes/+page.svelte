@@ -11,6 +11,7 @@
   import { checkLoginStatus } from '../controllers/accountsController';
   import { tick } from 'svelte';
   import { slide } from 'svelte/transition'
+  import { afterNavigate } from '$app/navigation';
 
   export const projectsList = writable<Project[]>([]);
 
@@ -39,13 +40,17 @@
     }
   };
 
-  onMount(() => {
+  onMount(async () => {
     const isLoggedIn = checkLoginStatus();  // Check login status when the component mounts
     if (isLoggedIn) {
       fetchProjects();
     } else {
       goto('/login'); // Redirect if not logged in
     }
+  });
+
+  afterNavigate(() => {
+    fetchProjects(); // or fetchFilteredProjects if filters should persist
   });
 
   let filterActive = false;
@@ -167,6 +172,20 @@
     max-width: 100%;
   }
 
+  .sent-filter-container {
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  /* Make the sent and grade labels smaller */
+  .sent-filter-container label,
+  .filters > label {
+    font-size: 0.9rem;
+  }
+
+
   .filter-item {
     display: flex;
     align-items: center;
@@ -283,17 +302,20 @@
       {#if filterActive}
         <div class="filters" transition:slide={{ duration: 300 }}> 
           
-          <label for="sentFilter">Sent</label>
-          <select id="sentFilter" bind:value={sentFilterValue} on:change={() => {
-            if (sentFilterValue === 'true') isSent = true;
-            else if (sentFilterValue === 'false') isSent = false;
-            else isSent = null;
-          }}>
-            <option value="all">All</option>
-            <option value="true">Sent</option>
-            <option value="false">Not Sent</option>
-          </select>
+          <div class="sent-filter-container">
+            <label for="sentFilter">Sent</label>
+            <select id="sentFilter" bind:value={sentFilterValue} on:change={() => {
+              if (sentFilterValue === 'true') isSent = true;
+              else if (sentFilterValue === 'false') isSent = false;
+              else isSent = null;
+            }}>
+              <option value="all">All</option>
+              <option value="true">Sent</option>
+              <option value="false">Not Sent</option>
+            </select>
+          </div>
 
+          <label for="checkbox-container">Grade</label>
           <div class="filter-item">
             <div class="checkbox-container">
               {#each ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15', 'V16', 'V17'] as grade}

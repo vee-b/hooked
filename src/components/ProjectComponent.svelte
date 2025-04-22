@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { createEventDispatcher } from 'svelte';
+    import { createEventDispatcher, tick } from 'svelte';
     import { deleteProject, projectsList } from "../stores/projectsList";
     import type { Project } from '../models/Project';
     import { goto } from '$app/navigation'; // Import goto for navigation
@@ -50,6 +50,7 @@
       dispatch('projectDeleted', project._id);
 
       // Force UI refresh by navigating to the same page
+      await tick(); // wait for DOM to mount
       await goto(window.location.pathname);
 
       } catch (error) {
