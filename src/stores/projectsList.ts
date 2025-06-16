@@ -421,7 +421,6 @@ export async function editProject(updatedProject: Project, imageFile?: File): Pr
       attempts: updatedProject.attempts,
       grade: updatedProject.grade,
       is_active: updatedProject.is_active ? 1 : 0, // Convert boolean to integer
-      coordinates: updatedProject.coordinates || [],
     };
 
     console.log("Project details being sent to backend:", formattedProject);

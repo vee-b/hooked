@@ -17,6 +17,9 @@
   let points: { lat: string; lng: string; note: string[] }[] = [];
   let editNotesMode = false; // Toggle for enabling/disabling coordinates editing
   let currentNote = ''; // Stores the current note entered by the user
+  let selectedPointIndex: number | null = null;
+  let originalPosition: { lat: string; lng: string } | null = null;
+
 
   // Handle logout on button click
   const handleLogout = () => {
@@ -63,21 +66,27 @@
   }
 
   function handleClick(event: MouseEvent) {
-    if (editNotesMode) return; // Prevent adding new points if in edit mode
-
     const img = event.target as HTMLImageElement;
     const rect = img.getBoundingClientRect();
     const clickLat = ((event.clientX - rect.left) / rect.width).toFixed(4);
     const clickLng = ((event.clientY - rect.top) / rect.height).toFixed(4);
 
-    // Convert lat/lng to float for comparison
     const clickLatNum = parseFloat(clickLat);
     const clickLngNum = parseFloat(clickLng);
 
-    // Define the tolerance (2% of the image width/height)
     const tolerance = 0.02;
 
-    // Check if click is near an existing point
+    if (editNotesMode) {
+      // Update position of the marker being edited
+      if (selectedPointIndex !== null && points[selectedPointIndex]) {
+        points[selectedPointIndex].lat = clickLat;
+        points[selectedPointIndex].lng = clickLng;
+        points = [...points]; // Trigger reactivity
+      }
+      return;
+    }
+
+    // Not in edit mode — check for existing point to edit
     let clickedPointIndex = points.findIndex(({ lat, lng }) => {
       const latNum = parseFloat(lat);
       const lngNum = parseFloat(lng);
@@ -88,31 +97,53 @@
     });
 
     if (clickedPointIndex !== -1) {
-      // If user clicked near an existing marker, enable edit mode for that point
+      // Enter edit mode for existing point
+      selectedPointIndex = clickedPointIndex;
+
+      originalPosition = {
+      lat: points[clickedPointIndex].lat,
+      lng: points[clickedPointIndex].lng,
+    };
+
       editNotesMode = true;
-      currentNote = points[clickedPointIndex].note.join(', '); // Load existing note
+      currentNote = points[clickedPointIndex].note.join(', ');
     } else {
-      // Otherwise, add a new point
-      points = [...points, { lat: clickLat, lng: clickLng, note: [] }];
-      toggleEditMode(); // Enable edit mode for new point
+      // Add new point
+      const newPoint = { lat: clickLat, lng: clickLng, note: [] };
+      points = [...points, newPoint];
+      selectedPointIndex = points.length - 1;
+      
+      originalPosition = {
+        lat: newPoint.lat,
+        lng: newPoint.lng,
+      };
+
+      editNotesMode = true;
+      currentNote = '';
     }
   }
-  
-  // Currently broken
+
   function cancelAnnotations() {
-    if (!editNotesMode) return; // Only allow canceling if in edit mode
+    if (!editNotesMode) return;
 
-    if (points.length > 0) {
-        const lastPoint = points[points.length - 1];
-
-        // Check if note is empty
-        if (lastPoint.note && lastPoint.note.length === 0) {
-            points = points.slice(0, -1); // Remove last added marker
-        }
+    if (selectedPointIndex !== null) {
+      // Check if it's a newly added point with no note
+      if (points[selectedPointIndex]?.note.length === 0) {
+        points.splice(selectedPointIndex, 1);
+      } else if (originalPosition) {
+        // Revert to original position
+        points[selectedPointIndex].lat = originalPosition.lat;
+        points[selectedPointIndex].lng = originalPosition.lng;
+      }
+      points = [...points]; // Trigger reactivity
     }
-    currentNote = ''; // Clear any entered note
-    toggleEditMode(); // Exit edit mode
+
+    selectedPointIndex = null;
+    originalPosition = null;
+    currentNote = '';
+    toggleEditMode();
   }
+
 
   async function clearAnnotations() {
       points = []; // Reset points array
@@ -122,6 +153,37 @@
       await goto(`/annotations?id=${projectId}&image=${imagePath}`);
   }
 
+  async function removeMarker() {
+    if (!editNotesMode) return;
+
+    // Attempt to find the marker being edited
+    const markerIndex = points.findIndex(
+      (point) => point.note.join(', ') === currentNote
+    );
+
+    if (markerIndex !== -1) {
+      points.splice(markerIndex, 1); // Remove from array
+      points = [...points]; // Trigger reactive update
+    } else {
+      // Fallback: Remove last marker if it has no note
+      const lastPoint = points[points.length - 1];
+      if (lastPoint && (!lastPoint.note || lastPoint.note.length === 0)) {
+        points = points.slice(0, -1);
+      }
+    }
+
+    currentNote = '';
+    editNotesMode = false;
+
+    // Save the updated points to the database
+    try {
+      await updateAnnotations(projectId, points);
+    } catch (error) {
+      console.error('Error saving annotation updates after removal:', error);
+    }
+  }
+
+
   async function saveNote() {
     if (!currentNote.trim()) {
         alert('Please enter a note before saving.');
@@ -129,7 +191,7 @@
     }
 
     // Find the last clicked marker (or currently edited one)
-    const selectedPointIndex = points.findIndex(point => point.note.join(', ') === currentNote);
+    let selectedPointIndex: number | null = points.findIndex(point => point.note.join(', ') === currentNote);
 
     if (selectedPointIndex !== -1) {
         points[selectedPointIndex].note = [currentNote]; // Update the correct point's note
@@ -146,6 +208,9 @@
         await updateAnnotations(projectId, points);
         currentNote = ''; // Clear input
         toggleEditMode(); // Exit edit mode
+
+        selectedPointIndex = null;
+
         await goto(`/annotations?id=${projectId}&image=${imagePath}`);
     } catch (error) {
         console.error('Error saving annotations:', error);
@@ -324,7 +389,8 @@
       on:input={autoResize}
     ></textarea>
     <div class="button-group">
-        <button on:click={saveNote}>Save Note</button>
+        <button on:click={saveNote}>Save Note/s</button>
+        <button on:click={removeMarker}>Remove Marker & Notes</button>
         <!-- <button on:click={() => goto(`/annotations?id=${projectId}&image=${imagePath}`)}>Cancel</button> -->
         <button on:click={cancelAnnotations}>Cancel</button>
     </div>
