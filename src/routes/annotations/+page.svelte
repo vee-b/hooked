@@ -19,6 +19,7 @@
   let currentNote = ''; // Stores the current note entered by the user
   let selectedPointIndex: number | null = null;
   let originalPosition: { lat: string; lng: string } | null = null;
+  let selectedColor = 'white'; // Default marker color
 
 
   // Handle logout on button click
@@ -300,7 +301,7 @@
       position: absolute;
       width: 10px;
       height: 10px;
-      background-color: red;
+      background-color: white;
       /* background-color: black;
       background-color: greenyellow; */
       border-radius: 50%;
@@ -354,7 +355,9 @@
           {#each points as { lat, lng }}
               <div 
                 class="marker" 
-                style="left: {parseFloat(lat) * 100}%; top: {parseFloat(lng) * 100}%;"
+                style="left: {parseFloat(lat) * 100}%; 
+                top: {parseFloat(lng) * 100}%;;
+                background-color: {selectedColor};"
                 on:click={(event) => handleClick(event)}
                 ></div>
           {/each}
@@ -376,6 +379,16 @@
 
   {#if !editNotesMode}
     <button on:click={clearAnnotations}>Clear All Notes</button>
+
+    
+    <div class="button-group">
+      Marker Colours:
+      <button on:click={() => selectedColor = 'white'} style="background-color: white; border-radius: 10px;"></button>
+      <button on:click={() => selectedColor = 'black'} style="background-color: black; border-radius: 10px;"></button>
+      <button on:click={() => selectedColor = 'red'} style="background-color: red; border-radius: 10px;"></button>
+      <button on:click={() => selectedColor = 'green'} style="background-color: green; border-radius: 10px;"></button>
+      <button on:click={() => selectedColor = 'blue'} style="background-color: blue; border-radius: 10px;"></button>
+    </div>
   {/if}
 
   {#if editNotesMode}
