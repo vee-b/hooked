@@ -31,6 +31,9 @@
   let imageFile: File | null = null;
   const options = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15', 'V16', 'V17'];
 
+  const allStyles = ['Vert', 'Overhang', 'Slab', 'Roof', 'Static', 'Dyno'];
+  let selectedStyles: string[] = [];
+
   $: currentGrades = getCurrentGrades($gradeSystem);
   $: selectedOption = convertVScaleGrade(selectedOption, $gradeSystem);
 
@@ -38,6 +41,14 @@
   const handleLogout = () => {
     logoutAccount();
   };
+
+  function toggleStyle(style: string) {
+    if (selectedStyles.includes(style)) {
+      selectedStyles = selectedStyles.filter(s => s !== style);
+    } else {
+      selectedStyles = [...selectedStyles, style];
+    }
+  }
 
   function formatDateForInput(date: Date): string {
     const pad = (n: number) => n.toString().padStart(2, "0");
@@ -102,8 +113,9 @@
           isSent = project.is_sent || false;
           dateTime = project.date_time ? new Date(project.date_time) : new Date();
           inputDateTime = formatDateForInput(dateTime);
-          isActive = project.is_active || true;
+          isActive = project.is_active !== undefined ? project.is_active : true;
           projectCoordinates = project.coordinates || [];
+          selectedStyles = project.style || [];
 
           // Log project data to verify everything is fetched correctly
           console.log('Fetched Project:', project);
@@ -175,6 +187,7 @@
         grade: gradeToStore,
         is_active: isActive,
         coordinates: projectCoordinates,
+        style: selectedStyles,
       });
 
       if (isEditMode) {
@@ -457,6 +470,50 @@
       {/each}
     </select>
   </div>
+
+  <!-- <div class="dropdown">
+    <label class="dropdown-label">Style</label>
+    <div class="dropdown-menu">
+      {#each allStyles as style}
+        <label class="dropdown-item">
+          <input
+            type="checkbox"
+            bind:group={selectedStyles}
+            value={style}
+          />
+          {style}
+        </label>
+      {/each}
+    </div>
+  </div> -->
+
+  <!-- BUTTONS -->
+  <!-- <div class="styles-container">
+    {#each allStyles as style}
+      <button
+        type="button"
+        class:selected={selectedStyles.includes(style)}
+        on:click={() => toggleStyle(style)}
+      >
+        {style}
+      </button>
+    {/each}
+  </div> -->
+
+  <!-- CHECKBOXES -->
+  <div class="styles-container">
+    {#each allStyles as style}
+      <label class="checkbox-style">
+        <input
+          type="checkbox"
+          checked={selectedStyles.includes(style)}
+          on:change={() => toggleStyle(style)}
+        />
+        {style}
+      </label>
+    {/each}
+  </div>
+
 
   <div class="form-group">
     <label for="attempts">Attempts</label>

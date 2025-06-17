@@ -14,6 +14,7 @@ export interface MongoDBProject {
   attempts: number;
   is_active: boolean;
   coordinates?: { lat: number; lng: number; note?: string[] }[];
+  style?: string[];
 }
 
 // Initialize the project list as a Svelte store.
@@ -421,6 +422,7 @@ export async function editProject(updatedProject: Project, imageFile?: File): Pr
       attempts: updatedProject.attempts,
       grade: updatedProject.grade,
       is_active: updatedProject.is_active ? 1 : 0, // Convert boolean to integer
+      style: updatedProject.style,
     };
 
     console.log("Project details being sent to backend:", formattedProject);

@@ -30,6 +30,7 @@ pub struct Project {
     pub grade: String,
     pub is_active: i32,
     pub coordinates: Vec<Coordinate>,
+    pub style: Option<Vec<String>>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]
