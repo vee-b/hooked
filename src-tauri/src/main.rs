@@ -331,25 +331,47 @@ async fn update_project(client: State<'_, MongoClient>, project: Project) -> Res
             update_doc.insert("is_sent", bson::Bson::Int32(if *is_sent { 1 } else { 0 }));
         }
 
-        // Ensure `coordinates` field is properly handled as an array of floats
-        if let Some(bson::Bson::Array(coordinates)) = update_doc.get("coordinates") {
-            // Log the received coordinates
-            println!("Received coordinates: {:?}", coordinates);
+        // // Ensure `coordinates` field is properly handled as an array of floats
+        // if let Some(bson::Bson::Array(coordinates)) = update_doc.get("coordinates") {
+        //     // Log the received coordinates
+        //     println!("Received coordinates: {:?}", coordinates);
             
-            // We assume that coordinates is an array of numbers (floats or integers).
-            let coordinates: Vec<f64> = coordinates.iter()
-                .filter_map(|bson| match bson {
-                    bson::Bson::Double(val) => Some(*val),
-                    bson::Bson::Int32(val) => Some(*val as f64),
-                    bson::Bson::Int64(val) => Some(*val as f64),
-                    _ => None, // Ignore invalid types
-                })
-                .collect();
+        //     // We assume that coordinates is an array of numbers (floats or integers).
+        //     let coordinates: Vec<f64> = coordinates.iter()
+        //         .filter_map(|bson| match bson {
+        //             bson::Bson::Double(val) => Some(*val),
+        //             bson::Bson::Int32(val) => Some(*val as f64),
+        //             bson::Bson::Int64(val) => Some(*val as f64),
+        //             _ => None, // Ignore invalid types
+        //         })
+        //         .collect();
 
-            // Log the coordinates before updating
-            println!("Processed coordinates: {:?}", coordinates);
+        //     // Log the coordinates before updating
+        //     println!("Processed coordinates: {:?}", coordinates);
             
-            update_doc.insert("coordinates", bson::Bson::Array(coordinates.iter().map(|&x| bson::Bson::Double(x)).collect()));
+        //     update_doc.insert("coordinates", bson::Bson::Array(coordinates.iter().map(|&x| bson::Bson::Double(x)).collect()));
+        // }
+
+        // Handle `coordinates` only if valid array of objects
+        let valid_coordinates = match update_doc.get("coordinates") {
+            Some(bson::Bson::Array(array)) if !array.is_empty() => {
+                // Log and preserve array as-is
+                println!("Valid coordinates received: {:?}", array);
+                true
+            }
+            _ => false,
+        };
+
+        // If not valid, fetch existing coordinates and use them
+        if !valid_coordinates {
+            if let Ok(existing_doc) = collection.find_one(filter.clone(), None).await {
+                if let Some(existing_coordinates) = existing_doc
+                    .and_then(|doc| doc.get("coordinates").cloned())
+                {
+                    println!("Reusing existing coordinates: {:?}", existing_coordinates);
+                    update_doc.insert("coordinates", existing_coordinates);
+                }
+            }
         }
 
         let update = doc! {"$set": update_doc};

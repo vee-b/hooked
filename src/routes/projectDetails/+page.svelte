@@ -1,5 +1,10 @@
 <!-- src/routes/projectDetails/+page.svelte -->
 
+<!-- 
+When 'isEditMode' == true, the project update/edit page is shown.
+When 'isEditMode' == false, the add new project page is shown.
+-->
+
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
@@ -31,7 +36,7 @@
   let imageFile: File | null = null;
   const options = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15', 'V16', 'V17'];
 
-  const allStyles = ['Vert', 'Overhang', 'Slab', 'Roof', 'Static', 'Dyno'];
+  const allStyles = ['Trad', 'Top Rope', 'Bouldering', 'Topout', 'Traverse', 'Vert', 'Overhang', 'Slab', 'Roof', 'Static', 'Dyno', 'Technical', 'Reachy', 'Sustained', 'Power', 'Campusing', 'Slopers', 'Crimps', 'Jugs', 'Pinches', 'Pockets', 'Undercut', 'Side Pull', 'Hidden Hold/s', 'Volumes'];
   let selectedStyles: string[] = [];
 
   $: currentGrades = getCurrentGrades($gradeSystem);
@@ -48,6 +53,8 @@
     } else {
       selectedStyles = [...selectedStyles, style];
     }
+    console.log('Selected styles being submitted:', selectedStyles);
+
   }
 
   function formatDateForInput(date: Date): string {
@@ -244,6 +251,7 @@
       dateTime = updatedProject.date_time ? new Date(updatedProject.date_time) : new Date();
       isActive = updatedProject.is_active ?? true;
       projectCoordinates = updatedProject.coordinates || [];
+      selectedStyles = updatedProject.style || [];
 
       console.log('Form populated with updated project.');
     } catch (error) {

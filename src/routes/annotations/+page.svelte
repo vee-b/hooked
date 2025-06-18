@@ -19,7 +19,7 @@
   let currentNote = ''; // Stores the current note entered by the user
   let selectedPointIndex: number | null = null;
   let originalPosition: { lat: string; lng: string } | null = null;
-  let selectedColor = 'white'; // Default marker color
+  let selectedColor = 'red'; // Default marker color
 
 
   // Handle logout on button click

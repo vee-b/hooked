@@ -409,6 +409,13 @@ export async function editProject(updatedProject: Project, imageFile?: File): Pr
       }
     }
 
+     // 👇 Fetch the existing project from the backend to preserve coordinates
+    const existingProject: Project = await invoke("get_project_by_id", {
+      id: updatedProject._id,
+    });
+
+    console.log("Fetched existing project for coordinates:", existingProject);
+
     console.log("Updating project:", updatedProject);
 
     // Ensure correct formatting before sending to Rust
@@ -422,6 +429,7 @@ export async function editProject(updatedProject: Project, imageFile?: File): Pr
       attempts: updatedProject.attempts,
       grade: updatedProject.grade,
       is_active: updatedProject.is_active ? 1 : 0, // Convert boolean to integer
+      coordinates: existingProject.coordinates,
       style: updatedProject.style,
     };
 
