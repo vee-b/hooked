@@ -299,14 +299,22 @@
   }
   .marker {
       position: absolute;
-      width: 10px;
-      height: 10px;
+      width: 20px;
+      height: 20px;
       background-color: white;
       /* background-color: black;
       background-color: greenyellow; */
       border-radius: 50%;
       transform: translate(-50%, -50%);
       pointer-events: none; /* ✅ Allows clicks to pass through */
+
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 12px;
+      font-weight: bold;
+      color: black;
+      user-select: none;
   }
   .coordinates {
     margin-top: 15px;
@@ -352,14 +360,17 @@
           <img src={imagePath} alt="Annotate Image" on:click={handleClick} />
           
           
-          {#each points as { lat, lng }}
+          {#each points as { lat, lng }, i}
               <div 
                 class="marker" 
                 style="left: {parseFloat(lat) * 100}%; 
                 top: {parseFloat(lng) * 100}%;;
-                background-color: {selectedColor};"
+                background-color: {selectedColor};
+                color: {selectedColor === 'black' || selectedColor === 'blue' ? 'white' : 'black'};"
                 on:click={(event) => handleClick(event)}
-                ></div>
+                >
+              {i + 1}
+              </div>
           {/each}
       </div>
   {/if}
@@ -388,6 +399,7 @@
       <button on:click={() => selectedColor = 'red'} style="background-color: red; border-radius: 10px;"></button>
       <button on:click={() => selectedColor = 'green'} style="background-color: green; border-radius: 10px;"></button>
       <button on:click={() => selectedColor = 'blue'} style="background-color: blue; border-radius: 10px;"></button>
+      <button on:click={() => selectedColor = 'yellow'} style="background-color: yellow; border-radius: 10px;"></button>
     </div>
   {/if}
 
