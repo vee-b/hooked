@@ -26,7 +26,7 @@
       align-items: center;
       padding: 0.5rem 0;
       z-index: 10;
-      background-color: #e6f4fd;
+      background-color: #f3f9f9fa;
       font-family: 'Poppins', sans-serif;
     }
   
@@ -40,8 +40,9 @@
       padding: 1rem;
       border: none;
       border-radius: 10px;
-      background: #e6f4fd;
-      box-shadow: 5px 5px 10px #b4d1e3, -5px -5px 10px #ffffff;
+      background: #f3f9f9fa;
+      /* box-shadow: 5px 5px 10px #b4d1e3, -5px -5px 10px #ffffff; */
+      box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.123), -5px -5px 10px #ffffff;
       transition: all 0.3s ease;
     }
 
@@ -53,7 +54,8 @@
   
     a:hover,
     a.active {
-      box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #ffffff;
+      /* box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #ffffff; */
+      box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.123), inset -3px -3px 6px #ffffff;
     }
   
     .icon {

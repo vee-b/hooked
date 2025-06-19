@@ -88,7 +88,7 @@
 <style global>
   /* Body and Background */
   body {
-    background-color: #e6f4fd; /* Dark background */
+    background-color: #f3f9f9fa;
     font-family: 'Poppins', sans-serif;
     margin: 0;
     padding: 0;
@@ -100,7 +100,7 @@
     text-align: center;
     padding: 1rem;
     font-family: 'Poppins', sans-serif;
-    background-color: #e6f4fd;
+    /* background-color: #e6f4fd; */
     color: black;
   }
 

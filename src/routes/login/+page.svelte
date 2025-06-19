@@ -165,7 +165,7 @@
 
     <style global>
       body {
-        background-color: #e6f4fd;
+        background-color: #f3f9f9fa;
         font-family: 'Poppins', sans-serif;
         margin: 0;
         padding: 0;
@@ -185,7 +185,7 @@
         padding-left: 40px;
         padding-right: 40px;
         margin-top: 40px;
-        background: #e6f4fd;
+        background: #f3f9f9fa;
         border-radius: 20px;
         text-align: center;
         transition: all 0.3s ease;
@@ -197,8 +197,8 @@
         padding: 1rem;
         border-radius: 10px;
         border: none;
-        background: #e6f4fd;
-        box-shadow: inset 5px 5px 10px #b4d1e3, inset -5px -5px 10px #ffffff;
+        background: #f3f9f9fa;
+        box-shadow: inset 5px 5px 10px #b4d1e3, inset -5px -5px 10px #f3f9f9fa;
         color: #333;
         font-size: 1rem;
         outline: none;

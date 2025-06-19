@@ -19,8 +19,7 @@
   let currentNote = ''; // Stores the current note entered by the user
   let selectedPointIndex: number | null = null;
   let originalPosition: { lat: string; lng: string } | null = null;
-  let selectedColor = 'red'; // Default marker color
-
+  let selectedColor = 'White'; // Default marker color
 
   // Handle logout on button click
   const handleLogout = () => {
@@ -366,7 +365,7 @@
                 style="left: {parseFloat(lat) * 100}%; 
                 top: {parseFloat(lng) * 100}%;;
                 background-color: {selectedColor};
-                color: {selectedColor === 'black' || selectedColor === 'blue' ? 'white' : 'black'};"
+                color: {selectedColor === 'black' ? 'white' : 'black'};"
                 on:click={(event) => handleClick(event)}
                 >
               {i + 1}
@@ -374,19 +373,6 @@
           {/each}
       </div>
   {/if}
-
-  <!-- <button on:click={toggleEditMode}>
-      {editNotesMode ? 'Disable Note Editing' : 'Add Notes'}
-    </button> -->
-
-  <!-- <div class="coordinates">
-    <h3>Coordinates:</h3>
-    <ul>
-      {#each points as { lat, lng}, i}
-        <li>Point {i + 1}: X: {lat}, Y: {lng}</li>
-      {/each}
-    </ul>
-  </div> -->
 
   {#if !editNotesMode}
     <button on:click={clearAnnotations}>Clear All Notes</button>
@@ -396,10 +382,6 @@
       Marker Colours:
       <button on:click={() => selectedColor = 'white'} style="background-color: white; border-radius: 10px;"></button>
       <button on:click={() => selectedColor = 'black'} style="background-color: black; border-radius: 10px;"></button>
-      <button on:click={() => selectedColor = 'red'} style="background-color: red; border-radius: 10px;"></button>
-      <button on:click={() => selectedColor = 'green'} style="background-color: green; border-radius: 10px;"></button>
-      <button on:click={() => selectedColor = 'blue'} style="background-color: blue; border-radius: 10px;"></button>
-      <button on:click={() => selectedColor = 'yellow'} style="background-color: yellow; border-radius: 10px;"></button>
     </div>
   {/if}
 

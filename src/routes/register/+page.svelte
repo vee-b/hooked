@@ -149,7 +149,7 @@
 
   <style global>
     body {
-      background-color: #e6f4fd;
+      /* background-color: #e6f4fd; */
       font-family: 'Roboto', sans-serif;
       margin: 0;
       padding: 0;
@@ -168,7 +168,7 @@
       padding-left: 40px;
       padding-right: 40px;
       margin-top: 40px;
-      background: #e6f4fd;
+      background: #f3f9f9fa;
       border-radius: 20px;
       text-align: center;
       transition: all 0.3s ease;

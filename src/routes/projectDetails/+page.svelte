@@ -444,7 +444,7 @@ When 'isEditMode' == false, the add new project page is shown.
 
   {#if isEditMode}
     <button on:click={() => goto(`/annotations?id=${projectId}&image=${encodeURIComponent(imagePath)}`)}>
-      Annotations
+      Edit Annotations
     </button>
   {/if}
 
