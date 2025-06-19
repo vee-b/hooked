@@ -10,6 +10,7 @@
   import { tick } from 'svelte';
   import { slide } from 'svelte/transition'
   import { afterNavigate } from '$app/navigation';
+  import Select from 'svelte-select';
 
   export const projectsList = writable<Project[]>([]);
 
@@ -58,7 +59,6 @@
 
   let filterActive = false;
   let selectedGrades: string[] = []; // Store multiple selected grades
-  //let isSent: boolean;
   let isSent: boolean | null = null; // null = no filter applied
   let sentFilterValue: string = 'all';
 
