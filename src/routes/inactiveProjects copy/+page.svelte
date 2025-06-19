@@ -88,11 +88,11 @@
 <style global>
   /* Body and Background */
   body {
-    /* background-color: #e6f4fd; */
+    background-color: #f3f9f9fa;
     font-family: 'Poppins', sans-serif;
     margin: 0;
     padding: 0;
-    color: black; /* Light text for contrast */
+    color: black; 
     margin-bottom: 3rem;
   }
   
@@ -137,13 +137,15 @@
     border-radius: 10px;
     font-size: 1rem;
     cursor: pointer;
-    background: #e6f4fd;
-    box-shadow: 5px 5px 10px #b4d1e3, -5px -5px 10px #ffffff;
+    /* background: #e6f4fd;
+    box-shadow: 5px 5px 10px #b4d1e3, -5px -5px 10px #ffffff; */
+    background: #f3f9f9fa;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.123), -5px -5px 10px #ffffff;
     transition: all 0.3s ease;
   }
 
   .button:hover {
-    box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #e6f4fd;
+    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.123), inset -3px -3px 6px #ffffff;
   }
 
   .top-buttons-container {

@@ -59,7 +59,96 @@
     }
   </script>
 
-  <!-- <style>
+  <style>
+  .card {
+    background: #ffffff;
+    border-radius: 1rem;
+    margin: 1rem;
+    overflow: hidden;
+    /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06); */
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.123), -5px -5px 10px #ffffff;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+  }
+
+  .card-content {
+    padding: 1rem;
+  }
+
+  .title-row {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.5rem;
+  }
+
+  .info {
+    font-size: 0.95rem;
+    color: #374151;
+    margin: 0.25rem 0;
+  }
+
+  .button-row {
+    display: flex;
+    flex-direction: row;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .btn {
+      width: 100%;
+      padding: 12px;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: lighter;
+      cursor: pointer;
+      border: none;
+      /* border-radius: 9999px;  */
+      border-radius: 1rem;
+      background: #ffffff;
+      box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.123), -5px -5px 10px #ffffff;
+      transition: all 0.3s ease;
+    }
+
+    .btn:hover {
+      box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.123), inset -3px -3px 6px #ffffff;
+    }
+</style>
+
+<div class="card">
+  {#if project.image_path}
+    <img src={project.image_path} alt="Project" loading="lazy" />
+  {/if}
+
+  <div class="card-content">
+    <div class="title-row">{shortened_date} • {shortened_time}</div>
+    <div class="info">Grade: {displayedGrade}</div>
+    <div class="info">Sent: {project.is_sent ? 'Yes' : 'No'} • Attempts: {project.attempts}</div>
+    <div class="info">Notes: {project.coordinates?.length || 0}</div>
+
+    <div class="button-row">
+      <button class="btn btn-edit" on:click={editProject}>Edit</button>
+      <button class="btn btn-delete" on:click={handleDeleteProject}>Delete</button>
+    </div>
+  </div>
+</div>
+
+
+
+
+
+
+
+<!-- ........................................................ -->
+
+<!-- <style>
     body {
       background-color: #e6f4fd; /* Dark background */
       font-family: 'Poppins', sans-serif;
@@ -150,131 +239,3 @@
       Delete Project
     </button>
   </div> -->
-
-
-
-<!-- ............................................................ -->
-
-
-
-  <style>
-  .card {
-    background: #ffffff;
-    border-radius: 1rem;
-    margin: 1rem;
-    overflow: hidden;
-    /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06); */
-    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.123), -5px -5px 10px #ffffff;
-    font-family: 'Inter', sans-serif;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .card img {
-    width: 100%;
-    height: auto;
-    object-fit: cover;
-  }
-
-  .card-content {
-    padding: 1rem;
-  }
-
-  .title-row {
-    font-size: 1.125rem;
-    font-weight: 600;
-    color: #111827;
-    margin-bottom: 0.5rem;
-  }
-
-  .info {
-    font-size: 0.95rem;
-    color: #374151;
-    margin: 0.25rem 0;
-  }
-
-  .button-row {
-    display: flex;
-    flex-direction: row;
-    gap: 0.75rem;
-    margin-top: 1rem;
-  }
-
-  /* .btn {
-    flex: 1;
-    padding: 0.75rem;
-    border: none;
-    border-radius: 0.75rem;
-    font-size: 1rem;
-    font-weight: 500;
-    text-align: center;
-    cursor: pointer;
-    transition: background 0.2s;
-  }
-
-  .btn-edit {
-    background-color: #e0f2fe;
-    color: #0284c7;
-  }
-
-  .btn-delete {
-    background-color: #fee2e2;
-    color: #b91c1c;
-  } */
-   
-   /* .btn {
-    flex: 1;
-    padding: 0.75rem;
-    font-size: 1rem;
-    font-weight: 500;
-    text-align: center;
-    cursor: pointer;
-    transition: background 0.2s, color 0.2s;
-    border: 2px solid teal;
-    background-color: transparent;
-    color: teal;
-    border-radius: 9999px; 
-  }
-
-  .btn:hover {
-    background-color: teal;
-    color: white;
-  } */
-
-  .btn {
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      font-size: 1rem;
-      font-weight: lighter;
-      cursor: pointer;
-      border: none;
-      /* border-radius: 9999px;  */
-      border-radius: 1rem;
-      background: #ffffff;
-      box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.123), -5px -5px 10px #ffffff;
-      transition: all 0.3s ease;
-    }
-
-    .btn:hover {
-      box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.123), inset -3px -3px 6px #ffffff;
-    }
-</style>
-
-<div class="card">
-  {#if project.image_path}
-    <img src={project.image_path} alt="Project" loading="lazy" />
-  {/if}
-
-  <div class="card-content">
-    <div class="title-row">{shortened_date} • {shortened_time}</div>
-    <div class="info">Grade: {displayedGrade}</div>
-    <div class="info">Sent: {project.is_sent ? 'Yes' : 'No'} • Attempts: {project.attempts}</div>
-    <div class="info">Notes: {project.coordinates?.length || 0}</div>
-
-    <div class="button-row">
-      <button class="btn btn-edit" on:click={editProject}>Edit</button>
-      <button class="btn btn-delete" on:click={handleDeleteProject}>Delete</button>
-    </div>
-  </div>
-</div>

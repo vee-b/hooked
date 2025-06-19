@@ -301,11 +301,9 @@
       width: 20px;
       height: 20px;
       background-color: white;
-      /* background-color: black;
-      background-color: greenyellow; */
       border-radius: 50%;
       transform: translate(-50%, -50%);
-      pointer-events: none; /* ✅ Allows clicks to pass through */
+      pointer-events: none; /* Allows clicks to pass through */
 
       display: flex;
       justify-content: center;

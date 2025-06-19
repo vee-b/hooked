@@ -1,5 +1,3 @@
-<!-- src/routes/+page.svelte -->
-
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
@@ -94,106 +92,107 @@
 </script>
 
 <style global>
-  /* Body and Background */
   body {
-      /* background-color: #f3f9f9fa;  */
-      font-family: 'Poppins', sans-serif;
-      margin: 0;
-      padding: 0;
-      color: black; /* Light text for contrast */
-      margin-bottom: 3rem;
-    }
+    font-family: 'Poppins', sans-serif;
+    margin: 0;
+    padding: 0;
+    color: black;
+    margin-bottom: 3rem;
+  }
 
   .home {
     text-align: center;
     padding: 1rem;
-    font-family: 'Poppins', sans-serif;
-    /* background-color: #f3f9f9fa; */
     color: black;
   }
 
-  .logout-button-wrapper {
-    display: inline;
-    position: absolute;
-    top: 1rem;
-    right: 1rem; /* Place the logout button at the top right */
-  }
+  .header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    position: relative;
+    z-index: 10;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.title {
+  color: rgb(57, 57, 57);
+  font-size: 2rem;
+  letter-spacing: 8px;
+  margin: 0;
+}
+
 
   .logout-button {
-    display: flex;
-    align-items: center;
-    background: none;
-    border: none;
-    width: 80px;
-    height: 45px;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: background 0.3s ease;
-    margin-right: 1rem;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    background: #ffffff;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px #ffffff;
+    border-radius: 10px;
+    transition: box-shadow 0.2s ease;
   }
 
-  .project-components-container {
-    margin-top: 1rem;
+  .logout-button:hover {
+    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px #ffffff;
   }
 
   .button {
-    padding: 1rem;
-    /* margin-bottom: 5px; */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem; /* spacing between icon and label */
+    padding: 0.75rem 1rem;
     border: none;
-    /* width: 100%; */
-    max-width: 70px;
     border-radius: 10px;
     font-size: 1rem;
     cursor: pointer;
-    /* background: #e6f4fd; */
-    /* box-shadow: 5px 5px 10px #b4d1e3, -5px -5px 10px #ffffff; */
-    transition: all 0.3s ease;
+    background: #ffffff;
+    max-width: none; /* allow full content */
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px #ffffff;
+    transition: box-shadow 0.2s ease;
   }
 
   .button:hover {
-    /* box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #e6f4fd; */
+    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.123), inset -3px -3px 6px #ffffff;
   }
 
   .top-buttons-container {
     display: flex;
-    flex-direction: row;
     gap: 10px;
+    justify-content: center;
+    margin-bottom: 1rem;
   }
 
   .filter-button-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: space-between;
-    margin-top: 0.5rem;
-    margin-bottom: 0.5rem;
-    /* box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #e6f4fd; */
+    background: #ffffff;
+    border-radius: 1rem;
+    padding: 1rem;
+    margin: 1.5rem auto;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px #ffffff;
+    font-family: 'Inter', sans-serif;
+    max-width: 90%;
     transition: all 0.3s ease;
-    border-radius: 10px;
-    max-width: 80%;
   }
 
   .divider {
     height: 10px;
-    border-top: 1px solid #ccc;
     margin: 20px 0;
-    border-style: hidden;
-    color: white;
+    border-top: 1px solid #ccc;
   }
 
   .title {
     color: rgb(57, 57, 57);
     font-size: 2rem;
-    font-weight: lighter;
-    margin-bottom: 20px;
+    letter-spacing: 8px;
     text-align: start;
-    letter-spacing: 8px; /* Adjust the value to control the space between letters */
+    margin-bottom: 20px;
   }
 
   .filters {
     display: flex;
     flex-direction: column;
-    /* max-width: fit-content; */
     max-width: 100%;
   }
 
@@ -202,110 +201,97 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+    align-items: center;
   }
 
-  /* Make the sent and grade labels smaller */
-  .sent-filter-container label,
-  .filters > label {
-    font-size: 0.9rem;
+  .sent-filter-container label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #333;
+    white-space: nowrap;
+    min-width: 50px; /* so label left-align matches */
   }
 
+  .sent-filter-container select {
+    padding: 6px 10px;
+    font-size: 0.875rem;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    background: #ffffff;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.05), -5px -5px 10px #ffffff;
+    cursor: pointer;
+    min-width: 120px;
+    transition: all 0.3s ease;
+  }
+
+  .sent-filter-container select:hover {
+    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px #ffffff;
+  }
 
   .filter-item {
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    /* flex-direction: column; */
-    /* justify-content: space-between; */
-    /* margin-top: 1rem;
-    margin-bottom: 1rem; */
-    transition: all 0.3s ease;
-    padding-left: 20px;
-    padding-right: 20px;
-    /* padding-bottom: 10px; */
-    border-radius: 0px;
+    flex-wrap: wrap;
+  }
+
+  .filter-item label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #333;
+    white-space: nowrap;
+    margin-left: 8px;
   }
 
   .filter-button-div {
     display: flex;
-    flex-direction: row;
-    gap: 10px; /* Adds space between items */
-    justify-content: space-between; /* Distributes items evenly */
-    align-items: center; /* Aligns items vertically */
-    max-width: 100%; /* Ensures it takes full width */
-    padding: 1rem;
-    flex-wrap: wrap; /* in case buttons get too tight */
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+  }
+
+  .filter-button-div .button {
+    background: #ffffff;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px #ffffff;
+    transition: all 0.3s ease;
+    border-radius: 1rem;
+  }
+
+  .filter-button-div .button:hover {
+    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px #ffffff;
   }
 
   select {
-    padding: 8px;
-    font-size: 14px;
-    width: 200px;
-    /* background-color: #e6f4fd !important;
-    box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #ffffff !important; */
-    /* color: black !important; */
-    /* border: 2px solid #e6f4fd; */
-    border-radius: 10px;
-    transition: border-color 0.3s ease, box-shadow 0.3s ease;
-  }
-
-  select:focus {
-    /* border-color: #e6f4fd; */
-    /* box-shadow: inset 5px 5px 10px #b4d1e3, inset -5px -5px 10px #ffffff !important; */
-    outline: none;
+    padding: 6px 8px;
+    font-size: 0.875rem;
+    width: auto;
+    border-radius: 6px;
+    border: 1px solid #ccc;
   }
 
   select[multiple] {
-    height: 150px; /* Adjust height to show multiple options */
+    height: 150px;
   }
 
   .checkbox-container {
     display: flex;
-    gap: 10px; /* Spacing between checkboxes */
-    justify-content: flex-start; /* Align checkboxes to the left */
-    padding: 10px;
-    max-width: 100%; /* Ensures that the container does not overflow */
-    max-height: 250px; 
-    font-size: 0.75rem; /* smaller font size */
-    flex-wrap: wrap; /* Wraps checkboxes to the next line when space is filled */
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0.25rem 0;
+    font-size: 0.75rem;
+    max-height: 200px;
     overflow-y: auto;
-
-    /* flex-wrap: nowrap;
-    overflow-y: auto; */
   }
 
   .checkbox-item {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
   }
 
   input[type="checkbox"] {
-    /* width: 15px;
-    height: 15px; */
     width: 25px !important;
     height: 15px !important;
-  }
-
-  /* Style the scrollbar */
-  .checkbox-container::-webkit-scrollbar {
-    width: 8px;  /* Adjust the width of the scrollbar */
-  }
-
-  /* Style the thumb (the draggable part of the scrollbar) */
-  .checkbox-container::-webkit-scrollbar-thumb {
-    /* Set a background color for the thumb */
-    /* background-color: #b4d1e3;   */
-    border-radius: 4px;  /* Round the edges of the thumb */
-    /* Optional: Add a border around the thumb */
-    /* border: 2px solid #e6f4fd;   */
-  }
-
-  /* Style the track (the area the thumb moves within) */
-  .checkbox-container::-webkit-scrollbar-track {
-    /* Set a background color for the track */
-    /* background-color: #e6f4fd;   */
-    border-radius: 4px;  /* Round the edges of the track */
   }
 
   .error-message {
@@ -316,74 +302,69 @@
 </style>
 
 <div class="home">
-  <h1 class="title">Active Projects</h1>
 
-  <div class="logout-button-wrapper">
-    <button class="logout-button" on:click={handleLogout}>
+  <div class="header-container">
+    <h1 class="title">Active Projects</h1>
+    <button class="button logout-button" on:click={handleLogout}>
       Logout
     </button>
   </div>
 
   <div class="divider"></div>
 
-  <div class=top-buttons-container>
+  <div class="top-buttons-container">
     <button class="button {filterActive ? 'active' : ''}" on:click={toggleFilter}>
-      <Filter /> 
+      <Filter size={18}/>
+      <span>Filters</span>
     </button>
-    
-    <div class="filter-button-container">
-
-      {#if filterActive}
-        <div class="filters" transition:slide={{ duration: 300 }}> 
-          
-          <div class="sent-filter-container">
-            <label for="sentFilter">Sent</label>
-            <select id="sentFilter" bind:value={sentFilterValue} on:change={() => {
-              if (sentFilterValue === 'true') isSent = true;
-              else if (sentFilterValue === 'false') isSent = false;
-              else isSent = null;
-            }}>
-              <option value="all">All</option>
-              <option value="true">Sent</option>
-              <option value="false">Not Sent</option>
-            </select>
-          </div>
-
-          <label for="checkbox-container">Grade</label>
-          <div class="filter-item">
-            <div class="checkbox-container">
-              {#each ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15', 'V16', 'V17'] as grade}
-                <div class="checkbox-item">
-                  <input 
-                    type="checkbox" 
-                    id={grade} 
-                    value={grade} 
-                    bind:group={selectedGrades} 
-                  />
-                  <label for={grade}>{grade}</label>
-                </div>
-              {/each}
-            </div>
-          </div>
-          
-          <div class="filter-button-div">
-            <button class="button" on:click={applyFilters}>Apply Filters</button> 
-            <button class="button" on:click={clearFilters}>Clear Filters</button>
-          </div>
-        </div>
-      {/if}
-    </div>
+    <button class="button" on:click={navigateToNewProject}>
+      <PlusCircle size={18}/>
+      <span>New Project</span>
+    </button>
   </div>
 
-  <button class="button" on:click={navigateToNewProject}>
-    <PlusCircle /> 
-  </button>
+  {#if filterActive}
+    <div class="filter-button-container" transition:slide={{ duration: 300 }}>
+      <div class="filters">
+        <div class="sent-filter-container">
+          <label for="sentFilter">Sent</label>
+          <select id="sentFilter" bind:value={sentFilterValue} on:change={() => {
+            isSent = sentFilterValue === 'true' ? true : sentFilterValue === 'false' ? false : null;
+          }}>
+            <option value="all">All</option>
+            <option value="true">Sent</option>
+            <option value="false">Not Sent</option>
+          </select>
+        </div>
 
-  <div class="divider"></div>
+        <div class="filter-item">
+          <label>Grades</label>
+          <div class="checkbox-container">
+            {#each ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8'] as grade}
+              <div class="checkbox-item">
+                <input
+                  type="checkbox"
+                  bind:group={selectedGrades}
+                  value={grade}
+                  id={grade}
+                />
+                <label for={grade}>{grade}</label>
+              </div>
+            {/each}
+          </div>
+        </div>
+
+        <div class="filter-button-div">
+          <button class="button" on:click={applyFilters}>Apply</button>
+          <button class="button" on:click={clearFilters}>Clear</button>
+        </div>
+      </div>
+    </div>
+  {/if}
 
   <div class="project-components-container">
     {#each $projectsList as project (project._id)}
-      <ProjectComponent {project} on:projectDeleted={() => fetchActiveFilteredProjects()} />
+      <ProjectComponent {project} />
     {/each}
   </div>
 </div>
