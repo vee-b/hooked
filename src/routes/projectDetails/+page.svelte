@@ -317,20 +317,27 @@ When 'isEditMode' == false, the add new project page is shown.
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 0.5rem; /* spacing between icon and label */
+    gap: 0.5rem; 
     padding: 0.75rem 1rem;
     border: none;
     border-radius: 10px;
     font-size: 1rem;
     cursor: pointer;
     background: #ffffff;
-    max-width: none; /* allow full content */
+    max-width: none; 
     box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px #ffffff;
     transition: box-shadow 0.2s ease;
   }
 
   .button:hover {
     box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.123), inset -3px -3px 6px #ffffff;
+  }
+
+  button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    /* padding: 1rem; */
   }
 
   .top-buttons-container {
@@ -364,12 +371,6 @@ When 'isEditMode' == false, the add new project page is shown.
     box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px #ffffff;
   }
 
-  .details {
-    display: flex;
-    flex-direction: column;
-    max-width: 100%;
-  }
-
   .styles-container {
     display: flex;
     flex-wrap: wrap;
@@ -380,40 +381,10 @@ When 'isEditMode' == false, the add new project page is shown.
     overflow-y: auto;
   }
 
-
-
-
-
-
-
-
-  .container {
-    max-width: 400px;
-    margin: 0 auto;
-    font-family: Arial, sans-serif;
-    padding: 2rem;
-    padding-bottom: 4rem;
-  }
-
-  .image-wrapper {
-    position: relative;
-    display: inline-block;
-    width: 100%;  
-  }
-
   img {
     width: 100%;  
     height: auto;
     display: block;
-  }
-
-  .marker {
-    position: absolute;
-    width: 15px;
-    height: 15px;
-    background-color: #ff8000b9;
-    border-radius: 50%;
-    transform: translate(-50%, -50%); 
   }
 
   h1 { 
@@ -446,31 +417,6 @@ When 'isEditMode' == false, the add new project page is shown.
     margin-right: 5px; 
   }
 
-  button {
-    display: block;
-    width: 100%;
-    padding: 12px;
-    padding: 1rem;
-    border: none;
-    border-radius: 10px;
-    font-size: 1rem;
-    cursor: pointer;
-    background: #e6f4fd;
-    box-shadow: 5px 5px 10px #b4d1e3, -5px -5px 10px #ffffff;
-    transition: all 0.3s ease;
-  }
-
-  button:hover { 
-    box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #e6f4fd;
-  }
-
-  .button-row { 
-    display: flex; 
-    justify-content: 
-    space-between; 
-    gap: 10px; 
-  } 
-
   .message { 
     color: green; 
     text-align: center; 
@@ -480,12 +426,12 @@ When 'isEditMode' == false, the add new project page is shown.
 
 <div class="home">
 
-<div class="header-container">  
-  <button class="back-button" on:click={navigateToHome}>
-    <ArrowLeft/>
-  </button>
-  <h1 class="title">{isEditMode ? "Edit Project" : "Add Project"}</h1>
-</div>
+  <div class="header-container">  
+    <button class="back-button" on:click={navigateToHome}>
+      <ArrowLeft/>
+    </button>
+    <h1 class="title">{isEditMode ? "Edit Project" : "Add Project"}</h1>
+  </div>
 
   <div class="divider"></div>
 

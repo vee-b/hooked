@@ -21,11 +21,6 @@
   let originalPosition: { lat: string; lng: string } | null = null;
   let selectedColor = 'White'; // Default marker color
 
-  // Handle logout on button click
-  // const handleLogout = () => {
-  //   logoutAccount();
-  // };
-
   // Fetch project details on mount
   onMount(async () => {
     // Check if user if logged in
@@ -234,13 +229,108 @@
 </script>
 
 <style>
-  .back-button-wrapper {
-    position: absolute;
-    top: 1rem;
-    left: 1rem;
+  .home {
+    text-align: center;
+    padding: 1rem;
+    color: black;
+  }
+
+  .header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    position: relative;
+    z-index: 10;
+    flex-wrap: wrap;
+    gap: 0rem;
   }
 
   .back-button {
+    display: flex;
+    align-items: center;
+    background: none;
+    border: none;
+    width: 45px;
+    height: 45px;
+    cursor: pointer;
+    border-radius: 8px;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px #ffffff;
+    transition: box-shadow 0.2s ease;
+  }
+
+  .back-button:hover {
+    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.123), inset -3px -3px 6px #ffffff;
+  }
+
+  /* .back-button svg {
+    width: 24px;
+    height: 24px;
+  } */
+
+  .title {
+    color: rgb(57, 57, 57);
+    font-size: 2rem;
+    letter-spacing: 8px;
+    text-align: start;
+    margin-bottom: 20px;
+  }
+
+  .divider {
+    height: 10px;
+    margin: 20px 0;
+    border-top: 1px solid #ccc;
+  }
+
+  .button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem; /* spacing between icon and label */
+    padding: 0.75rem 1rem;
+    border: none;
+    border-radius: 10px;
+    font-size: 1rem;
+    cursor: pointer;
+    background: #ffffff;
+    max-width: none; /* allow full content */
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px #ffffff;
+    transition: box-shadow 0.2s ease;
+  }
+
+  .button:hover {
+    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.123), inset -3px -3px 6px #ffffff;
+  }
+
+  button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+    /* padding: 1rem; */
+  }
+
+  .image-preview { 
+    width: 100%; 
+    height: auto; 
+    margin: 15px 0; 
+    display: block; 
+    border-radius: 20px;
+  }
+
+  /* h1 { 
+    text-align: center; 
+  } */
+
+
+
+
+  /* .back-button-wrapper {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
+  } */
+
+  /* .back-button {
     display: flex;
     align-items: center;
     background: none;
@@ -253,25 +343,6 @@
     margin-left: 1rem;
   }
 
-  /* .logout-button-wrapper {
-    position: absolute;
-    top: 1rem;
-    right: 1rem; 
-  }
-
-  .logout-button {
-    display: flex;
-    align-items: center;
-    background: none;
-    border: none;
-    width: 80px;
-    height: 45px;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: background 0.3s ease;
-    margin-right: 1rem;
-  } */
-
   .title {
     color: rgb(57, 57, 57);
     font-size: 2rem;
@@ -280,7 +351,7 @@
     margin-top: 40px;
     text-align: start;
     letter-spacing: 8px; 
-  }
+  } */
 
   .container {
     text-align: center;
@@ -318,6 +389,7 @@
   }
   .button-group {
       margin-top: 20px;
+      margin-bottom: 20px;
       display: flex;
       gap: 10px;
       justify-content: center;
@@ -337,24 +409,22 @@
   }
 </style>
 
-<div class="container">
-  <h1 class="title">Annotations</h1>
 
-  <div class="back-button-wrapper">
+
+<div class="home">
+
+  <div class="header-container">
     <button class="back-button" on:click={navigateBack}>
-      <ArrowLeft />
+      <ArrowLeft/>
     </button>
+    <h1 class="title">Annotate</h1>
   </div>
 
-  <!-- <div class="logout-button-wrapper">
-    <button class="logout-button" on:click={handleLogout}>
-      Logout
-    </button>
-  </div> -->
+  <div class="divider"></div>
   
   {#if imagePath}
       <div class="image-wrapper">
-          <img src={imagePath} alt="Annotate Image" on:click={handleClick} />
+          <img src={imagePath} class="image-preview" alt="Annotate Image" on:click={handleClick} />
           
           
           {#each points as { lat, lng }, i}
@@ -373,9 +443,8 @@
   {/if}
 
   {#if !editNotesMode}
-    <button on:click={clearAnnotations}>Clear All Notes</button>
+    <button class="button" on:click={clearAnnotations}>Remove All Markers/Notes</button>
 
-    
     <div class="button-group">
       Marker Colours:
       <button on:click={() => selectedColor = 'white'} style="background-color: white; border-radius: 10px;"></button>
@@ -384,9 +453,7 @@
   {/if}
 
   {#if editNotesMode}
-    <!-- <div class="note-input">
-      <input type="text" bind:value={currentNote} placeholder="Enter your note" />
-    </div> -->
+    
     <textarea 
       bind:value={currentNote} 
       placeholder="Enter your note" 
@@ -394,10 +461,28 @@
       on:input={autoResize}
     ></textarea>
     <div class="button-group">
-        <button on:click={saveNote}>Save Note/s</button>
-        <button on:click={removeMarker}>Remove Marker & Notes</button>
-        <!-- <button on:click={() => goto(`/annotations?id=${projectId}&image=${imagePath}`)}>Cancel</button> -->
-        <button on:click={cancelAnnotations}>Cancel</button>
+        <button class="button" on:click={saveNote}>Save</button>
+        <button class="button" on:click={removeMarker}>Delete</button>
+        <button class="button" on:click={cancelAnnotations}>Cancel</button>
     </div>
   {/if}
+
 </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<!-- <div class="note-input">
+      <input type="text" bind:value={currentNote} placeholder="Enter your note" />
+    </div> -->
