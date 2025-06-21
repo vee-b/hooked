@@ -22,9 +22,9 @@
   let selectedColor = 'White'; // Default marker color
 
   // Handle logout on button click
-  const handleLogout = () => {
-    logoutAccount();
-  };
+  // const handleLogout = () => {
+  //   logoutAccount();
+  // };
 
   // Fetch project details on mount
   onMount(async () => {
@@ -253,10 +253,10 @@
     margin-left: 1rem;
   }
 
-  .logout-button-wrapper {
+  /* .logout-button-wrapper {
     position: absolute;
     top: 1rem;
-    right: 1rem; /* Place the logout button at the top right */
+    right: 1rem; 
   }
 
   .logout-button {
@@ -270,7 +270,7 @@
     border-radius: 8px;
     transition: background 0.3s ease;
     margin-right: 1rem;
-  }
+  } */
 
   .title {
     color: rgb(57, 57, 57);
@@ -346,11 +346,11 @@
     </button>
   </div>
 
-  <div class="logout-button-wrapper">
+  <!-- <div class="logout-button-wrapper">
     <button class="logout-button" on:click={handleLogout}>
       Logout
     </button>
-  </div>
+  </div> -->
   
   {#if imagePath}
       <div class="image-wrapper">

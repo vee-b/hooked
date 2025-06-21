@@ -15,9 +15,9 @@
   export const projectsList = writable<Project[]>([]);
 
   // Handle logout on button click
-  const handleLogout = () => {
-    logoutAccount();
-  };
+  // const handleLogout = () => {
+  //   logoutAccount();
+  // };
 
   const navigateToNewProject = () => {
     goto('/projectDetails');
@@ -107,14 +107,14 @@
   }
 
   .header-container {
-    display: flex;
+    /* display: flex;
     justify-content: space-between;
     align-items: center;
     padding: 1.5rem 2rem;
     position: relative;
     z-index: 10;
     flex-wrap: wrap;
-    gap: 1rem;
+    gap: 1rem; */
 }
 
 .title {
@@ -125,7 +125,7 @@
 }
 
 
-  .logout-button {
+  /* .logout-button {
     padding: 0.5rem 1rem;
     font-weight: 500;
     background: #ffffff;
@@ -136,7 +136,7 @@
 
   .logout-button:hover {
     box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px #ffffff;
-  }
+  } */
 
   .button {
     display: flex;
@@ -304,10 +304,10 @@
 <div class="home">
 
   <div class="header-container">
-    <h1 class="title">Active Projects</h1>
-    <button class="button logout-button" on:click={handleLogout}>
+    <!-- <button class="button logout-button" on:click={handleLogout}>
       Logout
-    </button>
+    </button> -->
+    <h1 class="title">Active Projects</h1>
   </div>
 
   <div class="divider"></div>

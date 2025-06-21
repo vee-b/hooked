@@ -16,9 +16,9 @@
   export const projectsList = writable<Project[]>([]);
 
   // Handle logout on button click
-  const handleLogout = () => {
-    logoutAccount();
-  };
+  // const handleLogout = () => {
+  //   logoutAccount();
+  // };
   
   const fetchProjects = async () => {
   try {
@@ -116,10 +116,11 @@
   font-size: 2rem;
   letter-spacing: 8px;
   margin: 0;
+  margin: 2rem 0 1rem;
 }
 
 
-  .logout-button {
+  /* .logout-button {
     padding: 0.5rem 1rem;
     font-weight: 500;
     background: #ffffff;
@@ -130,7 +131,7 @@
 
   .logout-button:hover {
     box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px #ffffff;
-  }
+  } */
 
   .button {
     display: flex;
@@ -299,9 +300,9 @@
   
   <div class="header-container">
     <h1 class="title">Inactive Projects</h1>
-    <button class="button logout-button" on:click={handleLogout}>
+    <!-- <button class="button logout-button" on:click={handleLogout}>
       Logout
-    </button>
+    </button> -->
   </div>
 
   <div class="divider"></div>

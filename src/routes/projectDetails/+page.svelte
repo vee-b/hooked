@@ -43,9 +43,9 @@ When 'isEditMode' == false, the add new project page is shown.
   $: selectedOption = convertVScaleGrade(selectedOption, $gradeSystem);
 
   // Handle logout on button click
-  const handleLogout = () => {
-    logoutAccount();
-  };
+  // const handleLogout = () => {
+  //   logoutAccount();
+  // };
 
   function toggleStyle(style: string) {
     if (selectedStyles.includes(style)) {
@@ -290,10 +290,10 @@ When 'isEditMode' == false, the add new project page is shown.
     margin-left: 1rem;
   }
 
-  .logout-button-wrapper {
+  /* .logout-button-wrapper {
     position: absolute;
     top: 1rem;
-    right: 1rem; /* Place the logout button at the top right */
+    right: 1rem; 
   }
 
   .logout-button {
@@ -307,7 +307,7 @@ When 'isEditMode' == false, the add new project page is shown.
     border-radius: 8px;
     transition: background 0.3s ease;
     margin-right: 1rem;
-  }
+  }  */
 
   .title {
     color: rgb(57, 57, 57);
@@ -426,11 +426,11 @@ When 'isEditMode' == false, the add new project page is shown.
     </button>
   </div>
 
-  <div class="logout-button-wrapper">
+  <!-- <div class="logout-button-wrapper">
     <button class="logout-button" on:click={handleLogout}>
       Logout
     </button>
-  </div>
+  </div> -->
 
   <div class="button-row">
     <button on:click={pickImage}>
@@ -478,35 +478,6 @@ When 'isEditMode' == false, the add new project page is shown.
       {/each}
     </select>
   </div>
-
-  <!-- <div class="dropdown">
-    <label class="dropdown-label">Style</label>
-    <div class="dropdown-menu">
-      {#each allStyles as style}
-        <label class="dropdown-item">
-          <input
-            type="checkbox"
-            bind:group={selectedStyles}
-            value={style}
-          />
-          {style}
-        </label>
-      {/each}
-    </div>
-  </div> -->
-
-  <!-- BUTTONS -->
-  <!-- <div class="styles-container">
-    {#each allStyles as style}
-      <button
-        type="button"
-        class:selected={selectedStyles.includes(style)}
-        on:click={() => toggleStyle(style)}
-      >
-        {style}
-      </button>
-    {/each}
-  </div> -->
 
   <!-- CHECKBOXES -->
   <div class="styles-container">
