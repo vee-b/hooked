@@ -9,7 +9,7 @@ When 'isEditMode' == false, the add new project page is shown.
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
   import { invoke } from '@tauri-apps/api/core';
-  import { Camera, ArrowLeft, Edit } from 'lucide-svelte';
+  import { Camera, ArrowLeft, LogOut } from 'lucide-svelte';
   import { Camera as CapacitorCamera, CameraResultType } from '@capacitor/camera';
   import { Capacitor } from '@capacitor/core';
   import { addProject, editProject, fetchProjectById, sanitizeFileName, annotations, initializeProjectsList } from '../../stores/projectsList';
@@ -265,21 +265,10 @@ When 'isEditMode' == false, the add new project page is shown.
 </script>
 
 <style>
-  .home {
-    text-align: center;
-    padding: 1rem;
-    color: black;
-  }
-
-  .header-container {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 1.5rem 2rem;
-    position: relative;
-    z-index: 10;
-    flex-wrap: wrap;
-    gap: 0rem;
+  .back-button-wrapper {
+    position: absolute;
+    top: 1rem;
+    left: 1rem;
   }
 
   .back-button {
@@ -291,101 +280,19 @@ When 'isEditMode' == false, the add new project page is shown.
     height: 45px;
     cursor: pointer;
     border-radius: 8px;
-    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px #ffffff;
-    transition: box-shadow 0.2s ease;
-  }
-
-  .back-button:hover {
-    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.123), inset -3px -3px 6px #ffffff;
+    transition: background 0.3s ease;
+    margin-left: 1rem;
   }
 
   .title {
     color: rgb(57, 57, 57);
     font-size: 2rem;
-    letter-spacing: 8px;
-    text-align: start;
+    font-weight: lighter;
     margin-bottom: 20px;
+    margin-top: 40px;
+    text-align: start;
+    letter-spacing: 8px; 
   }
-
-  .divider {
-    height: 10px;
-    margin: 20px 0;
-    border-top: 1px solid #ccc;
-  }
-
-  .button {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem; /* spacing between icon and label */
-    padding: 0.75rem 1rem;
-    border: none;
-    border-radius: 10px;
-    font-size: 1rem;
-    cursor: pointer;
-    background: #ffffff;
-    max-width: none; /* allow full content */
-    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px #ffffff;
-    transition: box-shadow 0.2s ease;
-  }
-
-  .button:hover {
-    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.123), inset -3px -3px 6px #ffffff;
-  }
-
-  .top-buttons-container {
-    display: flex;
-    gap: 10px;
-    justify-content: center;
-    margin-bottom: 1rem;
-  }
-
-  .image-preview { 
-    width: 100%; 
-    height: auto; 
-    margin: 15px 0; 
-    display: block; 
-    border-radius: 20px;
-  }
-
-  .selection-box-container select {
-    padding: 6px 10px;
-    font-size: 0.875rem;
-    border-radius: 10px;
-    border: 1px solid #ccc;
-    background: #ffffff;
-    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.05), -5px -5px 10px #ffffff;
-    cursor: pointer;
-    min-width: 120px;
-    transition: all 0.3s ease;
-  }
-
-  .selection-box-container select:hover {
-    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px #ffffff;
-  }
-
-  .details {
-    display: flex;
-    flex-direction: column;
-    max-width: 100%;
-  }
-
-  .styles-container {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    padding: 0.25rem 0;
-    font-size: 0.75rem;
-    max-height: 200px;
-    overflow-y: auto;
-  }
-
-
-
-
-
-
-
 
   .container {
     max-width: 400px;
@@ -398,11 +305,11 @@ When 'isEditMode' == false, the add new project page is shown.
   .image-wrapper {
     position: relative;
     display: inline-block;
-    width: 100%;  
+    width: 100%;  /* Ensure it scales with the width of the container */
   }
 
   img {
-    width: 100%;  
+    width: 100%;  /* Ensures image scales with its container */
     height: auto;
     display: block;
   }
@@ -413,7 +320,7 @@ When 'isEditMode' == false, the add new project page is shown.
     height: 15px;
     background-color: #ff8000b9;
     border-radius: 50%;
-    transform: translate(-50%, -50%); 
+    transform: translate(-50%, -50%); /* Center the marker at the coordinates */
   }
 
   h1 { 
@@ -469,42 +376,48 @@ When 'isEditMode' == false, the add new project page is shown.
     justify-content: 
     space-between; 
     gap: 10px; 
-  } 
+  }
+
+  .image-preview { 
+    width: 100%; 
+    height: auto; 
+    margin: 15px 0; 
+    display: block; 
+  }
 
   .message { 
     color: green; 
     text-align: center; 
     margin-top: 10px; 
-  } 
+  }
 </style>
 
-<div class="home">
-
-<div class="header-container">  
-  <button class="back-button" on:click={navigateToHome}>
-    <ArrowLeft/>
-  </button>
+<div class="container">  
   <h1 class="title">{isEditMode ? "Edit Project" : "Add Project"}</h1>
-</div>
 
-  <div class="divider"></div>
+  <div class="back-button-wrapper">
+    <button class="back-button" on:click={navigateToHome}>
+      <ArrowLeft />
+    </button>
+  </div>
 
-  <div class="top-buttons-container">
-    <button class="button" on:click={pickImage}>
+  <div class="button-row">
+    <button on:click={pickImage}>
       <Camera /> 
     </button>
-    {#if isEditMode}
-    <button class="button" on:click={() => goto(`/annotations?id=${projectId}&image=${encodeURIComponent(imagePath)}`)}>
-      <Edit />
-    </button>
-  {/if}
   </div>
 
   {#if imagePreview}
     <img src={imagePreview} alt="Selected Image" class="image-preview" />
   {/if}
 
-  <!-- <div>
+  {#if isEditMode}
+    <button on:click={() => goto(`/annotations?id=${projectId}&image=${encodeURIComponent(imagePath)}`)}>
+      Edit Annotations
+    </button>
+  {/if}
+
+  <div>
     {#if isEditMode}
       {#if projectCoordinates.length > 0}
         <p>Notes: {projectCoordinates.length}</p>
@@ -512,9 +425,8 @@ When 'isEditMode' == false, the add new project page is shown.
         <p>Notes: 0</p>
       {/if}
     {/if}
-  </div> -->
     
-  <div class="selection-box-container">
+  </div>
 
   <div class="form-group">
     <label for="dateTime">Date & Time</label>
@@ -525,19 +437,18 @@ When 'isEditMode' == false, the add new project page is shown.
       on:change={handleInputChange}
     />
   </div>
-  
-  <div class="selection-box-container">
-    <div class="form-group">
-      <!-- <label for="grade">Grade</label> -->
-      <select id="grade" bind:value={selectedOption}>
-        <option value="" disabled selected>Select grade</option>
-        {#each currentGrades as grade}
-          <option value={grade}>{grade}</option>
-        {/each}
-      </select>
-    </div>
+
+  <div class="form-group">
+    <label for="grade">Grade</label>
+    <select id="grade" bind:value={selectedOption}>
+      <option value="" disabled selected>Select grade</option>
+      {#each currentGrades as grade}
+        <option value={grade}>{grade}</option>
+      {/each}
+    </select>
   </div>
 
+  <!-- CHECKBOXES -->
   <div class="styles-container">
     {#each allStyles as style}
       <label class="checkbox-style">
@@ -550,6 +461,7 @@ When 'isEditMode' == false, the add new project page is shown.
       </label>
     {/each}
   </div>
+
 
   <div class="form-group">
     <label for="attempts">Attempts</label>
@@ -567,15 +479,12 @@ When 'isEditMode' == false, the add new project page is shown.
   </div>
 
   <div class="form-group">
-    <button class="button" on:click={submitData}>
+    <button on:click={submitData}>
       {isEditMode ? "Update Project" : "Add Project"}
     </button>
   </div>
 
-  </div>
-
   {#if message}
     <p class="message" transition:fade>{typeof message === 'string' ? message : JSON.stringify(message)}</p>
-  {/if} 
+  {/if}
 </div>
-
