@@ -21,48 +21,57 @@
 
 <style>
   .home {
-    /* text-align: center; */
     padding: 1rem;
     font-family: 'Poppins', sans-serif;
     padding-bottom: 4rem;
+    color: black;
   }
 
-  .logout-button-wrapper {
-    display: inline;
-    position: absolute;
-    top: 1rem;
-    right: 1rem; /* Place the logout button at the top right */
-  }
-
-  .logout-button {
+  .header-container {
     display: flex;
+    justify-content: space-between;
     align-items: center;
-    background: none;
-    border: none;
-    width: 80px;
-    height: 45px;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: background 0.3s ease;
-    margin-right: 1rem;
+    padding: 1.5rem 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
   }
 
   .title {
     color: rgb(57, 57, 57);
-    font-weight: lighter;
-    margin-bottom: 20px;
-    letter-spacing: 8px; /* Adjust the value to control the space between letters */
+    font-size: 2rem;
+    letter-spacing: 8px;
+    margin: 0;
+  }
+
+  .logout-button {
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    background: #ffffff;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px #ffffff;
+    border-radius: 10px;
+    transition: box-shadow 0.2s ease;
+    border: none;
+    cursor: pointer;
+  }
+
+  .logout-button:hover {
+    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px #ffffff;
+  }
+
+  .divider {
+    height: 10px;
+    margin: 20px 0;
+    border-top: 1px solid #ccc;
   }
 </style>
 
 <div class="home">
-  <h1 class="title">Stats</h1>
-  
-  <div class="logout-button-wrapper">
-    <button class="logout-button" on:click={handleLogout}>
-      Logout
-    </button>
+  <div class="header-container">
+    <h1 class="title">Stats</h1>
+    <button class="logout-button" on:click={handleLogout}>Logout</button>
   </div>
+
+  <div class="divider"></div>
 
   <SendsComponent />
 </div>

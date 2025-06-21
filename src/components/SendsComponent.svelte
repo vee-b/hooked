@@ -12,40 +12,41 @@
     console.log('Sends summary fetched:', $sendsSummary);
   });
 </script>
-  
+
 <style>
   .sends-card {
-    padding: 12px;
-    border: 1px solid #ccc;
-    border-radius: 4px;
+    font-family: 'Poppins', sans-serif;
+    padding: 1.5rem;
+    margin: 1rem 0;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.05), -5px -5px 10px #ffffff;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
   }
 
   .sends-total {
-    font-size: 18px;
-    color: gray;
-    margin-bottom: 16px;
-    text-align: start;
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: rgb(57, 57, 57);
+    letter-spacing: 1px;
   }
-  
+
   .sends-text {
-    font-size: 18px;
-    color: gray;
-    text-align: start;
+    font-size: 1rem;
+    color: rgb(90, 90, 90);
   }
 </style>
-  
+
 <div class="sends-card">
   <div class="sends-total">
-    Total Sends: {$sendsSummary.total} 
+    Total Sends: {$sendsSummary.total}
   </div>
 
   {#each vScale as grade}
     <div class="sends-text">
-      {#if $sendsSummary.byGrade[grade] !== undefined}
-        {convertVScaleGrade(grade, $gradeSystem)} Sends: {$sendsSummary.byGrade[grade]}
-      {:else}
-        {convertVScaleGrade(grade, $gradeSystem)} Sends: 0
-      {/if}
+      {convertVScaleGrade(grade, $gradeSystem)} Sends: {$sendsSummary.byGrade[grade] ?? 0}
     </div>
   {/each}
 </div>

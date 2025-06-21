@@ -26,86 +26,96 @@
 </script>
 
 <style>
+  .home {
+    padding: 1rem;
+    font-family: 'Poppins', sans-serif;
+    padding-bottom: 4rem;
+    color: black;
+  }
+  
   .settings {
+    padding-left: 2rem;
+    padding-right: 2rem;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .header-container {
     display: flex;
-    flex-direction: column;
-    max-width: 400px;
-    margin: auto;
-    padding: 20px;
-    position: relative;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
   }
 
   .title {
     color: rgb(57, 57, 57);
-    font-weight: lighter;
-    margin-bottom: 20px;
-    letter-spacing: 8px; /* Adjust the value to control the space between letters */
-  }
-
-  .logout-button-wrapper {
-    position: absolute;
-    top: 1rem;
-    left: 1.5rem; /* Place the logout button at the top right */
+    font-size: 2rem;
+    letter-spacing: 8px;
+    margin: 0;
   }
 
   .logout-button {
-    display: flex;
-    align-items: center;
-    background: none;
-    border: none;
-    width: 80px;
-    height: 45px;
-    cursor: pointer;
-    border-radius: 8px;
-    transition: background 0.3s ease;
-    margin-right: 1rem;
-  }
-
-  .grade-dropdown {
-    border: p-2 rounded;
-    width: 40%;
-  }
-
-  .logout-button {
-    padding: 1rem;
-    border: none;
-    width: 25%;
+    padding: 0.5rem 1rem;
+    font-weight: 500;
+    background: #ffffff;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px #ffffff;
     border-radius: 10px;
-    font-size: 1rem;
+    transition: box-shadow 0.2s ease;
     cursor: pointer;
-    background: #e6f4fd;
-    box-shadow: 5px 5px 10px #b4d1e3, -5px -5px 10px #ffffff;
-    transition: all 0.3s ease;
-    position: absolute; /* Position relative to the .settings container */
-    top: 10px;  /* Adjust for distance from top */
-    right: 10px; /* Adjust for distance from right */
+    border: none;
+    font-size: 1rem;
   }
 
   .logout-button:hover {
-    box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #ffffff;
+    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px #ffffff;
+  }
+
+  .divider {
+    height: 10px;
+    margin: 20px 0;
+    border-top: 1px solid #ccc;
+  }
+
+  .grade-dropdown {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    background: #ffffff;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.05), -5px -5px 10px #ffffff;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease;
+    width: 100%;
+    margin-top: 1rem;
+  }
+
+  .grade-dropdown:hover {
+    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px #ffffff;
   }
 </style>
 
-<div class="settings">
-  <div class="logout-button-wrapper">
+<div class="home">
+  <div class="header-container">
+    <h1 class="title">Settings</h1>
     <button class="logout-button" on:click={handleLogout}>
       Logout
     </button>
   </div>
-  
-  <h1 class="title">Settings</h1>
+
+  <div class="divider"></div>
 
   <!-- Dropdown for Grade System -->
   <!-- <label for="grade-system">Choose Grade System:</label> -->
-  <select 
-    id="grade-system" 
-    bind:value={$gradeSystem} 
-    on:change={handleGradeChange} 
-    class="grade-dropdown"
-  >
-    <option value="V-Scale">V-Scale</option>
-    <option value="Font Scale">Font Scale</option>
-  </select>
-
-  <!-- <p>Grade System: {$gradeSystem}</p> -->
+  <div class="settings">
+    <select 
+      id="grade-system" 
+      bind:value={$gradeSystem} 
+      on:change={handleGradeChange} 
+      class="grade-dropdown"
+    >
+      <option value="V-Scale">V-Scale</option>
+      <option value="Font Scale">Font Scale</option>
+    </select>
+  </div>
 </div>
