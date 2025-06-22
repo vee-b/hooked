@@ -89,19 +89,19 @@
   .grade-row {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    gap: 0.75rem;
   }
 
   .grade-label {
     font-weight: bold;
     font-size: 1rem;
-    width: 60px;
-    text-align: right;
+    width: 35px;
+    text-align: left;
   }
 
   .progress-bar {
     flex: 1;
-    height: 1.2rem;
+    height: 0.6rem;
     background-color: #f0f0f0;
     border-radius: 8px;
     overflow: hidden;

@@ -337,7 +337,6 @@ When 'isEditMode' == false, the add new project page is shown.
     display: block;
     width: 100%;
     padding: 12px;
-    /* padding: 1rem; */
   }
 
   .top-buttons-container {
@@ -373,12 +372,28 @@ When 'isEditMode' == false, the add new project page is shown.
 
   .styles-container {
     display: flex;
+    flex-direction: column;
     flex-wrap: wrap;
     gap: 8px;
     padding: 0.25rem 0;
     font-size: 0.75rem;
     max-height: 200px;
     overflow-y: auto;
+    margin-bottom: 0.5rem;
+  }
+
+  .styles-checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .checkbox-item label {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #333;
+    white-space: nowrap;
+    margin-left: 8px;
   }
 
   img {
@@ -392,7 +407,7 @@ When 'isEditMode' == false, the add new project page is shown.
   }
 
   .form-group { 
-    margin-bottom: 15px; 
+    margin-bottom: 30px; 
   }
 
   label { 
@@ -484,9 +499,9 @@ When 'isEditMode' == false, the add new project page is shown.
     </div>
   </div>
 
-  <div class="styles-container">
+  <div class="styles-container checkbox-container form-group">
     {#each allStyles as style}
-      <label class="checkbox-style">
+      <label class="styles-checkbox-item">
         <input
           type="checkbox"
           checked={selectedStyles.includes(style)}
@@ -505,9 +520,7 @@ When 'isEditMode' == false, the add new project page is shown.
   <div class="form-group">
     <label for="isSent" class="checkbox-item">Sent</label>
     <input type="checkbox" id="isSent" bind:checked={isSent} />
-  </div>
 
-  <div class="form-group">
     <label for="isActive" class="checkbox-item">Active</label>
     <input type="checkbox" id="isActive" bind:checked={isActive} />
   </div>

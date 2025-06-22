@@ -270,6 +270,7 @@
 
   .checkbox-container {
     display: flex;
+    flex-direction: column;
     flex-wrap: wrap;
     gap: 8px;
     padding: 0.25rem 0;
@@ -282,6 +283,11 @@
     display: flex;
     align-items: center;
     gap: 4px;
+  }
+
+  .checkbox-item label {
+    width: 50px; /* Ensure equal width for alignment */
+    text-align: left;
   }
 
   input[type="checkbox"] {
