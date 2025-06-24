@@ -12,13 +12,12 @@
   import { tick } from 'svelte';
   import { slide } from 'svelte/transition'
   import { afterNavigate } from '$app/navigation';
+  import { gradeSystem, getCurrentGrades, convertFontScaleGrade } from '../../stores/settingsStore';
   
   export const projectsList = writable<Project[]>([]);
 
-  // Handle logout on button click
-  // const handleLogout = () => {
-  //   logoutAccount();
-  // };
+  // Grade conversion
+  $: currentGrades = getCurrentGrades($gradeSystem);
   
   const fetchProjects = async () => {
   try {
@@ -68,8 +67,12 @@
     console.log('Selected Grades:', selectedGrades);  // Log selected grades
     console.log('Applying Filters:', { selectedGrades, isSent });
       
+    const gradesToSend = $gradeSystem === 'Font Scale'
+      ? selectedGrades.map(grade => convertFontScaleGrade(grade, $gradeSystem))
+      : selectedGrades;
+    
     const filters = {
-      grades: selectedGrades,
+      grades: gradesToSend,
       isSent: isSent !== null ? isSent : undefined // omit if null
     };
   
@@ -118,20 +121,6 @@
   margin: 0;
   margin: 2rem 0 1rem;
 }
-
-
-  /* .logout-button {
-    padding: 0.5rem 1rem;
-    font-weight: 500;
-    background: #ffffff;
-    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px #ffffff;
-    border-radius: 10px;
-    transition: box-shadow 0.2s ease;
-  }
-
-  .logout-button:hover {
-    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px #ffffff;
-  } */
 
   .button {
     display: flex;
@@ -334,10 +323,26 @@
           </select>
         </div>
 
-        <div class="filter-item">
+        <!-- <div class="filter-item">
           <label>Grades</label>
           <div class="checkbox-container">
             {#each ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15', 'V16', 'V17'] as grade}
+              <div class="checkbox-item">
+                <input
+                  type="checkbox"
+                  bind:group={selectedGrades}
+                  value={grade}
+                  id={grade}
+                />
+                <label for={grade}>{grade}</label>
+              </div>
+            {/each}
+          </div>
+        </div> -->
+        <div class="filter-item">
+          <label>Grades</label>
+          <div class="checkbox-container">
+            {#each currentGrades as grade}
               <div class="checkbox-item">
                 <input
                   type="checkbox"

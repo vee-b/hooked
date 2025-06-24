@@ -4,11 +4,6 @@
   import { checkLoginStatus, logoutAccount } from '../../controllers/accountsController';
   import { gradeSystem, setGradeSystem } from '../../stores/settingsStore';
 
-  // Handle logout on button click
-  // const handleLogout = () => {
-  //   logoutAccount();
-  // };
-
   // Handle dropdown change event
   const handleGradeChange = (event: Event) => {
     const target = event.target as HTMLSelectElement;
@@ -55,22 +50,6 @@
     margin: 0;
   }
 
-  /* .logout-button {
-    padding: 0.5rem 1rem;
-    font-weight: 500;
-    background: #ffffff;
-    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px #ffffff;
-    border-radius: 10px;
-    transition: box-shadow 0.2s ease;
-    cursor: pointer;
-    border: none;
-    font-size: 1rem;
-  }
-
-  .logout-button:hover {
-    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px #ffffff;
-  } */
-
   .divider {
     height: 10px;
     margin: 20px 0;
@@ -98,9 +77,6 @@
 <div class="home">
   <div class="header-container">
     <h1 class="title">Settings</h1>
-    <!-- <button class="logout-button" on:click={handleLogout}>
-      Logout
-    </button> -->
   </div>
 
   <div class="divider"></div>

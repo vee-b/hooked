@@ -11,8 +11,12 @@
   import { slide } from 'svelte/transition'
   import { afterNavigate } from '$app/navigation';
   import Select from 'svelte-select';
+  import { gradeSystem, getCurrentGrades, convertFontScaleGrade } from '../stores/settingsStore';
 
   export const projectsList = writable<Project[]>([]);
+
+  // Grade conversion
+  $: currentGrades = getCurrentGrades($gradeSystem);
 
   const navigateToNewProject = () => {
     goto('/projectDetails');
@@ -66,10 +70,13 @@
     await tick(); // Wait for UI updates
     console.log('Selected Grades:', selectedGrades);  // Log selected grades
     console.log('Applying Filters:', { selectedGrades, isSent });
+
+    const gradesToSend = $gradeSystem === 'Font Scale'
+      ? selectedGrades.map(grade => convertFontScaleGrade(grade, $gradeSystem))
+      : selectedGrades;
     
     const filters = {
-      grades: selectedGrades,
-      //isSent: isSent ?? false, // Defaults to false if null/undefined
+      grades: gradesToSend,
       isSent: isSent !== null ? isSent : undefined // omit if null
     };
 
@@ -79,7 +86,6 @@
 
   const clearFilters = async () => {
     selectedGrades = [];
-    //isSent = false;
     isSent = null;
     await tick(); // Ensure UI updates before fetching
     fetchProjects(); // Fetch unfiltered active projects
@@ -317,7 +323,7 @@
         <div class="filter-item">
           <label>Grades</label>
           <div class="checkbox-container">
-            {#each ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15', 'V16', 'V17'] as grade}
+            {#each currentGrades as grade}
               <div class="checkbox-item">
                 <input
                   type="checkbox"
