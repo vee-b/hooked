@@ -2,37 +2,36 @@
     import { writable } from 'svelte/store';
     import { goto } from '$app/navigation';
     import { loginAccount } from '../../controllers/accountsController';
-    import { LogIn, ArrowRight } from 'lucide-svelte'; 
+    import { Mail, ArrowLeft } from 'lucide-svelte'; 
   
     let email = '';
-    let password = '';
     let errorMessage = writable('');
   
-    // Simulate a login API request (you can replace this with your real API call)
-    const login = async () => {
-      // Clear previous error messages
-      errorMessage.set('');
+    // // Simulate a login API request (you can replace this with your real API call)
+    // const login = async () => {
+    //   // Clear previous error messages
+    //   errorMessage.set('');
 
-      if (!email || !password) {
-        errorMessage.set('Please fill in both fields.');
-        return;
-      }
+    //   if (!email || !password) {
+    //     errorMessage.set('Please fill in both fields.');
+    //     return;
+    //   }
   
-      try {
-        // Call the backend via the login function (you will get a token if login is successful)
-        const token = await loginAccount(email, password);  // Call the Tauri command login function
-        console.log('Login successful, received token:', token);
+    //   try {
+    //     // Call the backend via the login function (you will get a token if login is successful)
+    //     const token = await loginAccount(email, password);  // Call the Tauri command login function
+    //     console.log('Login successful, received token:', token);
 
-        // Store the token in localStorage
-        localStorage.setItem('token', token);
+    //     // Store the token in localStorage
+    //     localStorage.setItem('token', token);
 
-        // Redirect to the dashboard (or any other page)
-        goto('/');
-      } catch (error) {
-        console.error('Login error:', error);
-        errorMessage.set('Invalid credentials, please try again.');
-      }
-    };
+    //     // Redirect to the dashboard (or any other page)
+    //     goto('/');
+    //   } catch (error) {
+    //     console.error('Login error:', error);
+    //     errorMessage.set('Invalid credentials, please try again.');
+    //   }
+    // };
   </script>
   
     <style global>
@@ -100,25 +99,8 @@
         margin-top: 1rem;
       }
 
-      .reset-password-button {
-        padding: 0.6rem;
-        border: none;
-        width: 100%;
-        border-radius: 10px;
-        font-size: 0.8rem;
-        cursor: pointer;
-        background: #ffffff;
-        box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px #ffffff;
-        transition: all 0.3s ease;
-        color: rgb(57, 57, 57);
-      }
-
-      .reset-password-button:hover {
-        box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px #ffffff;
-      }
-
       .submit-button,
-      .register-button {
+      .login-button {
         padding: 1rem;
         border: none;
         width: 100%;
@@ -162,7 +144,8 @@
       <div class="error-message">{$errorMessage}</div>
     {/if}
   
-    <form class="login-form" on:submit|preventDefault={login}>
+    <!-- on:submit|preventDefault={login} -->
+    <form class="reset-password-form">
       <input 
         type="email" 
         class="input-field" 
@@ -170,27 +153,15 @@
         bind:value={email} 
         required
       />
-  
-      <input 
-        type="password" 
-        class="input-field" 
-        placeholder="Password" 
-        bind:value={password} 
-        required
-      />
 
       <div class="button-container">
         <button type="submit" class="submit-button">
-          <LogIn size="20" style="margin-right: 8px;" />
-          Login
+          <Mail size="20" style="margin-right: 8px;" />
+          Email Reset Link
         </button>
-        <button type="button" class="reset-password-button" on:click={() => goto('/resetPassword')}>
-          <!-- <ArrowRight size="20" style="margin-left: 8px;" /> -->
-          Forgotten Password?
-        </button>
-        <button type="button" class="register-button" on:click={() => goto('/register')}>
-          <ArrowRight size="20" style="margin-left: 8px;" />
-          Sign Up
+        <button type="button" class="login-button" on:click={() => goto('/login')}>
+          <ArrowLeft size="20" style="margin-left: 8px;" />
+          Return To Login
         </button>
       </div>
     </form>
