@@ -167,6 +167,7 @@ async fn get_active_filtered_projects(
     // grade: Option<String>,
     grades: Option<Vec<String>>,
     sent_status: Option<String>,
+    styles: Option<Vec<String>>,
 ) -> Result<Vec<Project>, String> {
     let collection = client.database("hooked_db").collection::<Document>("projects");
 
@@ -177,6 +178,12 @@ async fn get_active_filtered_projects(
     if let Some(grades_list) = grades {
         if !grades_list.is_empty() {
             filter.insert("grade", doc! { "$in": grades_list }); // Use $in to match multiple grades
+        }
+    }
+
+    if let Some(styles_list) = styles {
+        if !styles_list.is_empty() {
+            filter.insert("style", doc! { "$in": styles_list });
         }
     }
 
@@ -212,6 +219,7 @@ async fn get_inactive_filtered_projects(
     // grade: Option<String>,
     grades: Option<Vec<String>>,
     sent_status: Option<String>,
+    styles: Option<Vec<String>>,
 ) -> Result<Vec<Project>, String> {
     let collection = client.database("hooked_db").collection::<Document>("projects");
 
@@ -225,6 +233,12 @@ async fn get_inactive_filtered_projects(
         }
     }
 
+    if let Some(styles_list) = styles {
+        if !styles_list.is_empty() {
+            filter.insert("style", doc! { "$in": styles_list });
+        }
+    }
+    
     // Add sent_status filter if provided
     if let Some(s) = sent_status {
         if s == "true" || s == "false" {
@@ -249,58 +263,6 @@ async fn get_inactive_filtered_projects(
     println!("Projects returned: {:?}", projects.len()); // Debugging
     Ok(projects)
 }
-
-
-
-
-// async fn get_inactive_filtered_projects(
-//     client: State<'_, MongoClient>,
-//     grade: Option<String>,
-//     sent_status: Option<String>,
-// ) -> Result<Vec<Project>, String> {
-//     let collection = client.database("hooked_db").collection::<Document>("projects");
-
-//     // Base filter: Only return inactive projects
-//     let mut filter = doc! { "is_active": 0 };
-
-//     // Add grade filter if provided
-//     // if let Some(g) = grade {
-//     //     if !g.is_empty() {
-//     //         filter.insert("grade", g);
-//     //     }
-//     // }
-//     // Add sent_status filter if provided
-//     if let Some(s) = sent_status {
-//         if s == "true" || s == "false" {
-//             let sent_value = if s == "true" { 1 } else { 0 };
-//             filter.insert("is_sent", Bson::Int32(sent_value));
-//         }
-//         // If s is empty or anything else, skip filtering on is_sent
-//     }
-
-//     // Add sent_status filter if provided
-//     if let Some(s) = sent_status {
-//         if !s.is_empty() {
-//             let sent_value = if s == "true" { 1 } else { 0 }; // Convert Boolean to i32
-//             filter.insert("is_sent", Bson::Int32(sent_value));
-//         }
-//     }
-
-//     // Log the final MongoDB query for debugging
-//     println!("MongoDB Query: {:?}", filter);
-
-//     // Execute the query
-//     let mut cursor = collection.find(filter, None).await.map_err(|e| e.to_string())?;
-//     let mut projects = Vec::new();
-
-//     while let Some(doc) = cursor.try_next().await.map_err(|e| e.to_string())? {
-//         let project: Project = bson::from_document(doc).map_err(|e| e.to_string())?;
-//         projects.push(project);
-//     }
-
-//     println!("Projects returned: {:?}", projects.len()); // Debugging
-//     Ok(projects)
-// }
 
 // Updates a project by _id if it exists.
 #[tauri::command]

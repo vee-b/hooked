@@ -11,7 +11,7 @@
   import { slide } from 'svelte/transition'
   import { afterNavigate } from '$app/navigation';
   import Select from 'svelte-select';
-  import { gradeSystem, getCurrentGrades, convertFontScaleGrade } from '../stores/settingsStore';
+  import { gradeSystem, getCurrentGrades, convertFontScaleGrade, allStyles } from '../stores/settingsStore';
 
   export const projectsList = writable<Project[]>([]);
 
@@ -32,10 +32,10 @@
   }
 };
 
-  const fetchFilteredProjects = async (filters: { grades: string[], isSent?: boolean }) => {
+  const fetchFilteredProjects = async (filters: { grades: string[], styles: string[], isSent?: boolean }) => {
     try {
       const isSentParam = filters.isSent !== undefined ? String(filters.isSent) : null;
-      const projectsData = await fetchActiveFilteredProjects(filters.grades, String(filters.isSent));
+      const projectsData = await fetchActiveFilteredProjects(filters.grades, String(filters.isSent), filters.styles);
       projectsList.set(projectsData);  // projectsData should be Project[]
       console.log('Fetched projects successfully:', projectsData);
     } catch (error) {
@@ -60,6 +60,7 @@
   let selectedGrades: string[] = []; // Store multiple selected grades
   let isSent: boolean | null = null; // null = no filter applied
   let sentFilterValue: string = 'all';
+  let selectedStyles: string[] = [];
 
 
   const toggleFilter = () => {
@@ -69,6 +70,7 @@
   const applyFilters = async () => {
     await tick(); // Wait for UI updates
     console.log('Selected Grades:', selectedGrades);  // Log selected grades
+    console.log('Selected Styles:', selectedStyles);
     console.log('Applying Filters:', { selectedGrades, isSent });
 
     const gradesToSend = $gradeSystem === 'Font Scale'
@@ -77,6 +79,7 @@
     
     const filters = {
       grades: gradesToSend,
+      styles: selectedStyles,
       isSent: isSent !== null ? isSent : undefined // omit if null
     };
 
@@ -86,6 +89,7 @@
 
   const clearFilters = async () => {
     selectedGrades = [];
+    selectedStyles = [];
     isSent = null;
     await tick(); // Ensure UI updates before fetching
     fetchProjects(); // Fetch unfiltered active projects
@@ -137,6 +141,12 @@
   .button:hover {
     box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.123), inset -3px -3px 6px #ffffff;
   }
+
+  /* button {
+    display: block;
+    width: 100%;
+    padding: 12px;
+  } */
 
   .top-buttons-container {
     display: flex;
@@ -213,6 +223,7 @@
     align-items: center;
     gap: 0.5rem;
     flex-wrap: wrap;
+    margin-bottom: 20px;
   }
 
   .filter-item label {
@@ -255,7 +266,6 @@
 
   .checkbox-container {
     display: flex;
-    flex-direction: column;
     flex-wrap: wrap;
     gap: 8px;
     padding: 0.25rem 0;
@@ -268,6 +278,8 @@
     display: flex;
     align-items: center;
     gap: 4px;
+    min-width: 120px;
+    margin-bottom: 4px;
   }
 
   .checkbox-item label {
@@ -298,11 +310,11 @@
   <div class="top-buttons-container">
     <button class="button {filterActive ? 'active' : ''}" on:click={toggleFilter}>
       <Filter size={18}/>
-      <span>Filters</span>
+      <!-- <span>Filters</span> -->
     </button>
     <button class="button" on:click={navigateToNewProject}>
       <PlusCircle size={18}/>
-      <span>New Project</span>
+      <!-- <span>New Project</span> -->
     </button>
   </div>
 
@@ -332,6 +344,23 @@
                   id={grade}
                 />
                 <label for={grade}>{grade}</label>
+              </div>
+            {/each}
+          </div>
+        </div>
+
+        <div class="filter-item">
+          <label>Styles</label>
+          <div class="checkbox-container">
+            {#each allStyles as style}
+              <div class="checkbox-item">
+                <input
+                  type="checkbox"
+                  bind:group={selectedStyles}
+                  value={style}
+                  id={style}
+                />
+                <label for={style}>{style}</label>
               </div>
             {/each}
           </div>
