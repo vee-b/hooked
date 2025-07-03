@@ -1,8 +1,23 @@
 <script lang="ts">
   import { goto } from "$app/navigation";
   import { onMount } from 'svelte';
-  import SendsComponent from '../../components/SendsComponent.svelte'; // Adjust the path as necessary
+  import SendsComponent from '../../components/SendsComponent.svelte';
+  import StylesRadarGraphComponent from '../../components/StylesRadarGraphComponent.svelte';
+  import { allStyles } from '../../stores/settingsStore';
+  import { projectsList } from '../../stores/projectsList';
   import { checkLoginStatus } from '../../controllers/accountsController';
+
+  $: completedData = allStyles.map(style =>
+    $projectsList.reduce(
+      (acc, project) => acc + (project.is_sent && project.style?.includes(style) ? 1 : 0), 0
+    )
+  );
+
+  $: practicingData = allStyles.map(style =>
+    $projectsList.reduce(
+      (acc, project) => acc + (!project.is_sent && project.style?.includes(style) ? 1 : 0), 0
+    )
+  );
 
   // Fetch project details on mount
   onMount(async () => {
@@ -43,6 +58,15 @@
     margin: 20px 0;
     border-top: 1px solid #ccc;
   }
+
+  .graph-card {
+    max-width: 450px;
+    margin: 1rem auto;
+    background: #ffffff;
+    border-radius: 12px;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.05), -5px -5px 10px #ffffff;
+    padding: 1.5rem;
+  }
 </style>
 
 <div class="home">
@@ -53,4 +77,8 @@
   <div class="divider"></div>
 
   <SendsComponent />
+
+  <div class="graph-card">
+    <StylesRadarGraphComponent />
+  </div>
 </div>

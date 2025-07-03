@@ -27,6 +27,8 @@ export const sendsSummary = writable<{ total: number; byGrade: Record<string, nu
   byGrade: {},
 });
 
+export const stylesSummary = writable<{ style: string; done: number; practicing: number }[]>([]);
+
 // Initialize projects list.
 // 'export' Makes this function available for import in other files.
 export async function initializeProjectsList(): Promise<void> {
@@ -90,6 +92,17 @@ export async function fetchSendsSummary(): Promise<void> {
     }
   } catch (error) {
     console.error('Error fetching sends summary:', error);
+  }
+}
+
+export async function fetchStylesSummary() {
+  try {
+    const result: [string, number, number][] = await invoke('get_styles_summary');
+    const summary = result.map(([style, done, practicing]) => ({ style, done, practicing }));
+    stylesSummary.set(summary);
+    console.log('Fetched styles summary:', summary);
+  } catch (err) {
+    console.error('Failed to fetch styles summary:', err);
   }
 }
 

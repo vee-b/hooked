@@ -24,6 +24,7 @@
     const projectsData = await fetchInactiveProjects();
     projectsList.set(projectsData);
     console.log('Fetched active projects:', projectsData);
+
   } catch (error) {
     console.error('Error fetching active projects:', error);
   }

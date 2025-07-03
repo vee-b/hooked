@@ -74,6 +74,7 @@ async fn main() {
             delete_project,
             get_sends_count,
             get_sends_summary,
+            get_styles_summary,
             get_active_projects,
             get_inactive_projects,
             get_active_filtered_projects,
@@ -555,6 +556,61 @@ async fn get_sends_summary(client: State<'_, MongoClient>) -> Result<(i64, Vec<(
     println!("Returning sends summary: total_count = {}, grade_counts = {:?}", total_count, grade_counts);
 
     Ok((total_count, grade_counts))
+}
+
+#[tauri::command]
+async fn get_styles_summary(client: State<'_, MongoClient>) -> Result<Vec<(String, i64, i64)>, String> {
+    let collection = client.database("hooked_db").collection::<Document>("projects");
+
+    // Pipeline to group by style for done (is_sent = 1)
+    let done_pipeline = vec![
+        doc! { "$match": { "is_sent": 1 }},
+        doc! { "$unwind": "$style" },  // break style array into multiple docs
+        doc! { "$group": { "_id": "$style", "count": { "$sum": 1 }}}
+    ];
+
+    let mut done_cursor = collection.aggregate(done_pipeline, None).await.map_err(|e| e.to_string())?;
+    let mut done_counts = std::collections::HashMap::new();
+    while let Some(doc) = done_cursor.try_next().await.map_err(|e| e.to_string())? {
+        if let Some(style) = doc.get_str("_id").ok() {
+            let count = match doc.get("count") {
+                Some(bson::Bson::Int32(n)) => *n as i64,
+                Some(bson::Bson::Int64(n)) => *n,
+                _ => 0,
+            };
+            done_counts.insert(style.to_string(), count);
+        }
+    }
+
+    // Pipeline to group by style for practicing (is_sent = 0)
+    let practicing_pipeline = vec![
+        doc! { "$match": { "is_sent": 0 }},
+        doc! { "$unwind": "$style" },
+        doc! { "$group": { "_id": "$style", "count": { "$sum": 1 }}}
+    ];
+
+    let mut practicing_cursor = collection.aggregate(practicing_pipeline, None).await.map_err(|e| e.to_string())?;
+    let mut practicing_counts = std::collections::HashMap::new();
+    while let Some(doc) = practicing_cursor.try_next().await.map_err(|e| e.to_string())? {
+        if let Some(style) = doc.get_str("_id").ok() {
+            let count = match doc.get("count") {
+                Some(bson::Bson::Int32(n)) => *n as i64,
+                Some(bson::Bson::Int64(n)) => *n,
+                _ => 0,
+            };
+            practicing_counts.insert(style.to_string(), count);
+        }
+    }
+
+    // Build summary list
+    let mut summary = Vec::new();
+    for style in done_counts.keys().chain(practicing_counts.keys()) {
+        let done = *done_counts.get(style).unwrap_or(&0);
+        let practicing = *practicing_counts.get(style).unwrap_or(&0);
+        summary.push((style.clone(), done, practicing));
+    }
+
+    Ok(summary)
 }
 
 // Uploads image data to Cloudinary and returns the secure_url.
