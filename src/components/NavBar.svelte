@@ -3,9 +3,11 @@
     import { Home, ChartLine, CalendarDays, Settings, ChartBar, ChartPie, Filter, Camera, Upload, Clock, PlusCircle, Activity, User, LogOut } from 'lucide-svelte'; // Example icons, adjust as needed
     import { page } from '$app/stores'; // To access the current route
     import { logoutAccount } from '../controllers/accountsController';
+    import ConfirmationBox from './ConfirmationBox.svelte';
   
     // Subscribe to the page store to reactively track the current path
     let currentPath: string;
+    let showLogoutConfirm = false;
 
     // Subscribe to the page store and set currentPath to the current pathname
     $: currentPath = $page.url.pathname;
@@ -19,6 +21,11 @@
     const handleLogout = () => {
       logoutAccount();
     };
+
+    async function confirmLogout() {
+      await logoutAccount();
+      await goto('/login');
+    }
     </script>
   
   <style>
@@ -97,7 +104,18 @@
     <a href="/settings" class={$page.url.pathname === '/settings' ? 'active' : ''}>
       <Settings class="icon" size={18}/>
     </a>
-    <button on:click={handleLogout} class="nav-button">
+    <button on:click={() => showLogoutConfirm = true} class="nav-button">
       <LogOut class="icon" size={18} />
     </button>
   </nav>
+
+  {#if showLogoutConfirm}
+    <ConfirmationBox 
+      message="Are you sure you want to log out?"
+      onConfirm={async () => {
+        showLogoutConfirm = false;
+        await confirmLogout();
+      }}
+      onCancel={() => showLogoutConfirm = false}
+    />
+  {/if}

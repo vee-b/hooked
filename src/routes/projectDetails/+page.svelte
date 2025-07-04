@@ -14,9 +14,10 @@ When 'isEditMode' == false, the add new project page is shown.
   import { Capacitor } from '@capacitor/core';
   import { addProject, editProject, fetchProjectById, sanitizeFileName, annotations, initializeProjectsList } from '../../stores/projectsList';
   import { Project } from '../../models/Project';
-  import { checkLoginStatus, logoutAccount } from '../../controllers/accountsController';
+  import { checkLoginStatus } from '../../controllers/accountsController';
   import { gradeSystem, getCurrentGrades, convertVScaleGrade, convertFontScaleGrade } from '../../stores/settingsStore';
   import { fade } from 'svelte/transition';
+  import ConfirmationBox from '../../components/ConfirmationBox.svelte';
 
   // Form state and mode indicator
   let projectId: string | undefined = undefined;  // Changed to undefined instead of null
@@ -29,15 +30,14 @@ When 'isEditMode' == false, the add new project page is shown.
   let selectedOption: string = ''; // grade
   let dateTime: Date = new Date();
   let inputDateTime = formatDateForInput(dateTime);
-
   let isSent: boolean = false;
   let isActive: boolean = true;
   let message: string = '';
   let imageFile: File | null = null;
   const options = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15', 'V16', 'V17'];
-
   const allStyles = ['Trad', 'Top Rope', 'Bouldering', 'Topout', 'Traverse', 'Vert', 'Overhang', 'Slab', 'Roof', 'Static', 'Dyno', 'Technical', 'Reachy', 'Sustained', 'Power', 'Campusing', 'Slopers', 'Crimps', 'Jugs', 'Pinches', 'Pockets', 'Undercut', 'Side Pull', 'Hidden Hold/s', 'Volumes'];
   let selectedStyles: string[] = [];
+  let showConfirmationBox = false;
 
   $: currentGrades = getCurrentGrades($gradeSystem);
   $: selectedOption = convertVScaleGrade(selectedOption, $gradeSystem);
@@ -489,7 +489,6 @@ When 'isEditMode' == false, the add new project page is shown.
   
   <div class="selection-box-container">
     <div class="form-group">
-      <!-- <label for="grade">Grade</label> -->
       <select id="grade" bind:value={selectedOption}>
         <option value="" disabled selected>Select grade</option>
         {#each currentGrades as grade}
@@ -526,7 +525,13 @@ When 'isEditMode' == false, the add new project page is shown.
   </div>
 
   <div class="form-group">
-    <button class="button" on:click={submitData}>
+    <button class="button" on:click={() => {
+      if (isEditMode) {
+        showConfirmationBox = true;
+      } else {
+        submitData();
+      }
+    }}>
       {isEditMode ? "Update Project" : "Add Project"}
     </button>
   </div>
@@ -538,3 +543,13 @@ When 'isEditMode' == false, the add new project page is shown.
   {/if} 
 </div>
 
+{#if showConfirmationBox}
+  <ConfirmationBox 
+    message={`Are you sure you want to update this project?`}
+    onConfirm={async () => {
+      showConfirmationBox = false;
+      await submitData();
+    }}
+    onCancel={() => showConfirmationBox = false}
+  />
+{/if}

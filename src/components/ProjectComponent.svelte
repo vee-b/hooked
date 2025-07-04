@@ -4,6 +4,7 @@
     import type { Project } from '../models/Project';
     import { goto } from '$app/navigation'; // Import goto for navigation
     import { gradeSystem, convertVScaleGrade } from '../stores/settingsStore'; // Import grade system store
+    import ConfirmationBox from './ConfirmationBox.svelte';
 
     // /**
     //  * @type {{ id: any; formatted_date_time: any; image_path: any; grade: any; is_sent: any; attempts: any; is_active: any; }}
@@ -16,8 +17,8 @@
   export let project: Project; // Receive project object as prop
   const shortened_time = project.formatted_date_time.slice(10)
   const shortened_date = project.formatted_date_time.slice(0, 10)
-  
   const dispatch = createEventDispatcher();
+  let showConfirmationBox = false;
 
   // Reactive: get current system value
   $: currentSystem = $gradeSystem;
@@ -135,7 +136,19 @@
 
     <div class="button-row">
       <button class="btn btn-edit" on:click={editProject}>Edit</button>
-      <button class="btn btn-delete" on:click={handleDeleteProject}>Delete</button>
+      <button class="btn btn-delete" on:click={() => showConfirmationBox = true}>Delete</button>
+
     </div>
   </div>
 </div>
+
+{#if showConfirmationBox}
+  <ConfirmationBox 
+    message={`Are you sure you want to delete this project?`}
+    onConfirm={async () => {
+      showConfirmationBox = false;
+      await handleDeleteProject();
+    }}
+    onCancel={() => showConfirmationBox = false}
+  />
+{/if}

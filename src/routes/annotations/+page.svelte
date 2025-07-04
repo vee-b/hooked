@@ -8,6 +8,7 @@
   import { updateAnnotations, fetchProjectById } from '../../stores/projectsList';
   import { checkLoginStatus } from '../../controllers/accountsController';
   import { ArrowLeft } from 'lucide-svelte';
+  import ConfirmationBox from '../../components/ConfirmationBox.svelte';
 
   let imagePath = '';
   let projectId = '';
@@ -18,6 +19,9 @@
   let selectedPointIndex: number | null = null;
   let originalPosition: { x: string; y: string } | null = null;
   let selectedColor = 'white'; // Default marker color
+  let showRemoveAllConfirm = false;
+  let showDeleteConfirm = false;
+  let showCancelConfirm = false;
 
   // Fetch project details on mount
   onMount(async () => {
@@ -55,7 +59,7 @@
 
     const xNum = parseFloat(x);
     const yNum = parseFloat(y);
-    const tolerance = 0.02;
+    const tolerance = 0.04;
 
     if (editNotesMode) {
       // Update position of the marker being edited
@@ -130,12 +134,6 @@
   }
 
   function cancelAnnotations() {
-    // if (selectedPointIndex !== null && originalPosition) {
-    //   points[selectedPointIndex].x = originalPosition.x;
-    //   points[selectedPointIndex].y = originalPosition.y;
-    // }
-    // points = [...points];
-    // exitEdit();
     if (selectedPointIndex !== null) {
       if (points[selectedPointIndex].note.length === 0) {
         // Remove the marker if no note was added
@@ -302,7 +300,9 @@
   {/if}
 
   {#if !editNotesMode}
-    <button class="button" on:click={clearAnnotations}>Remove All Markers/Notes</button>
+    <button class="button" on:click={() => showRemoveAllConfirm = true}>
+      Remove All Markers/Notes
+    </button>
     <div class="button-group">
       Marker Colours:
       <button on:click={() => selectedColor = 'white'} style="background:white; border-radius:10px;"></button>
@@ -319,8 +319,41 @@
     ></textarea>
     <div class="button-group">
       <button class="button" on:click={saveNote}>Save</button>
-      <button class="button" on:click={removeMarker}>Delete</button>
-      <button class="button" on:click={cancelAnnotations}>Cancel</button>
+      <button class="button" on:click={() => showDeleteConfirm = true}>Delete</button>
+      <button class="button" on:click={() => showCancelConfirm = true}>Cancel</button>
     </div>
   {/if}
 </div>
+
+{#if showRemoveAllConfirm}
+  <ConfirmationBox 
+    message="Are you sure you want to remove all markers and notes?"
+    onConfirm={async () => {
+      showRemoveAllConfirm = false;
+      await clearAnnotations();
+    }}
+    onCancel={() => showRemoveAllConfirm = false}
+  />
+{/if}
+
+{#if showDeleteConfirm}
+  <ConfirmationBox 
+    message="Are you sure you want to remove this marker?"
+    onConfirm={async () => {
+      showDeleteConfirm = false;
+      await removeMarker();
+    }}
+    onCancel={() => showDeleteConfirm = false}
+  />
+{/if}
+
+{#if showCancelConfirm}
+  <ConfirmationBox 
+    message="Cancel editing this marker? Any unsaved note changes will be lost."
+    onConfirm={() => {
+      showCancelConfirm = false;
+      cancelAnnotations();
+    }}
+    onCancel={() => showCancelConfirm = false}
+  />
+{/if}

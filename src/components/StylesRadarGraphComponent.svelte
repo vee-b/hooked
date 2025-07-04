@@ -170,11 +170,7 @@
       radarChart.data.datasets[0].label = showPercent ? 'Done (%)' : 'Done';
       radarChart.data.datasets[1].data = dataPracticing;
       radarChart.data.datasets[1].label = showPercent ? 'Practicing (%)' : 'Practicing';
-      
-      // if (radarChart.options.scales?.r) {
-      //   radarChart.options.scales.r.max = showPercent ? 100 : undefined;
-      //   radarChart.options.scales.r.ticks.stepSize = showPercent ? 20 : 1;
-      // }
+    
       const rScale = radarChart.options.scales?.r;
       if (rScale?.ticks) {
         rScale.max = showPercent ? 100 : undefined;
