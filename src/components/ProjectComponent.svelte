@@ -1,9 +1,10 @@
 <script lang="ts">
-    import { createEventDispatcher } from 'svelte';
+    import { createEventDispatcher, tick } from 'svelte';
     import { deleteProject, projectsList } from "../stores/projectsList";
     import type { Project } from '../models/Project';
     import { goto } from '$app/navigation'; // Import goto for navigation
     import { gradeSystem, convertVScaleGrade } from '../stores/settingsStore'; // Import grade system store
+    import ConfirmationBox from './ConfirmationBox.svelte';
 
     // /**
     //  * @type {{ id: any; formatted_date_time: any; image_path: any; grade: any; is_sent: any; attempts: any; is_active: any; }}
@@ -14,11 +15,13 @@
   //  * @type {{ id: any; formatted_date_time: string; image_path: any; grade: any; is_sent: any; attempts: any; }}
   //  */
   export let project: Project; // Receive project object as prop
-    
+  const shortened_time = project.formatted_date_time.slice(10)
+  const shortened_date = project.formatted_date_time.slice(0, 10)
   const dispatch = createEventDispatcher();
+  let showConfirmationBox = false;
 
-   // Reactive: get current system value
-   $: currentSystem = $gradeSystem;
+  // Reactive: get current system value
+  $: currentSystem = $gradeSystem;
   $: displayedGrade = convertVScaleGrade(project.grade, currentSystem);
 
   // Navigation to edit the project
@@ -48,87 +51,104 @@
       dispatch('projectDeleted', project._id);
 
       // Force UI refresh by navigating to the same page
+      await tick(); // wait for DOM to mount
       await goto(window.location.pathname);
 
       } catch (error) {
         console.error('Error deleting project:', error);
       }
     }
-    
   </script>
-  
+
   <style>
-    .project-card {
-      background-color: #f9f9f9;
-      padding: 16px;
-      margin: 12px 0;
+  .card {
+    background: #ffffff;
+    border-radius: 1rem;
+    margin: 1rem;
+    overflow: hidden;
+    /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06); */
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.123), -5px -5px 10px #ffffff;
+    font-family: 'Inter', sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .card img {
+    width: 100%;
+    height: auto;
+    object-fit: cover;
+  }
+
+  .card-content {
+    padding: 1rem;
+  }
+
+  .title-row {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: #111827;
+    margin-bottom: 0.5rem;
+  }
+
+  .info {
+    font-size: 0.95rem;
+    color: #374151;
+    margin: 0.25rem 0;
+  }
+
+  .button-row {
+    display: flex;
+    flex-direction: row;
+    gap: 0.75rem;
+    margin-top: 1rem;
+  }
+
+  .btn {
+      width: 100%;
+      padding: 12px;
       border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-      padding-bottom: 2rem;
-    }
-
-    .project-label {
-      font-weight: bold;
-      color: #333;
-    }
-
-    .text-content {
-      font-size: 16px;
-      margin: 4px 0;
-    }
-  
-    .button {
-      margin-top: 8px;
-      padding: 8px 12px;
-      background-color: #007bff;
-      color: white;
-      border: none;
-      border-radius: 4px;
+      font-size: 1rem;
+      font-weight: lighter;
       cursor: pointer;
+      border: none;
+      /* border-radius: 9999px;  */
+      border-radius: 1rem;
+      background: #ffffff;
+      box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.123), -5px -5px 10px #ffffff;
+      transition: all 0.3s ease;
     }
 
-    .button:hover {
-      background-color: #0056b3;
+    .btn:hover {
+      box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.123), inset -3px -3px 6px #ffffff;
     }
+</style>
 
-    img {
-      max-width: 200px;
-      max-height: 200px;
-      border-radius: 4px;
-      margin-top: 8px;
-    }
-    
-  </style>
+<div class="card">
+  {#if project.image_path}
+    <img src={project.image_path} alt="Project" loading="lazy" />
+  {/if}
 
-  <div class="project-card">
-      <p class="project-label">Date & Time: {project.formatted_date_time}</p>
+  <div class="card-content">
+    <div class="title-row">{shortened_date} • {shortened_time}</div>
+    <div class="info">Grade: {displayedGrade}</div>
+    <div class="info">Sent: {project.is_sent ? 'Yes' : 'No'} • Attempts: {project.attempts}</div>
+    <div class="info">Notes: {project.coordinates?.length || 0}</div>
 
-    {#if project.image_path}
-      <img src={project.image_path} alt="Project Image" />
-      <p class="loading" style="display: none;">Loading Image from Cloudinary...</p>
-    {/if}
+    <div class="button-row">
+      <button class="btn btn-edit" on:click={editProject}>Edit</button>
+      <button class="btn btn-delete" on:click={() => showConfirmationBox = true}>Delete</button>
 
-    <!-- <p class="project-label">Grade: {project.grade}</p> -->
-    <p class="project-label">
-      Grade: { displayedGrade }
-      <!-- {isValidGrade(project.grade) ? project.grade : 'Unknown Grade'} -->
-    </p>
-
-    <p class="project-label">Sent: {project.is_sent ? "Yes" : "No"}</p>
-
-    <p class="project-label">Attempts: {project.attempts}</p>
-
-    {#if project.coordinates && project.coordinates.length > 0}
-      <p class="project-label">Notes: {project.coordinates.length}</p>
-    {:else}
-      <p class="project-label">Notes: 0</p>
-    {/if}
-  
-    <button class="button" on:click={editProject}>
-      Edit Project
-    </button>
-  
-    <button class="button" on:click={handleDeleteProject}>
-      Delete Project
-    </button>
+    </div>
   </div>
+</div>
+
+{#if showConfirmationBox}
+  <ConfirmationBox 
+    message={`Are you sure you want to delete this project?`}
+    onConfirm={async () => {
+      showConfirmationBox = false;
+      await handleDeleteProject();
+    }}
+    onCancel={() => showConfirmationBox = false}
+  />
+{/if}

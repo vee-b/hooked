@@ -4,11 +4,6 @@
   import { checkLoginStatus, logoutAccount } from '../../controllers/accountsController';
   import { gradeSystem, setGradeSystem } from '../../stores/settingsStore';
 
-  // Handle logout on button click
-  const handleLogout = () => {
-    logoutAccount();
-  };
-
   // Handle dropdown change event
   const handleGradeChange = (event: Event) => {
     const target = event.target as HTMLSelectElement;
@@ -26,31 +21,77 @@
 </script>
 
 <style>
+  .home {
+    padding: 1rem;
+    font-family: 'Poppins', sans-serif;
+    padding-bottom: 4rem;
+    color: black;
+  }
+  
   .settings {
-    max-width: 400px;
-    margin: auto;
-    padding: 20px;
+    padding-left: 2rem;
+    padding-right: 2rem;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  .header-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1.5rem 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .title {
+    color: rgb(57, 57, 57);
+    font-size: 2rem;
+    letter-spacing: 8px;
+    margin: 0;
+  }
+
+  .divider {
+    height: 10px;
+    margin: 20px 0;
+    border-top: 1px solid #ccc;
+  }
+
+  .grade-dropdown {
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    background: #ffffff;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.05), -5px -5px 10px #ffffff;
+    cursor: pointer;
+    transition: box-shadow 0.2s ease;
+    width: 100%;
+    margin-top: 1rem;
+  }
+
+  .grade-dropdown:hover {
+    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px #ffffff;
   }
 </style>
 
-<div class="settings">
-  <h1>Settings</h1>
+<div class="home">
+  <div class="header-container">
+    <h1 class="title">Settings</h1>
+  </div>
+
+  <div class="divider"></div>
 
   <!-- Dropdown for Grade System -->
-  <label for="grade-system">Choose Grade System:</label>
-  <select 
-    id="grade-system" 
-    bind:value={$gradeSystem} 
-    on:change={handleGradeChange} 
-    class="border p-2 rounded"
-  >
-    <option value="V-Scale">V-Scale</option>
-    <option value="Font Scale">Font Scale</option>
-  </select>
-
-  <p>Current Grade System: {$gradeSystem}</p>
+  <!-- <label for="grade-system">Choose Grade System:</label> -->
+  <div class="settings">
+    <select 
+      id="grade-system" 
+      bind:value={$gradeSystem} 
+      on:change={handleGradeChange} 
+      class="grade-dropdown"
+    >
+      <option value="V-Scale">V-Scale</option>
+      <option value="Font Scale">Font Scale</option>
+    </select>
+  </div>
 </div>
-
-<button on:click={handleLogout} class="bg-red-500 px-4 py-2 rounded hover:bg-red-700">
-  Logout
-</button>

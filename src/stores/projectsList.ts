@@ -14,6 +14,7 @@ export interface MongoDBProject {
   attempts: number;
   is_active: boolean;
   coordinates?: { lat: number; lng: number; note?: string[] }[];
+  style?: string[];
 }
 
 // Initialize the project list as a Svelte store.
@@ -25,6 +26,8 @@ export const sendsSummary = writable<{ total: number; byGrade: Record<string, nu
   total: 0,
   byGrade: {},
 });
+
+export const stylesSummary = writable<{ style: string; done: number; practicing: number }[]>([]);
 
 // Initialize projects list.
 // 'export' Makes this function available for import in other files.
@@ -92,6 +95,17 @@ export async function fetchSendsSummary(): Promise<void> {
   }
 }
 
+export async function fetchStylesSummary() {
+  try {
+    const result: [string, number, number][] = await invoke('get_styles_summary');
+    const summary = result.map(([style, done, practicing]) => ({ style, done, practicing }));
+    stylesSummary.set(summary);
+    console.log('Fetched styles summary:', summary);
+  } catch (err) {
+    console.error('Failed to fetch styles summary:', err);
+  }
+}
+
 // Fetch the active projects.
 export async function fetchActiveProjects(): Promise<Project[]> {
   try {
@@ -156,6 +170,104 @@ export async function fetchInactiveProjects(): Promise<Project[]> {
     return projectInstances;
   } catch (error) {
     console.error('Error fetching active projects:', error);
+    return [];
+  }
+}
+
+// Fetch the active projects with filters.
+export async function fetchActiveFilteredProjects(
+  grades: string[] = [],
+  sentStatus: string = '',
+  styles: string[] = [],
+): Promise<Project[]> {
+  try {
+    console.log('Sending to Rust:', { grades, sentStatus, styles }); // Log filters
+
+    const projectsData: unknown = await invoke('get_active_filtered_projects', {
+      grades,
+      sentStatus,
+      styles,
+    });
+
+    console.log('Received from Rust:', projectsData); // Log what comes back
+
+    if (!Array.isArray(projectsData)) {
+      console.error('Unexpected response format:', projectsData);
+      return [];
+    }
+
+    const typedProjectsData: MongoDBProject[] = projectsData;
+
+    const projectInstances: Project[] = typedProjectsData.map((data) => {
+      return new Project({
+        ...data,
+        _id:
+          typeof data._id === 'object' && data._id !== null && '$oid' in data._id
+            ? data._id.$oid
+            : String(data._id || ''),
+        coordinates: Array.isArray(data.coordinates)
+          ? data.coordinates.map((coord) =>
+              typeof coord.lat === 'number' && typeof coord.lng === 'number'
+                ? coord
+                : { lat: 0, lng: 0 } // Default invalid coordinates
+            )
+          : [],
+      });
+    });
+
+    console.log('Processed Project IDs:', projectInstances.map((p) => p._id));
+    return projectInstances;
+  } catch (error) {
+    console.error('Error fetching active projects:', error);
+    return [];
+  }
+}
+
+// Function to fetch inactive projects with filters
+export async function fetchInactiveFilteredProjects(
+  grades: string[] = [],
+  sentStatus: string = '',
+  styles: string[] = [],
+): Promise<Project[]> {
+  try {
+    console.log('Sending to Rust:', { grades, sentStatus, styles }); // Log filters
+
+    const projectsData: unknown = await invoke('get_inactive_filtered_projects', {
+      grades,
+      sentStatus,
+      styles,
+    });
+
+    console.log('Received from Rust:', projectsData); // Log what comes back
+
+    if (!Array.isArray(projectsData)) {
+      console.error('Unexpected response format:', projectsData);
+      return [];
+    }
+
+    const typedProjectsData: MongoDBProject[] = projectsData;
+
+    const projectInstances: Project[] = typedProjectsData.map((data) => {
+      return new Project({
+        ...data,
+        _id:
+          typeof data._id === 'object' && data._id !== null && '$oid' in data._id
+            ? data._id.$oid
+            : String(data._id || ''),
+        coordinates: Array.isArray(data.coordinates)
+          ? data.coordinates.map((coord) =>
+              typeof coord.lat === 'number' && typeof coord.lng === 'number'
+                ? coord
+                : { lat: 0, lng: 0 } // Default invalid coordinates
+            )
+          : [],
+      });
+    });
+
+    console.log('Processed Project IDs:', projectInstances.map((p) => p._id));
+    return projectInstances;
+  } catch (error) {
+    console.error('Error fetching inactive projects:', error);
     return [];
   }
 }
@@ -271,6 +383,13 @@ export async function editProject(updatedProject: Project, imageFile?: File): Pr
       }
     }
 
+     // 👇 Fetch the existing project from the backend to preserve coordinates
+    const existingProject: Project = await invoke("get_project_by_id", {
+      id: updatedProject._id,
+    });
+
+    console.log("Fetched existing project for coordinates:", existingProject);
+
     console.log("Updating project:", updatedProject);
 
     // Ensure correct formatting before sending to Rust
@@ -284,7 +403,8 @@ export async function editProject(updatedProject: Project, imageFile?: File): Pr
       attempts: updatedProject.attempts,
       grade: updatedProject.grade,
       is_active: updatedProject.is_active ? 1 : 0, // Convert boolean to integer
-      coordinates: updatedProject.coordinates || [],
+      coordinates: existingProject.coordinates,
+      style: updatedProject.style,
     };
 
     console.log("Project details being sent to backend:", formattedProject);

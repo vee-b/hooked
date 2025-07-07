@@ -1,7 +1,32 @@
-<script>
+<script lang="ts">
     import { goto } from '$app/navigation';
     import { Home, ChartLine, CalendarDays, Settings, ChartBar, ChartPie, Filter, Camera, Upload, Clock, PlusCircle, Activity, User, LogOut } from 'lucide-svelte'; // Example icons, adjust as needed
-  </script>
+    import { page } from '$app/stores'; // To access the current route
+    import { logoutAccount } from '../controllers/accountsController';
+    import ConfirmationBox from './ConfirmationBox.svelte';
+  
+    // Subscribe to the page store to reactively track the current path
+    let currentPath: string;
+    let showLogoutConfirm = false;
+
+    // Subscribe to the page store and set currentPath to the current pathname
+    $: currentPath = $page.url.pathname;
+
+    // Helper function to check if the route is active
+    function isActive(route: string): boolean {
+      return currentPath === route;
+    }
+
+    // Handle logout on button click
+    const handleLogout = () => {
+      logoutAccount();
+    };
+
+    async function confirmLogout() {
+      await logoutAccount();
+      await goto('/login');
+    }
+    </script>
   
   <style>
     nav {
@@ -9,56 +34,88 @@
       bottom: 0;
       left: 0;
       width: 100%;
-      background: #ffffff;
-      border-top: 1px solid #e0e0e0;
       display: flex;
       justify-content: space-evenly;
       align-items: center;
       padding: 0.5rem 0;
       z-index: 10;
+      background-color: #f3f9f9fa;
+      font-family: 'Poppins', sans-serif;
     }
   
+    button {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-decoration: none;
+      color: black;
+      font-size: 0.8rem;
+      padding: 1rem;
+      border: none;
+      border-radius: 10px;
+      background: #f3f9f9fa;
+      box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.123), -5px -5px 10px #ffffff;
+      transition: all 0.3s ease;
+    }
+
+    button:hover,
+    button.active {
+      box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.123), inset -3px -3px 6px #ffffff;
+    }
+
     a {
       display: flex;
       flex-direction: column;
       align-items: center;
       text-decoration: none;
-      color: #666;
+      color: black;
       font-size: 0.8rem;
+      padding: 1rem;
+      border: none;
+      border-radius: 10px;
+      background: #f3f9f9fa;
+      box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.123), -5px -5px 10px #ffffff;
+      transition: all 0.3s ease;
     }
 
-    a span {
-      font-size: 0.8rem;
-      line-height: 1.2; /* Ensures good readability */
-    }
-
-  
-    a:hover {
-      color: #111;
+    a:hover,
+    a.active {
+      /* box-shadow: inset 3px 3px 6px #b4d1e3, inset -3px -3px 6px #ffffff; */
+      box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.123), inset -3px -3px 6px #ffffff;
     }
   
     .icon {
-      width: 24px;
-      height: 24px;
+      /* width: 24px;
+      height: 24px; */
       margin-bottom: 0.2rem;
     }
   </style>
-  
+
   <nav>
-    <a href="/">
-      <Home class="icon" />
-      <span>Home</span>
+    <a href="/" class={$page.url.pathname === '/' ? 'active' : ''}>
+      <Home class="icon" size={18} />
     </a>
-    <a href="/inactiveProjects">
-      <CalendarDays class="icon" />
-      <span>Inactive<br>Projects</span>
+    <a href="/inactiveProjects" class={$page.url.pathname === '/inactiveProjects' ? 'active' : ''}>
+      <CalendarDays class="icon" size={18}/>
     </a>
-    <a href="/stats">
-      <ChartLine class="icon" />
-      <span>Stats</span>
+    <a href="/stats" class={$page.url.pathname === '/stats' ? 'active' : ''}>
+      <ChartLine class="icon" size={18}/>
     </a>
-    <a href="/settings">
-      <Settings class="icon" />
-      <span>Settings</span>
+    <a href="/settings" class={$page.url.pathname === '/settings' ? 'active' : ''}>
+      <Settings class="icon" size={18}/>
     </a>
+    <button on:click={() => showLogoutConfirm = true} class="nav-button">
+      <LogOut class="icon" size={18} />
+    </button>
   </nav>
+
+  {#if showLogoutConfirm}
+    <ConfirmationBox 
+      message="Are you sure you want to log out?"
+      onConfirm={async () => {
+        showLogoutConfirm = false;
+        await confirmLogout();
+      }}
+      onCancel={() => showLogoutConfirm = false}
+    />
+  {/if}

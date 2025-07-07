@@ -74,8 +74,11 @@ async fn main() {
             delete_project,
             get_sends_count,
             get_sends_summary,
+            get_styles_summary,
             get_active_projects,
             get_inactive_projects,
+            get_active_filtered_projects,
+            get_inactive_filtered_projects,
             upload_image,
             get_project_by_id,
             create_account,
@@ -158,6 +161,110 @@ async fn get_inactive_projects(client: State<'_, MongoClient>) -> Result<Vec<Pro
     Ok(projects)
 }
 
+// Fetches all projects where is_active is 1 with optional filtering
+#[tauri::command]
+async fn get_active_filtered_projects(
+    client: State<'_, MongoClient>,
+    // grade: Option<String>,
+    grades: Option<Vec<String>>,
+    sent_status: Option<String>,
+    styles: Option<Vec<String>>,
+) -> Result<Vec<Project>, String> {
+    let collection = client.database("hooked_db").collection::<Document>("projects");
+
+    // Base filter: Only return active projects
+    let mut filter = doc! { "is_active": 1 };
+
+    // Add grade filter if provided
+    if let Some(grades_list) = grades {
+        if !grades_list.is_empty() {
+            filter.insert("grade", doc! { "$in": grades_list }); // Use $in to match multiple grades
+        }
+    }
+
+    if let Some(styles_list) = styles {
+        if !styles_list.is_empty() {
+            filter.insert("style", doc! { "$in": styles_list });
+        }
+    }
+
+    // Add sent_status filter if provided
+    if let Some(s) = sent_status {
+        if s == "true" || s == "false" {
+            let sent_value = if s == "true" { 1 } else { 0 };
+            filter.insert("is_sent", Bson::Int32(sent_value));
+        }
+        // If s is empty or anything else, skip filtering on is_sent
+    }
+
+    // Log the final MongoDB query for debugging
+    println!("MongoDB Query: {:?}", filter);
+
+    // Execute the query
+    let mut cursor = collection.find(filter, None).await.map_err(|e| e.to_string())?;
+    let mut projects = Vec::new();
+
+    while let Some(doc) = cursor.try_next().await.map_err(|e| e.to_string())? {
+        let project: Project = bson::from_document(doc).map_err(|e| e.to_string())?;
+        projects.push(project);
+    }
+
+    println!("Projects returned: {:?}", projects.len()); // Debugging
+    Ok(projects)
+}
+
+// Fetches all projects where is_active is 0 with optional filtering
+#[tauri::command]
+async fn get_inactive_filtered_projects(
+    client: State<'_, MongoClient>,
+    // grade: Option<String>,
+    grades: Option<Vec<String>>,
+    sent_status: Option<String>,
+    styles: Option<Vec<String>>,
+) -> Result<Vec<Project>, String> {
+    let collection = client.database("hooked_db").collection::<Document>("projects");
+
+    // Base filter: Only return active projects
+    let mut filter = doc! { "is_active": 0 };
+
+    // Add grade filter if provided
+    if let Some(grades_list) = grades {
+        if !grades_list.is_empty() {
+            filter.insert("grade", doc! { "$in": grades_list }); // Use $in to match multiple grades
+        }
+    }
+
+    if let Some(styles_list) = styles {
+        if !styles_list.is_empty() {
+            filter.insert("style", doc! { "$in": styles_list });
+        }
+    }
+    
+    // Add sent_status filter if provided
+    if let Some(s) = sent_status {
+        if s == "true" || s == "false" {
+            let sent_value = if s == "true" { 1 } else { 0 };
+            filter.insert("is_sent", Bson::Int32(sent_value));
+        }
+        // If s is empty or anything else, skip filtering on is_sent
+    }
+
+    // Log the final MongoDB query for debugging
+    println!("MongoDB Query: {:?}", filter);
+
+    // Execute the query
+    let mut cursor = collection.find(filter, None).await.map_err(|e| e.to_string())?;
+    let mut projects = Vec::new();
+
+    while let Some(doc) = cursor.try_next().await.map_err(|e| e.to_string())? {
+        let project: Project = bson::from_document(doc).map_err(|e| e.to_string())?;
+        projects.push(project);
+    }
+
+    println!("Projects returned: {:?}", projects.len()); // Debugging
+    Ok(projects)
+}
+
 // Updates a project by _id if it exists.
 #[tauri::command]
 async fn update_project(client: State<'_, MongoClient>, project: Project) -> Result<(), String> {
@@ -187,25 +294,47 @@ async fn update_project(client: State<'_, MongoClient>, project: Project) -> Res
             update_doc.insert("is_sent", bson::Bson::Int32(if *is_sent { 1 } else { 0 }));
         }
 
-        // Ensure `coordinates` field is properly handled as an array of floats
-        if let Some(bson::Bson::Array(coordinates)) = update_doc.get("coordinates") {
-            // Log the received coordinates
-            println!("Received coordinates: {:?}", coordinates);
+        // // Ensure `coordinates` field is properly handled as an array of floats
+        // if let Some(bson::Bson::Array(coordinates)) = update_doc.get("coordinates") {
+        //     // Log the received coordinates
+        //     println!("Received coordinates: {:?}", coordinates);
             
-            // We assume that coordinates is an array of numbers (floats or integers).
-            let coordinates: Vec<f64> = coordinates.iter()
-                .filter_map(|bson| match bson {
-                    bson::Bson::Double(val) => Some(*val),
-                    bson::Bson::Int32(val) => Some(*val as f64),
-                    bson::Bson::Int64(val) => Some(*val as f64),
-                    _ => None, // Ignore invalid types
-                })
-                .collect();
+        //     // We assume that coordinates is an array of numbers (floats or integers).
+        //     let coordinates: Vec<f64> = coordinates.iter()
+        //         .filter_map(|bson| match bson {
+        //             bson::Bson::Double(val) => Some(*val),
+        //             bson::Bson::Int32(val) => Some(*val as f64),
+        //             bson::Bson::Int64(val) => Some(*val as f64),
+        //             _ => None, // Ignore invalid types
+        //         })
+        //         .collect();
 
-            // Log the coordinates before updating
-            println!("Processed coordinates: {:?}", coordinates);
+        //     // Log the coordinates before updating
+        //     println!("Processed coordinates: {:?}", coordinates);
             
-            update_doc.insert("coordinates", bson::Bson::Array(coordinates.iter().map(|&x| bson::Bson::Double(x)).collect()));
+        //     update_doc.insert("coordinates", bson::Bson::Array(coordinates.iter().map(|&x| bson::Bson::Double(x)).collect()));
+        // }
+
+        // Handle `coordinates` only if valid array of objects
+        let valid_coordinates = match update_doc.get("coordinates") {
+            Some(bson::Bson::Array(array)) if !array.is_empty() => {
+                // Log and preserve array as-is
+                println!("Valid coordinates received: {:?}", array);
+                true
+            }
+            _ => false,
+        };
+
+        // If not valid, fetch existing coordinates and use them
+        if !valid_coordinates {
+            if let Ok(existing_doc) = collection.find_one(filter.clone(), None).await {
+                if let Some(existing_coordinates) = existing_doc
+                    .and_then(|doc| doc.get("coordinates").cloned())
+                {
+                    println!("Reusing existing coordinates: {:?}", existing_coordinates);
+                    update_doc.insert("coordinates", existing_coordinates);
+                }
+            }
         }
 
         let update = doc! {"$set": update_doc};
@@ -427,6 +556,61 @@ async fn get_sends_summary(client: State<'_, MongoClient>) -> Result<(i64, Vec<(
     println!("Returning sends summary: total_count = {}, grade_counts = {:?}", total_count, grade_counts);
 
     Ok((total_count, grade_counts))
+}
+
+#[tauri::command]
+async fn get_styles_summary(client: State<'_, MongoClient>) -> Result<Vec<(String, i64, i64)>, String> {
+    let collection = client.database("hooked_db").collection::<Document>("projects");
+
+    // Pipeline to group by style for done (is_sent = 1)
+    let done_pipeline = vec![
+        doc! { "$match": { "is_sent": 1 }},
+        doc! { "$unwind": "$style" },  // break style array into multiple docs
+        doc! { "$group": { "_id": "$style", "count": { "$sum": 1 }}}
+    ];
+
+    let mut done_cursor = collection.aggregate(done_pipeline, None).await.map_err(|e| e.to_string())?;
+    let mut done_counts = std::collections::HashMap::new();
+    while let Some(doc) = done_cursor.try_next().await.map_err(|e| e.to_string())? {
+        if let Some(style) = doc.get_str("_id").ok() {
+            let count = match doc.get("count") {
+                Some(bson::Bson::Int32(n)) => *n as i64,
+                Some(bson::Bson::Int64(n)) => *n,
+                _ => 0,
+            };
+            done_counts.insert(style.to_string(), count);
+        }
+    }
+
+    // Pipeline to group by style for practicing (is_sent = 0)
+    let practicing_pipeline = vec![
+        doc! { "$match": { "is_sent": 0 }},
+        doc! { "$unwind": "$style" },
+        doc! { "$group": { "_id": "$style", "count": { "$sum": 1 }}}
+    ];
+
+    let mut practicing_cursor = collection.aggregate(practicing_pipeline, None).await.map_err(|e| e.to_string())?;
+    let mut practicing_counts = std::collections::HashMap::new();
+    while let Some(doc) = practicing_cursor.try_next().await.map_err(|e| e.to_string())? {
+        if let Some(style) = doc.get_str("_id").ok() {
+            let count = match doc.get("count") {
+                Some(bson::Bson::Int32(n)) => *n as i64,
+                Some(bson::Bson::Int64(n)) => *n,
+                _ => 0,
+            };
+            practicing_counts.insert(style.to_string(), count);
+        }
+    }
+
+    // Build summary list
+    let mut summary = Vec::new();
+    for style in done_counts.keys().chain(practicing_counts.keys()) {
+        let done = *done_counts.get(style).unwrap_or(&0);
+        let practicing = *practicing_counts.get(style).unwrap_or(&0);
+        summary.push((style.clone(), done, practicing));
+    }
+
+    Ok(summary)
 }
 
 // Uploads image data to Cloudinary and returns the secure_url.

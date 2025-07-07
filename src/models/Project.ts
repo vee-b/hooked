@@ -13,6 +13,7 @@ export class Project {
   grade: string;
   is_active: boolean;
   coordinates: { lat: number; lng: number; note?: string[] }[];
+  style: string[];
 
   constructor({ 
     _id,
@@ -22,7 +23,8 @@ export class Project {
     attempts = 0, 
     grade = 'Unknown', 
     is_active = true, 
-    coordinates = [] 
+    coordinates = [],
+    style = [],
   } : {
     _id?: string;
     date_time?: Date | string | number;
@@ -33,6 +35,7 @@ export class Project {
     is_active?: boolean;
     //coordinates?: { x: string; y: string }[];
     coordinates?: { lat: number; lng: number }[];
+    style?: string[];
   }) {
     this._id = _id;
     this.date_time = typeof date_time === 'string' || typeof date_time === 'number'
@@ -44,6 +47,7 @@ export class Project {
     this.grade = grade;
     this.is_active = is_active;
     this.coordinates = coordinates;
+    this.style = style; 
   }
 
   // Format the date
@@ -62,6 +66,7 @@ export class Project {
       grade: this.grade,
       is_active: this.is_active ? 1 : 0,
       coordinates: this.coordinates,
+      style: this.style,
     };
   }
 
@@ -75,7 +80,8 @@ export class Project {
       attempts: map.attempts,
       grade: map.grade,
       is_active: map.is_active === 1,
-      coordinates: map.coordinates || []
+      coordinates: map.coordinates || [],
+      style: map.style || [],
     });
   }
 }

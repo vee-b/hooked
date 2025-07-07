@@ -2,6 +2,7 @@
     import { writable } from 'svelte/store';
     import { goto } from '$app/navigation';
     import { registerAccount } from '../../controllers/accountsController';
+    import { UserPlus, ArrowLeft } from 'lucide-svelte'; 
 
     let email = '';
     let password = '';
@@ -37,78 +38,110 @@
     };
   </script>
   
-  <style>
+  <style global>
+    body {
+      /* background-color: #e6f4fd; */
+      font-family: 'Roboto', sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    h2 {
+      color: rgb(57, 57, 57);
+      font-size: 1.5rem;
+      font-weight: lighter;
+      margin-bottom: 20px;
+    }
+
     .register-container {
-      max-width: 400px;
-      margin: 50px auto;
-      padding: 20px;
-      background-color: #f9f9f9;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      max-width: 450px;
+      margin: 100px auto;
+      padding-left: 40px;
+      padding-right: 40px;
+      margin-top: 40px;
+      background: #f3f9f9fa;
+      border-radius: 20px;
+      text-align: center;
+      transition: all 0.3s ease;
+      box-sizing: border-box; /* Ensure padding doesn't affect width */
     }
-  
-    .register-form {
-      display: flex;
-      flex-direction: column;
-    }
-  
+
     .input-field {
       margin-bottom: 1rem;
-      padding: 0.75rem;
-      font-size: 1rem;
+      padding: 1rem;
+      border-radius: 10px;
+      border: none;
+      /* background: #e6f4fd; */
       border: 1px solid #ccc;
-      border-radius: 5px;
-    }
-  
-    .input-field:focus {
-      border-color: #007bff;
+      background: #ffffff;
+      /* box-shadow: inset 5px 5px 10px #b4d1e3, inset -5px -5px 10px #ffffff; */
+      box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.05), -5px -5px 10px #ffffff;
+      color: #333;
+      font-size: 1rem;
       outline: none;
+      width: 100%;
+      max-width: 100%; /* Ensures full width within the container */
+      box-sizing: border-box; /* Prevents padding from affecting width */
     }
-  
-    .error-message {
-      color: red;
-      margin-bottom: 1rem;
+
+    .input-field:focus {
+      box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px #ffffff;
     }
-  
-    .success-message {
-      color: green;
-      margin-bottom: 1rem;
+
+    button {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.6rem 1rem;
+      font-size: 1rem;
     }
 
     .button-container {
       display: flex;
       flex-direction: column;
-      gap: 0.75rem;
+      gap: 1rem;
       margin-top: 1rem;
     }
-  
-    .login-button,
-    .submit-button {
+
+    .submit-button,
+    .login-button {
       padding: 1rem;
-      background-color: #007bff;
-      color: white;
       border: none;
-      border-radius: 5px;
-      cursor: pointer;
+      width: 100%;
+      border-radius: 10px;
       font-size: 1rem;
-    }
-  
-    .submit-button:hover {
-      background-color: #0056b3;
+      cursor: pointer;
+      background: #ffffff;
+      box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px #ffffff;
+      transition: all 0.3s ease;
+      color: rgb(57, 57, 57);
     }
 
-    .login-button {
-      background-color: #6c757d;
-      color: white;
-    }
-  
+    .submit-button:hover,
     .login-button:hover {
-      background-color: #5a6268;
+      box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px #ffffff;
+    }
+
+    .error-message {
+      color: red;
+      margin-bottom: 10px;
+    }
+
+    .logo {
+      width: 100%;
+      max-width: 400px;
+      opacity: 0.85;
+      margin-bottom: 20px;
+      border-radius: 10px;
     }
   </style>
   
   <div class="register-container">
-    <h2>Register</h2>
+    <h2>HOOKED</h2>
+
+    <!-- Logo Image -->
+    <img src="/images/logo.png" alt="Logo" class="logo" />
   
     {#if $errorMessage}
       <div class="error-message">{$errorMessage}</div>
@@ -145,8 +178,14 @@
       
       <!-- <button type="submit" class="submit-button">Register</button> -->
       <div class="button-container">
-        <button type="submit" class="submit-button">Register</button>
-        <button type="button" class="login-button" on:click={() => goto('/login')}>Login</button>
+        <button type="submit" class="submit-button">
+          <UserPlus size="20" style="margin-right: 8px"/>
+          Sign Up
+        </button>
+        <button type="button" class="login-button" on:click={() => goto('/login')}>
+          <ArrowLeft size="20" style="margin-left: 8px;" />
+          Login
+        </button>
       </div>
     </form>
   </div>

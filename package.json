@@ -23,10 +23,12 @@
     "@tauri-apps/plugin-log": "^2.2.1",
     "@tauri-apps/plugin-shell": ">=2.0.0",
     "@types/mongodb": "^4.0.6",
+    "chart.js": "^4.5.0",
     "date-fns": "^4.1.0",
     "express": "^4.21.2",
     "lucide-svelte": "^0.474.0",
     "mongodb": "^6.13.0",
+    "svelte-select": "^5.8.3",
     "uuid": "^10.0.0"
   },
   "devDependencies": {
@@ -37,6 +39,7 @@
     "@types/express": "^5.0.0",
     "@types/koa__cors": "^5.0.0",
     "@types/uuid": "^10.0.0",
+    "postcss": "^8.5.3",
     "svelte": "^4.2.7",
     "svelte-check": "^3.6.0",
     "typescript": "^5.7.3",
