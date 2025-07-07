@@ -92,8 +92,10 @@ async fn main() {
 // Inserts a new Project document into the projects collection.
 #[tauri::command] // Marks the function as a Tauri command, allowing the frontend (e.g., SvelteKit) to invoke the function asynchronously.
 // client: State<'_, MongoClient>: State: This is Tauri's way of sharing state across different commands.MongoClient: The MongoDB client instance, which provides access to the database. '_': A lifetime specifier. This indicates that the MongoClient reference is tied to the application's state lifetime. 
-async fn insert_project(client: State<'_, MongoClient>, project: Project) -> Result<(), String> {
+async fn insert_project(client: State<'_, MongoClient>, mut project: Project) -> Result<(), String> {
     let collection = client.database("hooked_db").collection("projects");
+
+    project.normalize();
 
     // Convert project to BSON document
     let doc = match bson::to_document(&project) {
@@ -267,8 +269,10 @@ async fn get_inactive_filtered_projects(
 
 // Updates a project by _id if it exists.
 #[tauri::command]
-async fn update_project(client: State<'_, MongoClient>, project: Project) -> Result<(), String> {
+async fn update_project(client: State<'_, MongoClient>, mut project: Project) -> Result<(), String> {
     let collection = client.database("hooked_db").collection::<Document>("projects");
+
+    project.normalize();
 
     // Log received project data
     println!("Received project data: {:?}", project);

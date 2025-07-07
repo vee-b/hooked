@@ -24,6 +24,7 @@ pub struct Project {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub _id: Option<ObjectId>, // Use ObjectId for MongoDB's _id
     pub date_time: i64,
+    pub sent_date: Option<i64>,
     pub image_path: String,
     pub is_sent: i32,
     pub attempts: i32,
@@ -31,6 +32,18 @@ pub struct Project {
     pub is_active: i32,
     pub coordinates: Vec<Coordinate>,
     pub style: Option<Vec<String>>,
+}
+
+impl Project {
+    pub fn normalize(&mut self) {
+        if self.is_sent != 0 {
+            if self.sent_date.is_none() {
+                self.sent_date = Some(Utc::now().timestamp());
+            }
+        } else {
+            self.sent_date = None;
+        }
+    }
 }
 
 #[derive(Debug, Serialize, Deserialize)]
