@@ -131,7 +131,14 @@
   <div class="card-content">
     <div class="title-row">{shortened_date} • {shortened_time}</div>
     <div class="info">Grade: {displayedGrade}</div>
-    <div class="info">Sent: {project.is_sent ? 'Yes' : 'No'} • Attempts: {project.attempts}</div>
+    <!-- <div class="info">Sent: {project.is_sent ? 'Yes' : 'No'} • Attempts: {project.attempts}</div> -->
+    <div class="info">
+      Sent: {project.is_sent ? 'Yes' : 'No'}
+      {#if project.formatted_sent_date !== 'Not Sent'}
+        • {project.formatted_sent_date}
+      {/if}
+      • Attempts: {project.attempts}
+    </div>
     <div class="info">Notes: {project.coordinates?.length || 0}</div>
 
     <div class="button-row">

@@ -524,6 +524,16 @@ When 'isEditMode' == false, the add new project page is shown.
     <input type="checkbox" id="isActive" bind:checked={isActive} />
   </div>
 
+  {#if isSent && project}
+    <div class="form-group">
+      <small>Sent on: 
+        {project.sent_date && project.sent_date.getTime() > 0
+          ? project.formatted_sent_date 
+          : 'Now'}
+      </small>
+    </div>
+  {/if}
+
   <div class="form-group">
     <button class="button" on:click={() => {
       if (isEditMode) {
