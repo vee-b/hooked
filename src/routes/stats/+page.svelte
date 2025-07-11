@@ -3,19 +3,32 @@
   import { onMount } from 'svelte';
   import SendsComponent from '../../components/SendsComponent.svelte';
   import StylesRadarGraphComponent from '../../components/StylesRadarGraphComponent.svelte';
-  import { allStyles } from '../../stores/settingsStore';
+  import HoldsRadarGraphComponent from '../../components/HoldsRadarGraphComponent.svelte';
+  import { allStyles, allHolds } from '../../stores/settingsStore';
   import { projectsList } from '../../stores/projectsList';
   import { checkLoginStatus } from '../../controllers/accountsController';
 
-  $: completedData = allStyles.map(style =>
+  $: completedStyleData = allStyles.map(style =>
     $projectsList.reduce(
       (acc, project) => acc + (project.is_sent && project.style?.includes(style) ? 1 : 0), 0
     )
   );
 
-  $: practicingData = allStyles.map(style =>
+  $: practicingStyleData = allStyles.map(style =>
     $projectsList.reduce(
       (acc, project) => acc + (!project.is_sent && project.style?.includes(style) ? 1 : 0), 0
+    )
+  );
+
+  $: completedHoldsData = allHolds.map(holds =>
+    $projectsList.reduce(
+      (acc, project) => acc + (project.is_sent && project.holds?.includes(holds) ? 1 : 0), 0
+    )
+  );
+
+  $: practicingHoldsData = allHolds.map(holds =>
+    $projectsList.reduce(
+      (acc, project) => acc + (!project.is_sent && project.holds?.includes(holds) ? 1 : 0), 0
     )
   );
 
@@ -59,8 +72,14 @@
     border-top: 1px solid #ccc;
   }
 
+  .sends-card {
+    max-width: 650px;
+    width: 90%;
+    margin: 1rem auto;
+  }
+
   .graph-card {
-    max-width: 450px;
+    max-width: 600px;
     margin: 1rem auto;
     background: #ffffff;
     border-radius: 12px;
@@ -76,9 +95,17 @@
 
   <div class="divider"></div>
 
-  <SendsComponent />
+  <!-- <SendsComponent /> -->
+
+  <div class="sends-card">
+    <SendsComponent />
+  </div>
 
   <div class="graph-card">
     <StylesRadarGraphComponent />
+  </div>
+
+  <div class="graph-card">
+    <HoldsRadarGraphComponent />
   </div>
 </div>

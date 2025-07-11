@@ -32,6 +32,10 @@
     padding-left: 2rem;
     padding-right: 2rem;
     font-family: 'Poppins', sans-serif;
+
+    max-width: 600px;
+    width: 90%;
+    margin: 1rem auto;
   }
 
   .header-container {

@@ -1,8 +1,8 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { Chart } from 'chart.js/auto';
-  import { stylesSummary, fetchStylesSummary } from '../stores/projectsList';
-  import { allStyles } from '../stores/settingsStore';
+  import { holdsSummary, fetchHoldsSummary } from '../stores/projectsList';
+  import { allHolds } from '../stores/settingsStore';
   import { writable } from 'svelte/store';
 
   let canvasEl: HTMLCanvasElement | null = null;
@@ -12,38 +12,38 @@
   let showPercent = false;
 
   onMount(async () => {
-    await fetchStylesSummary();
+    await fetchHoldsSummary();
   });
 
   // Prepare normalized data
-  $: styleChartData = allStyles.map(style => {
-    const found = $stylesSummary.find(item => item.style === style);
+  $: holdsChartData = allHolds.map(holds => {
+    const found = $holdsSummary.find(item => item.holds === holds);
     return {
-      style,
+      holds,
       done: found?.done ?? 0,
       practicing: found?.practicing ?? 0
     };
   });
 
-  $: totalDone = styleChartData.reduce((sum, item) => sum + item.done, 0);
-  $: totalPracticing = styleChartData.reduce((sum, item) => sum + item.practicing, 0);
+  $: totalDone = holdsChartData.reduce((sum, item) => sum + item.done, 0);
+  $: totalPracticing = holdsChartData.reduce((sum, item) => sum + item.practicing, 0);
 
   // Calculate % data relative to total done/practicing
-  $: stylePercentData = styleChartData.map(item => ({
-    style: item.style,
+  $: holdsPercentData = holdsChartData.map(item => ({
+    style: item.holds,
     done: totalDone ? +((item.done / totalDone) * 100).toFixed(2) : 0,
     practicing: totalPracticing ? +((item.practicing / totalPracticing) * 100).toFixed(2) : 0
   }));
 
   // Watch for changes
-  $: if (canvasEl && styleChartData.length) {
-    const labels = styleChartData.map(item => item.style);
+  $: if (canvasEl && holdsChartData.length) {
+    const labels = holdsChartData.map(item => item.holds);
     const dataDone = showPercent 
-      ? stylePercentData.map(item => item.done)
-      : styleChartData.map(item => item.done);
+      ? holdsPercentData.map(item => item.done)
+      : holdsChartData.map(item => item.done);
     const dataPracticing = showPercent 
-      ? stylePercentData.map(item => item.practicing)
-      : styleChartData.map(item => item.practicing);
+      ? holdsPercentData.map(item => item.practicing)
+      : holdsChartData.map(item => item.practicing);
 
     if (!radarChart) {
       radarChart = new Chart(canvasEl, {
@@ -147,7 +147,7 @@
     box-shadow: none;
   }
 
-  .styles-title {
+  .holds-title {
     font-size: 1.25rem;
     font-weight: 600;
     color: rgb(57, 57, 57);
@@ -156,8 +156,8 @@
   }
 </style>
 
-<div class="styles-radar-container">
-  <div class="styles-title">Styles</div>
+<div class="holds-radar-container">
+  <div class="holds-title">Holds</div>
   <canvas bind:this={canvasEl}></canvas>
   <div class="toggle-container">
     <button class="toggle-button" on:click={toggleMode}>

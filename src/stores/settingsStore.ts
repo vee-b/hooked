@@ -43,5 +43,7 @@ export const setGradeSystem = (system: string) => {
     localStorage.setItem('gradeSystem', system);
   };
 
-// Export the style tags so they can be reused
-export const allStyles = ['Trad', 'Top Rope', 'Bouldering', 'Topout', 'Traverse', 'Vert', 'Overhang', 'Slab', 'Roof', 'Static', 'Dyno', 'Technical', 'Reachy', 'Sustained', 'Power', 'Campusing', 'Slopers', 'Crimps', 'Jugs', 'Pinches', 'Pockets', 'Undercut', 'Side Pull', 'Hidden Hold/s', 'Volumes'];
+// Export the style and hold tags so they can be reused
+export const allStyles = ['Topout', 'Traverse', 'Vert', 'Overhang', 'Slab', 'Roof', 'Static', 'Dyno', 'Technical', 'Reachy', 'Sustained', 'Power', 'Campusing'];
+export const allHolds = ['Slopers', 'Crimps', 'Jugs', 'Pinches', 'Pockets', 'Undercut', 'Side Pull', 'Hidden Hold/s', 'Volumes'];
+// 'Trad', 'Top Rope', 'Bouldering', 

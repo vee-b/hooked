@@ -101,20 +101,10 @@
       }
 
       .reset-password-button {
-        padding: 0.6rem;
         border: none;
-        width: 100%;
-        border-radius: 10px;
         font-size: 0.8rem;
         cursor: pointer;
-        background: #ffffff;
-        box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.1), -5px -5px 10px #ffffff;
-        transition: all 0.3s ease;
         color: rgb(57, 57, 57);
-      }
-
-      .reset-password-button:hover {
-        box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.1), inset -3px -3px 6px #ffffff;
       }
 
       .submit-button,
@@ -180,18 +170,18 @@
       />
 
       <div class="button-container">
+        
         <button type="submit" class="submit-button">
           <LogIn size="20" style="margin-right: 8px;" />
           Login
-        </button>
-        <button type="button" class="reset-password-button" on:click={() => goto('/resetPassword')}>
-          <!-- <ArrowRight size="20" style="margin-left: 8px;" /> -->
-          Forgotten Password?
         </button>
         <button type="button" class="register-button" on:click={() => goto('/register')}>
           <ArrowRight size="20" style="margin-left: 8px;" />
           Sign Up
         </button>
+        <p class="reset-password-button" on:click={() => goto('/resetPassword')}>
+          Forgotten Password?
+        </p>
       </div>
     </form>
   </div>

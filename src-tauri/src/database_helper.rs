@@ -32,6 +32,7 @@ pub struct Project {
     pub is_active: i32,
     pub coordinates: Vec<Coordinate>,
     pub style: Option<Vec<String>>,
+    pub holds: Option<Vec<String>>,
 }
 
 impl Project {

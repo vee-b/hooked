@@ -15,6 +15,7 @@ export interface MongoDBProject {
   is_active: boolean;
   coordinates?: { lat: number; lng: number; note?: string[] }[];
   style?: string[];
+  holds?: string[];
 }
 
 // Initialize the project list as a Svelte store.
@@ -28,6 +29,7 @@ export const sendsSummary = writable<{ total: number; byGrade: Record<string, nu
 });
 
 export const stylesSummary = writable<{ style: string; done: number; practicing: number }[]>([]);
+export const holdsSummary = writable<{ holds: string; done: number; practicing: number }[]>([]);
 
 // Initialize projects list.
 // 'export' Makes this function available for import in other files.
@@ -106,6 +108,17 @@ export async function fetchStylesSummary() {
   }
 }
 
+export async function fetchHoldsSummary() {
+  try {
+    const result: [string, number, number][] = await invoke('get_holds_summary');
+    const summary = result.map(([holds, done, practicing]) => ({ holds, done, practicing }));
+    holdsSummary.set(summary);
+    console.log('Fetched holds summary:', summary);
+  } catch (err) {
+    console.error('Failed to fetch holds summary:', err);
+  }
+}
+
 // Fetch the active projects.
 export async function fetchActiveProjects(): Promise<Project[]> {
   try {
@@ -179,14 +192,16 @@ export async function fetchActiveFilteredProjects(
   grades: string[] = [],
   sentStatus: string = '',
   styles: string[] = [],
+  holds: string[] = [],
 ): Promise<Project[]> {
   try {
-    console.log('Sending to Rust:', { grades, sentStatus, styles }); // Log filters
+    console.log('Sending to Rust:', { grades, sentStatus, styles, holds }); // Log filters
 
     const projectsData: unknown = await invoke('get_active_filtered_projects', {
       grades,
       sentStatus,
       styles,
+      holds,
     });
 
     console.log('Received from Rust:', projectsData); // Log what comes back
@@ -228,14 +243,16 @@ export async function fetchInactiveFilteredProjects(
   grades: string[] = [],
   sentStatus: string = '',
   styles: string[] = [],
+  holds: string[] = [],
 ): Promise<Project[]> {
   try {
-    console.log('Sending to Rust:', { grades, sentStatus, styles }); // Log filters
+    console.log('Sending to Rust:', { grades, sentStatus, styles, holds }); // Log filters
 
     const projectsData: unknown = await invoke('get_inactive_filtered_projects', {
       grades,
       sentStatus,
       styles,
+      holds,
     });
 
     console.log('Received from Rust:', projectsData); // Log what comes back
@@ -405,6 +422,7 @@ export async function editProject(updatedProject: Project, imageFile?: File): Pr
       is_active: updatedProject.is_active ? 1 : 0, // Convert boolean to integer
       coordinates: existingProject.coordinates,
       style: updatedProject.style,
+      holds: updatedProject.holds,
     };
 
     console.log("Project details being sent to backend:", formattedProject);

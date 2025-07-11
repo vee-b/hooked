@@ -66,11 +66,14 @@
     border-radius: 1rem;
     margin: 1rem;
     overflow: hidden;
-    /* box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06); */
     box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.123), -5px -5px 10px #ffffff;
     font-family: 'Inter', sans-serif;
     display: flex;
     flex-direction: column;
+
+    max-width: 600px; /* cap the width on large screens */
+    width: 90%;       /* on small screens, still responsive */
+    margin: 1rem auto; /* center horizontally */
   }
 
   .card img {

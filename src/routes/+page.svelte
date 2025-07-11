@@ -11,7 +11,7 @@
   import { slide } from 'svelte/transition'
   import { afterNavigate } from '$app/navigation';
   import Select from 'svelte-select';
-  import { gradeSystem, getCurrentGrades, convertFontScaleGrade, allStyles } from '../stores/settingsStore';
+  import { gradeSystem, getCurrentGrades, convertFontScaleGrade, allStyles, allHolds } from '../stores/settingsStore';
 
   export const projectsList = writable<Project[]>([]);
 
@@ -32,10 +32,10 @@
   }
 };
 
-  const fetchFilteredProjects = async (filters: { grades: string[], styles: string[], isSent?: boolean }) => {
+  const fetchFilteredProjects = async (filters: { grades: string[], styles: string[], holds: string[], isSent?: boolean }) => {
     try {
       const isSentParam = filters.isSent !== undefined ? String(filters.isSent) : null;
-      const projectsData = await fetchActiveFilteredProjects(filters.grades, String(filters.isSent), filters.styles);
+      const projectsData = await fetchActiveFilteredProjects(filters.grades, String(filters.isSent), filters.styles, filters.holds);
       projectsList.set(projectsData);  // projectsData should be Project[]
       console.log('Fetched projects successfully:', projectsData);
     } catch (error) {
@@ -61,6 +61,7 @@
   let isSent: boolean | null = null; // null = no filter applied
   let sentFilterValue: string = 'all';
   let selectedStyles: string[] = [];
+  let selectedHolds: string[] = [];
 
 
   const toggleFilter = () => {
@@ -71,6 +72,7 @@
     await tick(); // Wait for UI updates
     console.log('Selected Grades:', selectedGrades);  // Log selected grades
     console.log('Selected Styles:', selectedStyles);
+    console.log('Selected Holds:', selectedHolds);
     console.log('Applying Filters:', { selectedGrades, isSent });
 
     const gradesToSend = $gradeSystem === 'Font Scale'
@@ -80,6 +82,7 @@
     const filters = {
       grades: gradesToSend,
       styles: selectedStyles,
+      holds: selectedHolds,
       isSent: isSent !== null ? isSent : undefined // omit if null
     };
 
@@ -90,6 +93,7 @@
   const clearFilters = async () => {
     selectedGrades = [];
     selectedStyles = [];
+    selectedHolds = [];
     isSent = null;
     await tick(); // Ensure UI updates before fetching
     fetchProjects(); // Fetch unfiltered active projects
@@ -109,6 +113,7 @@
     text-align: center;
     padding: 1rem;
     color: black;
+    margin-bottom: 3rem;
   }
 
   .header-container {
@@ -164,6 +169,10 @@
     font-family: 'Inter', sans-serif;
     max-width: 90%;
     transition: all 0.3s ease;
+
+    max-width: 600px;
+    width: 60%;
+    margin: 1rem auto;
   }
 
   .divider {
@@ -361,6 +370,23 @@
                   id={style}
                 />
                 <label for={style}>{style}</label>
+              </div>
+            {/each}
+          </div>
+        </div>
+
+        <div class="filter-item">
+          <label>Holds</label>
+          <div class="checkbox-container">
+            {#each allHolds as hold}
+              <div class="checkbox-item">
+                <input
+                  type="checkbox"
+                  bind:group={selectedHolds}
+                  value={hold}
+                  id={hold}
+                />
+                <label for={hold}>{hold}</label>
               </div>
             {/each}
           </div>

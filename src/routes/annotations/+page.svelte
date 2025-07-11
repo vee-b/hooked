@@ -170,11 +170,15 @@
   .home { 
     text-align: center; 
     padding: 1rem; 
-    color: black; }
+    color: black; 
+    margin-bottom: 3rem;
+  }
+
   .header-container {
     display: flex; 
+    flex-direction: column;
     justify-content: space-between; 
-    align-items: center;
+    align-items: start;
     padding: 1.5rem 2rem; 
     flex-wrap: wrap; 
     gap: 0;
@@ -221,6 +225,10 @@
     box-shadow: 5px 5px 10px rgba(0,0,0,0.1), -5px -5px 10px #fff;
     transition: box-shadow 0.2s ease;
     width: 100%;
+
+    max-width: 600px; /* cap the width on large screens */
+    width: 90%;       /* on small screens, still responsive */
+    margin: 1rem auto; /* center horizontally */
   }
 
   .button:hover {
@@ -230,6 +238,10 @@
   .image-wrapper { 
     position: relative; 
     display: inline-block; 
+
+    max-width: 600px; /* cap the width on large screens */
+    width: 90%;       /* on small screens, still responsive */
+    margin: 1rem auto; /* center horizontally */
     }
 
   img { 
@@ -260,13 +272,17 @@
     display: flex; 
     gap: 10px; 
     justify-content: center;
+
+    max-width: 600px; /* cap the width on large screens */
+    width: 90%;       /* on small screens, still responsive */
+    margin: 1rem auto; /* center horizontally */
   }
 
   .note-input {
     margin-top: 10px; 
     width: 90%; 
     min-height: 50px; 
-    max-width: 100%;
+    max-width: 60%;
     font-size: 16px; 
     padding: 10px; 
     border-radius: 5px;

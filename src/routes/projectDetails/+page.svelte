@@ -15,7 +15,7 @@ When 'isEditMode' == false, the add new project page is shown.
   import { addProject, editProject, fetchProjectById, sanitizeFileName, annotations, initializeProjectsList } from '../../stores/projectsList';
   import { Project } from '../../models/Project';
   import { checkLoginStatus } from '../../controllers/accountsController';
-  import { gradeSystem, getCurrentGrades, convertVScaleGrade, convertFontScaleGrade } from '../../stores/settingsStore';
+  import { gradeSystem, getCurrentGrades, convertVScaleGrade, convertFontScaleGrade, allStyles, allHolds } from '../../stores/settingsStore';
   import { fade } from 'svelte/transition';
   import ConfirmationBox from '../../components/ConfirmationBox.svelte';
 
@@ -35,8 +35,8 @@ When 'isEditMode' == false, the add new project page is shown.
   let message: string = '';
   let imageFile: File | null = null;
   const options = ['V0', 'V1', 'V2', 'V3', 'V4', 'V5', 'V6', 'V7', 'V8', 'V9', 'V10', 'V11', 'V12', 'V13', 'V14', 'V15', 'V16', 'V17'];
-  const allStyles = ['Trad', 'Top Rope', 'Bouldering', 'Topout', 'Traverse', 'Vert', 'Overhang', 'Slab', 'Roof', 'Static', 'Dyno', 'Technical', 'Reachy', 'Sustained', 'Power', 'Campusing', 'Slopers', 'Crimps', 'Jugs', 'Pinches', 'Pockets', 'Undercut', 'Side Pull', 'Hidden Hold/s', 'Volumes'];
   let selectedStyles: string[] = [];
+  let selectedHolds: string[] = [];
   let showConfirmationBox = false;
 
   $: currentGrades = getCurrentGrades($gradeSystem);
@@ -49,6 +49,16 @@ When 'isEditMode' == false, the add new project page is shown.
       selectedStyles = [...selectedStyles, style];
     }
     console.log('Selected styles being submitted:', selectedStyles);
+
+  }
+
+  function toggleHold(hold: string) {
+    if (selectedHolds.includes(hold)) {
+      selectedHolds = selectedHolds.filter(s => s !== hold);
+    } else {
+      selectedHolds = [...selectedHolds, hold];
+    }
+    console.log('Selected holds being submitted:', selectedHolds);
 
   }
 
@@ -111,13 +121,13 @@ When 'isEditMode' == false, the add new project page is shown.
           imagePreview = project.image_path || '/images/logo.png';
           attempts = project.attempts ? project.attempts.toString() : '0';
           selectedOption = project.grade || '';
-          //selectedOption = convertVScaleGrade(project.grade, $gradeSystem);
           isSent = project.is_sent || false;
           dateTime = project.date_time ? new Date(project.date_time) : new Date();
           inputDateTime = formatDateForInput(dateTime);
           isActive = project.is_active !== undefined ? project.is_active : true;
           projectCoordinates = project.coordinates || [];
           selectedStyles = project.style || [];
+          selectedHolds = project.holds || [];
 
           // Log project data to verify everything is fetched correctly
           console.log('Fetched Project:', project);
@@ -190,6 +200,7 @@ When 'isEditMode' == false, the add new project page is shown.
         is_active: isActive,
         coordinates: projectCoordinates,
         style: selectedStyles,
+        holds: selectedHolds,
       });
 
       if (isEditMode) {
@@ -247,6 +258,7 @@ When 'isEditMode' == false, the add new project page is shown.
       isActive = updatedProject.is_active ?? true;
       projectCoordinates = updatedProject.coordinates || [];
       selectedStyles = updatedProject.style || [];
+      selectedHolds = updatedProject.holds || [];
 
       console.log('Form populated with updated project.');
     } catch (error) {
@@ -269,12 +281,14 @@ When 'isEditMode' == false, the add new project page is shown.
     text-align: center;
     padding: 1rem;
     color: black;
+    margin-bottom: 2rem;
   }
 
   .header-container {
     display: flex;
+    flex-direction: column;
     justify-content: space-between;
-    align-items: center;
+    align-items: start;
     padding: 1.5rem 2rem;
     position: relative;
     z-index: 10;
@@ -344,6 +358,10 @@ When 'isEditMode' == false, the add new project page is shown.
     gap: 10px;
     justify-content: center;
     margin-bottom: 1rem;
+
+    max-width: 600px; /* cap the width on large screens */
+    width: 90%;       /* on small screens, still responsive */
+    margin: 1rem auto; /* center horizontally */
   }
 
   .image-preview { 
@@ -352,6 +370,12 @@ When 'isEditMode' == false, the add new project page is shown.
     margin: 15px 0; 
     display: block; 
     border-radius: 20px;
+  }
+
+  .selection-box-container {
+    max-width: 600px; /* cap the width on large screens */
+    width: 90%;       /* on small screens, still responsive */
+    margin: 1rem auto; /* center horizontally */
   }
 
   .selection-box-container select {
@@ -400,6 +424,12 @@ When 'isEditMode' == false, the add new project page is shown.
     width: 100%;  
     height: auto;
     display: block;
+  }
+
+  .image-div {
+    max-width: 600px; /* cap the width on large screens */
+  width: 90%;       /* on small screens, still responsive */
+  margin: 1rem auto; /* center horizontally */
   }
 
   h1 { 
@@ -461,9 +491,11 @@ When 'isEditMode' == false, the add new project page is shown.
   {/if}
   </div>
 
-  {#if imagePreview}
-    <img src={imagePreview} alt="Selected Image" class="image-preview" />
-  {/if}
+  <div class="image-div">
+    {#if imagePreview}
+      <img src={imagePreview} alt="Selected Image" class="image-preview" />
+    {/if}
+  </div>
 
   <!-- <div>
     {#if isEditMode}
@@ -477,74 +509,90 @@ When 'isEditMode' == false, the add new project page is shown.
     
   <div class="selection-box-container">
 
-  <div class="form-group">
-    <label for="dateTime">Date & Time</label>
-    <input
-      type="datetime-local"
-      id="dateTime"
-      bind:value={inputDateTime}
-      on:change={handleInputChange}
-    />
-  </div>
-  
-  <div class="selection-box-container">
     <div class="form-group">
-      <select id="grade" bind:value={selectedOption}>
-        <option value="" disabled selected>Select grade</option>
-        {#each currentGrades as grade}
-          <option value={grade}>{grade}</option>
-        {/each}
-      </select>
+      <label for="dateTime">Date & Time</label>
+      <input
+        type="datetime-local"
+        id="dateTime"
+        bind:value={inputDateTime}
+        on:change={handleInputChange}
+      />
     </div>
-  </div>
+    
+    <div class="selection-box-container">
+      <div class="form-group">
+        <label for="Grade">Grade</label>
+        <select id="grade" bind:value={selectedOption}>
+          <option value="" disabled selected>Select grade</option>
+          {#each currentGrades as grade}
+            <option value={grade}>{grade}</option>
+          {/each}
+        </select>
+      </div>
+    </div>
 
-  <div class="styles-container checkbox-container form-group">
-    {#each allStyles as style}
-      <label class="styles-checkbox-item">
-        <input
-          type="checkbox"
-          checked={selectedStyles.includes(style)}
-          on:change={() => toggleStyle(style)}
-        />
-        {style}
-      </label>
-    {/each}
-  </div>
+    <label for="styles">Style</label>
+    <div class="styles-container checkbox-container form-group">
+      {#each allStyles as style}
+        <label class="styles-checkbox-item">
+          <input
+            type="checkbox"
+            checked={selectedStyles.includes(style)}
+            on:change={() => toggleStyle(style)}
+          />
+          {style}
+        </label>
+      {/each}
+    </div>
 
-  <div class="form-group">
-    <label for="attempts">Attempts</label>
-    <input type="number" id="attempts" bind:value={attempts} />
-  </div>
+    <label for="holds">Holds</label>
+    <div class="styles-container checkbox-container form-group">
+      {#each allHolds as hold}
+        <label class="styles-checkbox-item">
+          <input
+            type="checkbox"
+            checked={selectedHolds.includes(hold)}
+            on:change={() => toggleHold(hold)}
+          />
+          {hold}
+        </label>
+      {/each}
+    </div>
 
-  <div class="form-group">
-    <label for="isSent" class="checkbox-item">Sent</label>
-    <input type="checkbox" id="isSent" bind:checked={isSent} />
-
-    <label for="isActive" class="checkbox-item">Active</label>
-    <input type="checkbox" id="isActive" bind:checked={isActive} />
-  </div>
-
-  {#if isSent && project}
     <div class="form-group">
-      <small>Sent on: 
-        {project.sent_date && project.sent_date.getTime() > 0
-          ? project.formatted_sent_date 
-          : 'Now'}
-      </small>
+      <label for="attempts">Attempts</label>
+      <input type="number" id="attempts" bind:value={attempts} />
     </div>
-  {/if}
 
-  <div class="form-group">
-    <button class="button" on:click={() => {
-      if (isEditMode) {
-        showConfirmationBox = true;
-      } else {
-        submitData();
-      }
-    }}>
-      {isEditMode ? "Update Project" : "Add Project"}
-    </button>
-  </div>
+    <div class="form-group">
+      <label for="isSent" class="checkbox-item">Sent</label>
+      <input type="checkbox" id="isSent" bind:checked={isSent} />
+
+      <label for="isActive" class="checkbox-item">Active</label>
+      <input type="checkbox" id="isActive" bind:checked={isActive} />
+    </div>
+
+    {#if isSent && project}
+      <div class="form-group">
+        <small>Sent on: 
+          {project.sent_date && project.sent_date.getTime() > 0
+            ? project.formatted_sent_date 
+            : 'Now'}
+        </small>
+      </div>
+    {/if}
+
+    <div class="form-group">
+      <button class="button" on:click={() => {
+        if (isEditMode) {
+          showConfirmationBox = true;
+        } else {
+          submitData();
+        }
+      }}>
+        {isEditMode ? "Update Project" : "Add Project"}
+      </button>
+    </div>
 
   </div>
 
