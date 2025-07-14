@@ -1,339 +1,168 @@
-use sqlx::{SqlitePool, Row}; // Rust SQL toolkit for asynchronous database interactions. SqlitePool manages connections to the SQLite database, and Row is used to access results from a query.
-use serde::{Deserialize, Serialize}; // Serialization/deserialization framework. Serialize and Deserialize are used to convert Rust structs to and from JSON or other formats.
+// src-tauri/src/database_helper.rs
 
-// Define the Project struct
+// Initialises the MongoDB database
+
+
+// IMPORTS
+// Serde for JSON serialization
+use serde::{Deserialize, Serialize};
+
+// MongoDB & BSON
+use mongodb::{Client, bson::{self, doc}, Collection};
+use bson::oid::ObjectId;
+
+// Date handling
+use chrono::Utc;
+
+// Error types
+use mongodb::error::Error;
+
+// Secure password hashing & verifying
+use argon2::{Argon2, PasswordHasher, PasswordVerifier, password_hash::{PasswordHash, SaltString, rand_core::OsRng}};
+
+// JWT tokens
+use jsonwebtoken::{encode, EncodingKey, Header};
+
+// DATA STRUCTS
+
+// Stores a coordinate marker on the image
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "camelCase")] // Ensures field names in MongoDB match JSON camelCase
+pub struct Coordinate {
+    pub lat: f64,
+    pub lng: f64,
+    pub note: Vec<String>,
+}
+
+// Represents a bouldering project
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Project {
-    pub id: String,              // Keep as String, adjust if necessary
-    pub date_time: i64,          // Use i64 for date/time representation
-    pub image_path: String,       // Image path
-    pub is_sent: i32,            // Use i32 for the is_sent field
-    pub attempts: i32,           // Number of attempts
-    pub grade: String,           // Project grade
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub _id: Option<ObjectId>, // MongoDB uses _id
+    pub date_time: i64, // UNIX timestamp
+    pub sent_date: Option<i64>, // Optional UNIX timestamp
+    pub image_path: String,
+    pub is_sent: i32, // Use 1 or 0 to match the JS client
+    pub attempts: i32,
+    pub grade: String,
+    pub is_active: i32,
+    pub coordinates: Vec<Coordinate>,
+    pub style: Option<Vec<String>>,
+    pub holds: Option<Vec<String>>,
 }
 
-// Database struct (Manages the SQLite connection pool (SqlitePool), which allows asynchronous queries on the database)
+// Normalization to ensure sent_date is only set when is_sent = 1
+impl Project {
+    pub fn normalize(&mut self) {
+        if self.is_sent != 0 {
+            if self.sent_date.is_none() {
+                self.sent_date = Some(Utc::now().timestamp());
+            }
+        } else {
+            self.sent_date = None;
+        }
+    }
+}
+
+// Represents a JWT claim
+#[derive(Debug, Serialize, Deserialize)]
+struct Claims {
+    sub: String, // Subject (usually the user identifier)
+    exp: usize,  // Expiration time
+}
+
+// User accounts stored in the DB
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Account {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub _id: Option<ObjectId>, // MongoDB's unique ID
+    pub email: String,         // User email (unique)
+    pub hashed_password: String, // Securely stored password
+    pub created_at: chrono::DateTime<chrono::Utc>, // Timestamp
+}
+
+// DATABASE HELPER
+// Wraps a MongoDB client to share across calls
 pub struct DatabaseHelper {
-    pool: SqlitePool,
+    client: Client, // Holds a MongoDB client to interact with the database.
 }
 
+// Implement all the logic on it
 impl DatabaseHelper {
-    // Create a new instance of DatabaseHelper
-    pub async fn new() -> Result<Self, sqlx::Error> {
-        let db_path = Self::get_database_path()?; // Retrieves or creates the path to the SQLite file.
-        let pool = SqlitePool::connect(&db_path).await?; // Opens a connection to the SQLite database using the db_path.
-        Self::initialize(&pool).await?; // Ensures the database is properly initialized by creating the necessary tables.
-        Ok(DatabaseHelper { pool })
+    // NEW INSTANCE
+    // Connect to MongoDB, do a test ping
+    pub async fn new() -> Result<Self, mongodb::error::Error> { // Connect to MongoDB.
+        let mongo_uri = "***REMOVED***vness:8dSKcqijM7aVUH2V@hooked.1zbi6.mongodb.net/?retryWrites=true&w=majority&appName=Hooked"; // A string containing the MongoDB connection URI.
+        let client = Client::with_uri_str(mongo_uri).await?; // Asynchronously connects to MongoDB using the URI.
+
+        client.database("admin").run_command(doc! {"ping": 1}, None).await?; // client.database("admin"): Selects the admin database. .run_command(doc! {"ping": 1}, None).await?: Executes a ping command to check the database connection.
+        Ok(DatabaseHelper { client }) // Returns an instance of DatabaseHelper with the connected client.
     }
 
-    // Constructs the file path for the SQLite database.
-    fn get_database_path() -> Result<String, std::io::Error> {
-        let project_dir = std::env::current_dir()?;
-        let db_dir = project_dir.join("database");
-    
-        // If the "database" directory or the project.db file doesn't exist, it creates it.
-        if !db_dir.exists() {
-            std::fs::create_dir(&db_dir)?;
+    // PROJECTS
+
+    // Fetch a single project by its ObjectId
+    pub async fn get_project_by_id(&self, id: &ObjectId) -> Result<Option<Project>, mongodb::error::Error> {
+        let database = self.client.database("hooked_db");
+        let collection: Collection<Project> = database.collection("projects");
+
+        let filter = doc! { "_id": id };
+        let project = collection.find_one(filter, None).await?;
+
+        Ok(project)
+    }
+
+    // ACCOUNTS
+
+    // Create a new user account (register)
+    pub async fn create_account(&self, email: &str, password: &str) -> Result<ObjectId, Error> {
+        let database = self.client.database("hooked_db");
+        let collection: Collection<Account> = database.collection("accounts");
+
+        // Hash the password securely
+        let salt = SaltString::generate(&mut OsRng); // Generates a secure random salt. (A salt is a random string of data that is generated each time a user creates (or changes) their password.It is then combined (concatenated) with the user's password before hashing.)
+        let argon2 = Argon2::default(); // Uses secure default Argon2 parameters
+        let hashed_password = argon2.hash_password(password.as_bytes(), &salt)
+            .map_err(|_| Error::from(std::io::Error::new(std::io::ErrorKind::Other, "Hashing error")))?
+            .to_string();
+
+        // Insert into database
+        let new_account = Account {
+            _id: None,
+            email: email.to_string(),
+            hashed_password,
+            created_at: Utc::now(),
+        };
+
+        let insert_result = collection.insert_one(new_account, None).await?;
+        Ok(insert_result.inserted_id.as_object_id().unwrap()) // Return inserted ID
+    }
+
+    // LOGIN
+    // Verifies password + returns a JWT token
+    pub async fn login(&self, email: &str, password: &str) -> Result<String, Error> {
+        let database = self.client.database("hooked_db");
+        let collection: Collection<Account> = database.collection("accounts");
+
+        let filter = doc! { "email": email };
+        let user = collection.find_one(filter, None).await?;
+
+        if let Some(user) = user {
+            let parsed_hash = PasswordHash::new(&user.hashed_password).unwrap();
+            let argon2 = Argon2::default();
+
+            if argon2.verify_password(password.as_bytes(), &parsed_hash).is_ok() {
+                // Password correct. Generate JWT Token
+                let expiration = Utc::now().timestamp() as usize + 3600; // 1-hour expiry
+                let claims = Claims { sub: email.to_string(), exp: expiration };
+                let secret = "my_secret_key"; // WARNING: should be ENV VAR in production!
+                let token = encode(&Header::default(), &claims, &EncodingKey::from_secret(secret.as_ref()))
+                    .map_err(|_| Error::from(std::io::Error::new(std::io::ErrorKind::Other, "JWT Error")))?;
+
+                return Ok(token);
+            }
         }
-    
-        let db_path = db_dir.join("project.db");
-        println!("Database path: {}", db_path.display()); // Log the database path
-    
-        if !db_path.exists() {
-            std::fs::File::create(&db_path)?;
-        }
-    
-        // Returns the file path in a format SQLite understands (sqlite:path_to_db).
-        Ok(format!("sqlite:{}", db_path.to_string_lossy()))
+
+        Err(Error::from(std::io::Error::new(std::io::ErrorKind::Other, "Invalid credentials")))
     }
-    
-    // Initialize the database and create the table
-    async fn initialize(pool: &SqlitePool) -> Result<(), sqlx::Error> {
-        sqlx::query(
-            r#"
-            CREATE TABLE IF NOT EXISTS projectTable (
-                id TEXT PRIMARY KEY,
-                date_time INTEGER,
-                image_path TEXT,
-                is_sent INTEGER,
-                attempts INTEGER,
-                grade TEXT
-            )
-            "#,
-        )
-        .execute(pool)
-        .await?;
-        Ok(())
-    }
-
-    // Insert a project into the database
-    pub async fn insert_project(&self, project: Project) -> Result<(), sqlx::Error> {
-        let result = sqlx::query(
-            r#"
-            INSERT INTO projectTable (id, date_time, image_path, is_sent, attempts, grade)
-            VALUES (?, ?, ?, ?, ?, ?)
-            "#,
-        )
-        .bind(project.id) // Ensure correct binding
-        .bind(project.date_time) // Correct date_time binding
-        .bind(project.image_path) // Bind image_path
-        .bind(project.is_sent) // Bind is_sent
-        .bind(project.attempts) // Bind attempts
-        .bind(project.grade) // Bind grade
-        .execute(&self.pool) // Execute against the pool
-        .await; // Handle any errors
-
-        if let Err(e) = result {
-            println!("Error during insert: {:?}", e);
-            return Err(e);
-        }
-        Ok(())
-    }
-
-    // Fetch all projects from the database
-    pub async fn get_all_projects(&self) -> Result<Vec<Project>, sqlx::Error> {
-        let rows = sqlx::query(
-            r#"
-            SELECT id, dateTime, imagePath, isSent, attempts, grade
-            FROM projectTable
-            ORDER BY dateTime ASC
-            "#,
-        )
-        .fetch_all(&self.pool)
-        .await?;
-
-        let projects = rows.iter().map(|row| Project {
-            id: row.get("id"),
-            date_time: row.get("dateTime"),
-            image_path: row.get("imagePath"),
-            is_sent: row.get("isSent"),
-            attempts: row.get("attempts"),
-            grade: row.get("grade"),
-        }).collect();
-
-        Ok(projects)
-    }
-
-    // Update a project in the database
-    pub async fn update_project(&self, project: Project) -> Result<(), sqlx::Error> {
-        sqlx::query(
-            r#"
-            UPDATE projectTable
-            SET dateTime = ?, imagePath = ?, isSent = ?, attempts = ?, grade = ?
-            WHERE id = ?
-            "#,
-        )
-        .bind(project.date_time) // Update bindings as necessary
-        .bind(project.image_path)
-        .bind(project.is_sent)
-        .bind(project.attempts)
-        .bind(project.grade)
-        .bind(project.id)
-        .execute(&self.pool)
-        .await?;
-        Ok(())
-    }
-
-    // Delete a project from the database
-    pub async fn delete_project(&self, id: &str) -> Result<(), sqlx::Error> {
-        sqlx::query(
-            r#"
-            DELETE FROM projectTable
-            WHERE id = ?
-            "#,
-        )
-        .bind(id)
-        .execute(&self.pool)
-        .await?;
-        Ok(())
-    }
-
-    // Get the count of projects in the database
-    pub async fn get_sends_count(&self) -> Result<i64, sqlx::Error> {
-        let count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM projectTable")
-            .fetch_one(&self.pool)
-            .await?;
-        Ok(count.0)
-    }
-
-    // Optionally, delete the database file (if needed)
-    // pub async fn delete_database_file() -> Result<(), std::io::Error> {
-    //     std::fs::remove_file("database/project.db")?; // Make sure the path is correct
-    //     Ok(())
-    // }
 }
-
-
-
-// //use sqlx::{Sqlite, SqlitePool};
-// //use sqlx::sqlite::SqliteConnectOptions;
-// //use std::path::PathBuf;
-// //use sqlx::Row; // Add this import
-// use sqlx::{SqlitePool, Row};
-// //use dirs;
-// use serde::{Deserialize, Serialize};
-
-// #[derive(Debug, Serialize, Deserialize)]
-// pub struct Project {
-//     pub id: String,
-//     pub date_time: i64,
-//     pub project_name: String,
-//     pub image_path: String,
-//     pub is_sent: i32,
-//     pub attempts: i32,
-//     pub grade: String,
-// }
-
-// pub struct DatabaseHelper {
-//     pool: SqlitePool,
-// }
-
-// impl DatabaseHelper {
-//     // Create a new instance of DatabaseHelper
-//     pub async fn new() -> Result<Self, sqlx::Error> {
-//         let db_path = Self::get_database_path()?;
-//         let pool = SqlitePool::connect(&db_path).await?;
-//         Self::initialize(&pool).await?;
-//         Ok(DatabaseHelper { pool })
-//     }
-
-//     fn get_database_path() -> Result<String, std::io::Error> {
-//         // Get the path to the current working directory (your project's root)
-//         let project_dir = std::env::current_dir()?;
-        
-//         // Create a subdirectory for the database file, like "database"
-//         let db_dir = project_dir.join("database");
-        
-//         // Create the directory if it doesn't exist
-//         if !db_dir.exists() {
-//             std::fs::create_dir(&db_dir)?;
-//         }
-    
-//         // Construct the full path to the database
-//         let db_path = db_dir.join("project.db");
-//         println!("Database path: {}", db_path.display()); // Log the database path
-    
-//         // Ensure the file exists (create it if it doesn't)
-//         if !db_path.exists() {
-//             std::fs::File::create(&db_path)?;
-//         }
-    
-//         // Return the path with the "sqlite:" prefix for SqlitePool to handle
-//         Ok(format!("sqlite:{}", db_path.to_string_lossy()))
-//     }
-    
-
-//     // Initialize the database and create the table
-//     async fn initialize(pool: &SqlitePool) -> Result<(), sqlx::Error> {
-//         sqlx::query(
-//             r#"
-//             CREATE TABLE IF NOT EXISTS projectTable (
-//                 id TEXT PRIMARY KEY,
-//                 dateTime INTEGER,
-//                 projectName TEXT,
-//                 imagePath TEXT,
-//                 isSent INTEGER,
-//                 attempts INTEGER,
-//                 grade TEXT
-//             )
-//             "#,
-//         )
-//         .execute(pool)
-//         .await?;
-//         Ok(())
-//     }
-
-//     // Insert a project into the database
-//     pub async fn insert_project(&self, project: Project) -> Result<(), sqlx::Error> {
-//         sqlx::query(
-//             r#"
-//             INSERT INTO projectTable (id, dateTime, projectName, imagePath, isSent, attempts, grade)
-//             VALUES (?, ?, ?, ?, ?, ?, ?)
-//             "#,
-//         )
-//         .bind(project.id)
-//         .bind(project.date_time)
-//         .bind(project.project_name)
-//         .bind(project.image_path)
-//         .bind(project.is_sent)
-//         .bind(project.attempts)
-//         .bind(project.grade)
-//         .execute(&self.pool)
-//         .await?;
-//         Ok(())
-//     }
-
-//     // Fetch all projects from the database
-//     pub async fn fetch_projects(&self) -> Result<Vec<Project>, sqlx::Error> {
-//         let rows = sqlx::query(
-//             r#"
-//             SELECT id, dateTime, projectName, imagePath, isSent, attempts, grade
-//             FROM projectTable
-//             ORDER BY dateTime ASC
-//             "#,
-//         )
-//         .fetch_all(&self.pool)
-//         .await?;
-
-//         let projects = rows.iter().map(|row| Project {
-//             id: row.get("id"),
-//             date_time: row.get("dateTime"),
-//             project_name: row.get("projectName"),
-//             image_path: row.get("imagePath"),
-//             is_sent: row.get("isSent"),
-//             attempts: row.get("attempts"),
-//             grade: row.get("grade"),
-//         }).collect();
-
-//         Ok(projects)
-//     }
-
-//     // Update a project in the database
-//     pub async fn update_project(&self, project: Project) -> Result<(), sqlx::Error> {
-//         sqlx::query(
-//             r#"
-//             UPDATE projectTable
-//             SET dateTime = ?, projectName = ?, imagePath = ?, isSent = ?, attempts = ?, grade = ?
-//             WHERE id = ?
-//             "#,
-//         )
-//         .bind(project.date_time)
-//         .bind(project.project_name)
-//         .bind(project.image_path)
-//         .bind(project.is_sent)
-//         .bind(project.attempts)
-//         .bind(project.grade)
-//         .bind(project.id)
-//         .execute(&self.pool)
-//         .await?;
-//         Ok(())
-//     }
-
-//     // Delete a project from the database
-//     pub async fn delete_project(&self, id: &str) -> Result<(), sqlx::Error> {
-//         sqlx::query(
-//             r#"
-//             DELETE FROM projectTable
-//             WHERE id = ?
-//             "#,
-//         )
-//         .bind(id)
-//         .execute(&self.pool)
-//         .await?;
-//         Ok(())
-//     }
-
-//     // Get the count of projects in the database
-//     pub async fn get_count(&self) -> Result<i64, sqlx::Error> {
-//         let count: (i64,) = sqlx::query_as("SELECT COUNT(*) FROM projectTable")
-//             .fetch_one(&self.pool)
-//             .await?;
-//         Ok(count.0)
-//     }
-
-//     // Optionally, delete the database file (if needed)
-//     pub async fn delete_database_file() -> Result<(), std::io::Error> {
-//         std::fs::remove_file("project.db")?;
-//         Ok(())
-//     }
-// }

@@ -1,0 +1,19 @@
+{
+  "_id": "67e5d9367e656686e9d3d2c1",
+  "date_time": 1743116587814,
+  "image_path": "https://res.cloudinary.com/du9hsgxds/image/upload/v1743116597/skim2dre...",
+  "is_sent": 1,
+  "attempts": 1,
+  "grade": "V0",
+  "is_active": 1,
+  "coordinates": [
+    {
+      "lat": 0.0712,
+      "lng": 0.6413,
+      "note": ["Good foothold. Trust it."]
+    }
+  ],
+  "style": ["Bouldering", "Pockets", "Slab"],
+  "holds": ["Side Pull"],
+  "sent_date": 1752148968
+}

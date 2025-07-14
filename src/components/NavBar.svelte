@@ -1,87 +1,132 @@
-<script>
-    import { goto } from '$app/navigation';
-    import { Home, ChartBar, ChartPie, ChartLine, Filter, Camera, Upload, Clock, PlusCircle, Activity, User, CalendarDays } from 'lucide-svelte'; // Example icons, adjust as needed
-  </script>
-  
-  <style>
-    nav {
-      position: fixed;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      background: #ffffff;
-      border-top: 1px solid #e0e0e0;
-      display: flex;
-      justify-content: space-evenly;
-      align-items: center;
-      padding: 0.5rem 0;
-      z-index: 10;
-    }
-  
-    a {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-decoration: none;
-      color: #666;
-      font-size: 0.8rem;
-    }
-  
-    a:hover {
-      color: #111;
-    }
-  
-    .icon {
-      width: 24px;
-      height: 24px;
-      margin-bottom: 0.2rem;
-    }
-  </style>
-  
-  <nav>
-    <a href="/">
-      <Home class="icon" />
-      <span>Home</span>
-    </a>
-    <!-- <a href="/camera">
-      <PlusCircle class="icon" />
-      <span>Add Project</span>
-    </a> -->
-    <a href="/inactiveProjects">
-      <CalendarDays class="icon" />
-      <span>History</span>
-    </a>
-    <a href="/stats">
-      <ChartLine class="icon" />
-      <span>Stats</span>
-    </a>
-    <!-- <a href="/profile">
-      <User class="icon" />
-      <span>Profile</span>
-    </a> -->
-  </nav>
-  
-  
+<!-- src/components/NavBar.svelte -->
+<script lang="ts">
+  import { goto } from '$app/navigation';
+  import { Home, ChartLine, CalendarDays, Settings, ChartBar, ChartPie, Filter, Camera, Upload, Clock, PlusCircle, Activity, User, LogOut } from 'lucide-svelte'; // Example icons, adjust as needed
+  import { page } from '$app/stores'; // To access the current route
+  import { logoutAccount } from '../controllers/accountsController';
+  import ConfirmationBox from './ConfirmationBox.svelte';
 
-<!-- <script>
-    import { goto } from '$app/navigation';
-  </script>
+  // STATE
+  let currentPath: string; // Store the current route path
+  let showLogoutConfirm = false; // Controls showing the confirmation modal
+
+  // REACTIVE: get the current route
+  // This runs whenever `$page` changes, keeping `currentPath` updated
+  $: currentPath = $page.url.pathname;
+
+  // UTILITY: Check if a route is active
+  // Used to highlight the nav item
+  function isActive(route: string): boolean {
+    return currentPath === route;
+  }
+
+  // LOGOUT HANDLING
+  // Calls logout logic
+  const handleLogout = () => {
+    logoutAccount();
+  };
+
+  // Confirm logout: logs out then redirects to login page
+  async function confirmLogout() {
+    await logoutAccount();
+    await goto('/login');
+  }
+</script>
   
-  <nav class="fixed bottom-0 left-0 right-0 bg-white border-t shadow-md flex justify-around py-3">
-    <button on:click={() => goto('/')} class="text-gray-600 hover:text-blue-600">
-      Home
-    </button>
-    <button on:click={() => goto('/newProject')} class="text-gray-600 hover:text-blue-600">
-      New Project
-    </button>
-    <button on:click={() => goto('/settings')} class="text-gray-600 hover:text-blue-600">
-      Settings
-    </button>
-  </nav>
-  
-  <style>
-    nav {
-      z-index: 10;
-    }
-  </style> -->
-  
+<style>
+  nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+    padding: 0.5rem 0;
+    z-index: 10;
+    background-color: #f3f9f9fa;
+    font-family: 'Poppins', sans-serif;
+  }
+
+  button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: black;
+    font-size: 0.8rem;
+    padding: 1rem;
+    border: none;
+    border-radius: 10px;
+    background: #f3f9f9fa;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.123), -5px -5px 10px #ffffff;
+    transition: all 0.3s ease;
+  }
+
+  button:hover,
+  button.active {
+    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.123), inset -3px -3px 6px #ffffff;
+  }
+
+  a {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-decoration: none;
+    color: black;
+    font-size: 0.8rem;
+    padding: 1rem;
+    border: none;
+    border-radius: 10px;
+    background: #f3f9f9fa;
+    box-shadow: 5px 5px 10px rgba(0, 0, 0, 0.123), -5px -5px 10px #ffffff;
+    transition: all 0.3s ease;
+  }
+
+  a:hover,
+  a.active {
+    box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.123), inset -3px -3px 6px #ffffff;
+  }
+
+  .icon {
+    margin-bottom: 0.2rem;
+  }
+</style>
+
+<nav>
+  <!-- Home Link -->
+  <a href="/" class={$page.url.pathname === '/' ? 'active' : ''}>
+    <Home class="icon" size={18} />
+  </a>
+  <!-- Inactive Projects Link -->
+  <a href="/inactiveProjects" class={$page.url.pathname === '/inactiveProjects' ? 'active' : ''}>
+    <CalendarDays class="icon" size={18}/>
+  </a>
+  <!-- Stats Page Link -->
+  <a href="/stats" class={$page.url.pathname === '/stats' ? 'active' : ''}>
+    <ChartLine class="icon" size={18}/>
+  </a>
+  <!-- Settings Page Link -->
+  <a href="/settings" class={$page.url.pathname === '/settings' ? 'active' : ''}>
+    <Settings class="icon" size={18}/>
+  </a>
+  <!-- Logout Button (opens confirmation modal) -->
+  <button on:click={() => showLogoutConfirm = true} class="nav-button">
+    <LogOut class="icon" size={18} />
+  </button>
+</nav>
+
+<!-- 
+MODAL: Confirmation Box for logging out
+Appears only when showLogoutConfirm is true
+-->
+{#if showLogoutConfirm}
+  <ConfirmationBox 
+    message="Are you sure you want to log out?"
+    onConfirm={async () => {
+      showLogoutConfirm = false;
+      await confirmLogout();
+    }}
+    onCancel={() => showLogoutConfirm = false} 
+  />
+{/if}
