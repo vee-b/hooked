@@ -4,7 +4,9 @@ import { writable, type Writable } from 'svelte/store';
 import { invoke } from '@tauri-apps/api/core';
 import { Project } from '../models/Project';
 
-// Define the shape of a MongoDB project object.
+// INTERFACE TO REPRESENT RAW MONGODB PROJECT
+// (What the backend returns, before converting
+// into the Project class)
 export interface MongoDBProject {
   _id: string | { $oid: string };
   date_time: number;
@@ -15,22 +17,27 @@ export interface MongoDBProject {
   is_active: boolean;
   coordinates?: { lat: number; lng: number; note?: string[] }[];
   style?: string[];
+  holds?: string[];
 }
 
-// Initialize the project list as a Svelte store.
-export const projectsList: Writable<Project[]> = writable([]); // projectsList: Stores an array of Project instances.
-export const annotations = writable<{ [key: string]: { x: string; y: string }[] }>({});
+// SVELTE STORES
+// Reactive data across the app
 
-// Store for sends count (by grade and total)
+// Projects array: main list of all loaded projects
+export const projectsList: Writable<Project[]> = writable([]);
+// Annotation overlays (image markers)
+export const annotations = writable<{ [key: string]: { x: string; y: string }[] }>({});
+// Summary data
 export const sendsSummary = writable<{ total: number; byGrade: Record<string, number> }>({
   total: 0,
   byGrade: {},
 });
 
 export const stylesSummary = writable<{ style: string; done: number; practicing: number }[]>([]);
+export const holdsSummary = writable<{ holds: string; done: number; practicing: number }[]>([]);
 
-// Initialize projects list.
-// 'export' Makes this function available for import in other files.
+// FUNCTION: Load all projects from backend
+// and fill the store
 export async function initializeProjectsList(): Promise<void> {
   try {
     // Invoke Rust command to get all projects. 'result' is typed as 'unknown' because the function does not initially know what type the backend will return.
@@ -60,7 +67,7 @@ export async function initializeProjectsList(): Promise<void> {
   }
 }
 
-// Delete a project by its ID.
+// Delete a project by its ID (calls Rust, then refreshes list)
 export async function deleteProject(_id: string): Promise<void> {
   try {
     await invoke('delete_project', { id: _id });
@@ -71,7 +78,8 @@ export async function deleteProject(_id: string): Promise<void> {
   }
 }
 
-// Fetch sends summary from backend
+// FETCH SUMMARY DATA (for stats graphs)
+// e.g. sends count by grade
 export async function fetchSendsSummary(): Promise<void> {
   try {
     const [total, gradeCounts] = await invoke<[number, [string, number][]]>('get_sends_summary');
@@ -95,6 +103,7 @@ export async function fetchSendsSummary(): Promise<void> {
   }
 }
 
+// Same pattern for style & holds
 export async function fetchStylesSummary() {
   try {
     const result: [string, number, number][] = await invoke('get_styles_summary');
@@ -106,7 +115,19 @@ export async function fetchStylesSummary() {
   }
 }
 
-// Fetch the active projects.
+export async function fetchHoldsSummary() {
+  try {
+    const result: [string, number, number][] = await invoke('get_holds_summary');
+    const summary = result.map(([holds, done, practicing]) => ({ holds, done, practicing }));
+    holdsSummary.set(summary);
+    console.log('Fetched holds summary:', summary);
+  } catch (err) {
+    console.error('Failed to fetch holds summary:', err);
+  }
+}
+
+// FETCH ACTIVE OR INACTIVE PROJECTS
+// Used in /+page.svelte or /inactiveProjects
 export async function fetchActiveProjects(): Promise<Project[]> {
   try {
     const projectsData: unknown = await invoke('get_active_projects');
@@ -174,19 +195,22 @@ export async function fetchInactiveProjects(): Promise<Project[]> {
   }
 }
 
-// Fetch the active projects with filters.
+// FILTERED FETCHING (by grade, sent, style, holds)
+// Used by the filters in your UI
 export async function fetchActiveFilteredProjects(
   grades: string[] = [],
   sentStatus: string = '',
   styles: string[] = [],
+  holds: string[] = [],
 ): Promise<Project[]> {
   try {
-    console.log('Sending to Rust:', { grades, sentStatus, styles }); // Log filters
+    console.log('Sending to Rust:', { grades, sentStatus, styles, holds }); // Log filters
 
     const projectsData: unknown = await invoke('get_active_filtered_projects', {
       grades,
       sentStatus,
       styles,
+      holds,
     });
 
     console.log('Received from Rust:', projectsData); // Log what comes back
@@ -228,14 +252,16 @@ export async function fetchInactiveFilteredProjects(
   grades: string[] = [],
   sentStatus: string = '',
   styles: string[] = [],
+  holds: string[] = [],
 ): Promise<Project[]> {
   try {
-    console.log('Sending to Rust:', { grades, sentStatus, styles }); // Log filters
+    console.log('Sending to Rust:', { grades, sentStatus, styles, holds }); // Log filters
 
     const projectsData: unknown = await invoke('get_inactive_filtered_projects', {
       grades,
       sentStatus,
       styles,
+      holds,
     });
 
     console.log('Received from Rust:', projectsData); // Log what comes back
@@ -272,7 +298,8 @@ export async function fetchInactiveFilteredProjects(
   }
 }
 
-// Sanitize file name - key change to prevent double uploads
+// IMAGE HELPERS
+// Handles safe filenames + Cloudinary upload
 export const sanitizeFileName = (image: any): string => {
   const timestamp = Date.now();
   const extension = image.format || 'jpg';
@@ -312,6 +339,8 @@ export async function uploadImageToCloudinary(imageFile: File): Promise<string |
   }
 }
 
+// CREATE OR EDIT PROJECTS
+// This talks to the Tauri backend
 // Function to add a new project with image upload to Cloudinary
 export async function addProject(newProject: Project, imageFile: File): Promise<void> {
   try {
@@ -347,7 +376,6 @@ export async function fetchProjectById(projectId: string): Promise<Project | nul
       return null;
     }
 
-    // Assume the MongoDB response is structured to include all columns
     const data = projectData as MongoDBProject;
 
     // Create a new Project instance and include all project data
@@ -405,6 +433,7 @@ export async function editProject(updatedProject: Project, imageFile?: File): Pr
       is_active: updatedProject.is_active ? 1 : 0, // Convert boolean to integer
       coordinates: existingProject.coordinates,
       style: updatedProject.style,
+      holds: updatedProject.holds,
     };
 
     console.log("Project details being sent to backend:", formattedProject);
@@ -419,6 +448,7 @@ export async function editProject(updatedProject: Project, imageFile?: File): Pr
   }
 }
 
+// SAVE ANNOTATIONS (called by the annotate page)
 // Function to save annotations to the store and persist them if needed
 export async function updateAnnotations(projectId: string, annotationsData: { lat: string; lng: string, note: string[] }[]): Promise<void> {
   try {

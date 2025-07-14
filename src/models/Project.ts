@@ -1,21 +1,24 @@
 // src/models/Project.ts
 
-import { format } from 'date-fns';
-import { invoke } from '@tauri-apps/api/core';
+import { format } from 'date-fns'; // library to format JS dates
 
-// Define the Project class
+// Definition of the Project class
 export class Project {
-  _id?: string; // MongoDB uses _id for the document identifier
-  date_time: Date;
-  image_path: string;
-  is_sent: boolean;
-  sent_date: Date;
-  attempts: number;
-  grade: string;
-  is_active: boolean;
-  coordinates: { lat: number; lng: number; note?: string[] }[];
-  style: string[];
+  _id?: string; // Optional, since MongoDB generates _id if not provided
+  date_time: Date; // when the project was created / logged
+  image_path: string; // path or URL to the project image
+  is_sent: boolean; // true if the climb was completed
+  sent_date: Date; // when it was sent (if ever)
+  attempts: number; // how many tries
+  grade: string; // e.g. V5
+  is_active: boolean; // for filtering
+  coordinates: { lat: number; lng: number; note?: string[] }[]; // annotation points on image
+  style: string[]; // styles tags (e.g. "slab", "overhang")
+  holds: string[]; // holds tags (e.g. "pinch", "jug")
 
+  // The constructor
+  // accepts either defaults or passed values
+  // also auto-converts dates from string/number
   constructor({ 
     _id,
     date_time = new Date(), 
@@ -27,6 +30,7 @@ export class Project {
     is_active = true, 
     coordinates = [],
     style = [],
+    holds = [],
   } : {
     _id?: string;
     date_time?: Date | string | number;
@@ -38,36 +42,48 @@ export class Project {
     is_active?: boolean;
     coordinates?: { lat: number; lng: number }[];
     style?: string[];
+    holds?: string[];
   }) {
     this._id = _id;
+
+    // Convert to Date object if it's a string or timestamp
     this.date_time = typeof date_time === 'string' || typeof date_time === 'number'
       ? new Date(date_time)
       : date_time;
+
     this.image_path = image_path;
     this.is_sent = is_sent;
+
+    // Support sent_date as timestamp (seconds or ms)
     this.sent_date = typeof sent_date === 'string' || typeof sent_date === 'number'
       ? new Date(Number(sent_date) < 10_000_000_000 ? Number(sent_date) * 1000 : Number(sent_date))
       : sent_date;
+
     this.attempts = attempts;
     this.grade = grade;
     this.is_active = is_active;
     this.coordinates = coordinates;
-    this.style = style; 
+    this.style = style;
+    this.holds = holds; 
   }
 
-  // Format the date
+  // Getter: returns formatted date & time
+  // e.g. "13-07-2025 14:55:00"
   get formatted_date_time(): string {
     return this.date_time ? format(this.date_time, 'dd-MM-yyyy HH:mm:ss') : 'Invalid Date';
   }
 
-  // Format sent date
+  // Getter: returns formatted sent date
+  // or "Not Sent" if no valid sent_date
   get formatted_sent_date(): string {
     return this.sent_date && this.sent_date.getTime() > 0
       ? format(this.sent_date, 'dd-MM-yyyy HH:mm:ss')
       : 'Not Sent';
   }
 
-  // Convert the object to a format MongoDB expects
+  // Convert the object into a plain map
+  // suitable for sending to MongoDB
+  // (turns Dates into timestamps etc.)
   toMap() {
     return {
       ...(this._id ? { _id: this._id } : {}),
@@ -80,10 +96,12 @@ export class Project {
       is_active: this.is_active ? 1 : 0,
       coordinates: this.coordinates,
       style: this.style,
+      holds: this.holds,
     };
   }
 
-  // Static method to create a Project from MongoDB document format
+  // Static helper to reconstruct a Project
+  // from MongoDB document (map/object)
   static fromMap(map: any): Project {
     return new Project({
       _id: map._id ? String(map._id) : undefined,
@@ -96,6 +114,7 @@ export class Project {
       is_active: map.is_active === 1,
       coordinates: map.coordinates || [],
       style: map.style || [],
+      holds: map.holds || [],
     });
   }
 }

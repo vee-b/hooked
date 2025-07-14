@@ -1,3 +1,5 @@
+// src/controllers/accountsController.svelte
+
 import { invoke } from '@tauri-apps/api/core';
 import { goto } from '$app/navigation';
 

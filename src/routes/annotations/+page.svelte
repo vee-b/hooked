@@ -1,29 +1,51 @@
 <!-- src/routes/annotate/+page.svelte -->
- <!-- To be main branch page for adding coords/notes to coords -->
+
+<!--
+  ======================================================
+  FILE: src/routes/annotate/+page.svelte
+  PURPOSE: Annotate climbing project image with markers and notes.
+  Allows placing points on the image, adding notes to each,
+  editing, deleting, or clearing them all.
+  Saves directly to MongoDB via Rust backend.
+  ======================================================
+-->
   
 <script lang="ts">
+  // Core Svelte helpers
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+
+  // Data models + API
   import { Project } from '../../models/Project';
   import { updateAnnotations, fetchProjectById } from '../../stores/projectsList';
+
+  // Auth check
   import { checkLoginStatus } from '../../controllers/accountsController';
+
+  // UI components
   import { ArrowLeft } from 'lucide-svelte';
   import ConfirmationBox from '../../components/ConfirmationBox.svelte';
 
-  let imagePath = '';
-  let projectId = '';
+  // LOCAL STATE VARIABLES
+  let imagePath = ''; // image URL from query param
+  let projectId = ''; // project ID from query param
   let project: Project | null = null;
-  let points: { x: string; y: string; note: string[] }[] = [];
-  let editNotesMode = false; // Toggle for enabling/disabling coordinates editing
-  let currentNote = ''; // Stores the current note entered by the user
-  let selectedPointIndex: number | null = null;
-  let originalPosition: { x: string; y: string } | null = null;
-  let selectedColor = 'white'; // Default marker color
+
+  let points: { x: string; y: string; note: string[] }[] = []; // stores markers
+
+  let editNotesMode = false; // controls if user is editing note for a point
+  let currentNote = ''; // stores current textarea input
+  let selectedPointIndex: number | null = null; // which point is selected
+  let originalPosition: { x: string; y: string } | null = null; // original pos for cancel
+
+  let selectedColor = 'white'; // color of marker (default white)
+
+  // Confirmation boxes
   let showRemoveAllConfirm = false;
   let showDeleteConfirm = false;
   let showCancelConfirm = false;
 
-  // Fetch project details on mount
+  // INITIAL DATA LOAD
   onMount(async () => {
     // Check if user if logged in
     const isLoggedIn = checkLoginStatus();
@@ -38,7 +60,7 @@
 
     if (projectId) {
       try {
-        // Fetch project details (including coordinates) from the database
+        // Fetch project including saved coordinates from DB
         project = await fetchProjectById(projectId);
         points = (project?.coordinates ?? []).map(coord => ({
           x: coord.lat.toString(),
@@ -51,9 +73,12 @@
     }
   });
 
+  // CLICK HANDLER FOR IMAGE
   function handleClick(event: MouseEvent) {
     const img = event.target as HTMLImageElement;
     const rect = img.getBoundingClientRect();
+
+    // Get position as % relative to image size
     const x = ((event.clientX - rect.left) / rect.width).toFixed(4);
     const y = ((event.clientY - rect.top) / rect.height).toFixed(4);
 
@@ -62,28 +87,29 @@
     const tolerance = 0.04;
 
     if (editNotesMode) {
-      // Update position of the marker being edited
+      // If already editing, just move existing marker
       if (selectedPointIndex !== null) {
         points[selectedPointIndex].x = x;
         points[selectedPointIndex].y = y;
-        points = [...points]; // Trigger reactivity
+        points = [...points];
       }
       return;
     }
 
+    // Check if clicked near an existing point
     const index = points.findIndex(({ x, y }) =>
       Math.abs(parseFloat(x) - xNum) <= tolerance &&
       Math.abs(parseFloat(y) - yNum) <= tolerance
     );
 
     if (index !== -1) {
-      // Enter edit mode for existing point
+      // Enter edit mode for this existing point
       selectedPointIndex = index;
       originalPosition = { x: points[index].x, y: points[index].y };
       editNotesMode = true;
       currentNote = points[index].note.join(', ');
     } else {
-      // Add new point
+      // Otherwise create new point and enter edit mode
       const newPoint = { x, y, note: [] };
       points = [...points, newPoint];
       selectedPointIndex = points.length - 1;
@@ -93,10 +119,12 @@
     }
   }
 
+  // FORMAT POINTS FOR MONGODB
   function toLatLngFormat() {
     return points.map(p => ({ lat: p.x, lng: p.y, note: p.note }));
   }
 
+  // SAVE A NOTE 
   async function saveNote() {
     if (!currentNote.trim()) {
       alert('Please enter a note before saving.');
@@ -117,6 +145,7 @@
     }
   }
 
+  // REMOVE SELECTED MARKER
   async function removeMarker() {
     if (selectedPointIndex !== null) {
       points.splice(selectedPointIndex, 1); // Remove from array
@@ -126,6 +155,7 @@
     }
   }
 
+  // CLEAR ALL ANNOTATIONS
   async function clearAnnotations() {
     points = []; // Reset points array
     await updateAnnotations(projectId, []);
@@ -133,6 +163,7 @@
     await goto(`/annotations?id=${projectId}&image=${imagePath}`);
   }
 
+  // CANCEL EDIT
   function cancelAnnotations() {
     if (selectedPointIndex !== null) {
       if (points[selectedPointIndex].note.length === 0) {
@@ -155,12 +186,14 @@
     editNotesMode = false;
   }
 
+  // TEXTAREA AUTO-RESIZE
   function autoResize(event: Event) {
     const target = event.target as HTMLTextAreaElement;
     target.style.height = 'auto';
     target.style.height = target.scrollHeight + 'px';
   }
 
+  // NAVIGATION BACK
   function navigateBack() {
     history.length > 1 ? history.back() : goto('/projectDetails');
   }
@@ -170,11 +203,15 @@
   .home { 
     text-align: center; 
     padding: 1rem; 
-    color: black; }
+    color: black; 
+    margin-bottom: 3rem;
+  }
+
   .header-container {
     display: flex; 
+    flex-direction: column;
     justify-content: space-between; 
-    align-items: center;
+    align-items: start;
     padding: 1.5rem 2rem; 
     flex-wrap: wrap; 
     gap: 0;
@@ -221,6 +258,10 @@
     box-shadow: 5px 5px 10px rgba(0,0,0,0.1), -5px -5px 10px #fff;
     transition: box-shadow 0.2s ease;
     width: 100%;
+
+    max-width: 600px; /* cap the width on large screens */
+    width: 90%;       /* on small screens, still responsive */
+    margin: 1rem auto; /* center horizontally */
   }
 
   .button:hover {
@@ -230,6 +271,10 @@
   .image-wrapper { 
     position: relative; 
     display: inline-block; 
+
+    max-width: 600px; /* cap the width on large screens */
+    width: 90%;       /* on small screens, still responsive */
+    margin: 1rem auto; /* center horizontally */
     }
 
   img { 
@@ -260,13 +305,17 @@
     display: flex; 
     gap: 10px; 
     justify-content: center;
+
+    max-width: 600px; /* cap the width on large screens */
+    width: 90%;       /* on small screens, still responsive */
+    margin: 1rem auto; /* center horizontally */
   }
 
   .note-input {
     margin-top: 10px; 
     width: 90%; 
     min-height: 50px; 
-    max-width: 100%;
+    max-width: 60%;
     font-size: 16px; 
     padding: 10px; 
     border-radius: 5px;
@@ -325,6 +374,7 @@
   {/if}
 </div>
 
+<!-- CONFIRMATION POPUPS -->
 {#if showRemoveAllConfirm}
   <ConfirmationBox 
     message="Are you sure you want to remove all markers and notes?"

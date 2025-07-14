@@ -1,12 +1,13 @@
-<!-- src/components/StylesRadarGraphComponent.svelte -->
+<!-- src/components/HoldsRadarGraphComponent.svelte -->
 
 <script lang="ts">
   import { onMount } from 'svelte';
   import { Chart } from 'chart.js/auto';
-  import { stylesSummary, fetchStylesSummary } from '../stores/projectsList';
-  import { allStyles } from '../stores/settingsStore';
+  import { holdsSummary, fetchHoldsSummary } from '../stores/projectsList';
+  import { allHolds } from '../stores/settingsStore';
   import { writable } from 'svelte/store';
 
+  // VARIABLES & STATE
   // Reference to the <canvas> element where we render the radar chart
   let canvasEl: HTMLCanvasElement | null = null;
   // Holds the Chart.js radar chart instance so we can update it later
@@ -15,43 +16,43 @@
   // Toggle state to switch between counts vs percentages
   let showPercent = false;
 
-  // ON MOUNT: fetch styles summary data from the store
+  // ON MOUNT: fetch holds summary data from the store
   onMount(async () => {
-    await fetchStylesSummary();
+    await fetchHoldsSummary();
   });
 
-  // COMPUTED DERIVED DATA
-  // This creates a consistent array matching allStyles, combining the fetched summary
-  $: styleChartData = allStyles.map(style => {
-    const found = $stylesSummary.find(item => item.style === style);
+  // This creates a consistent array matching allHolds, combining the fetched summary
+  $: holdsChartData = allHolds.map(holds => {
+    const found = $holdsSummary.find(item => item.holds === holds);
     return {
-      style,
+      holds,
       done: found?.done ?? 0,
       practicing: found?.practicing ?? 0
     };
   });
 
   // Totals for calculating percentages
-  $: totalDone = styleChartData.reduce((sum, item) => sum + item.done, 0);
-  $: totalPracticing = styleChartData.reduce((sum, item) => sum + item.practicing, 0);
+  $: totalDone = holdsChartData.reduce((sum, item) => sum + item.done, 0);
+  $: totalPracticing = holdsChartData.reduce((sum, item) => sum + item.practicing, 0);
 
   // Compute percentage data relative to totals
-  $: stylePercentData = styleChartData.map(item => ({
-    style: item.style,
+  $: holdsPercentData = holdsChartData.map(item => ({
+    style: item.holds,
     done: totalDone ? +((item.done / totalDone) * 100).toFixed(2) : 0,
     practicing: totalPracticing ? +((item.practicing / totalPracticing) * 100).toFixed(2) : 0
   }));
 
   // WATCHER: whenever data changes or the toggle changes,
   // rebuild or update the radar chart
-  $: if (canvasEl && styleChartData.length) {
-    const labels = styleChartData.map(item => item.style);
+  $: if (canvasEl && holdsChartData.length) {
+    // Prepare labels and datasets depending on toggle
+    const labels = holdsChartData.map(item => item.holds);
     const dataDone = showPercent 
-      ? stylePercentData.map(item => item.done)
-      : styleChartData.map(item => item.done);
+      ? holdsPercentData.map(item => item.done)
+      : holdsChartData.map(item => item.done);
     const dataPracticing = showPercent 
-      ? stylePercentData.map(item => item.practicing)
-      : styleChartData.map(item => item.practicing);
+      ? holdsPercentData.map(item => item.practicing)
+      : holdsChartData.map(item => item.practicing);
 
     if (!radarChart) {
       // INITIALIZE A NEW RADAR CHART
@@ -157,7 +158,7 @@
     box-shadow: none;
   }
 
-  .styles-title {
+  .holds-title {
     font-size: 1.25rem;
     font-weight: 600;
     color: rgb(57, 57, 57);
@@ -166,10 +167,10 @@
   }
 </style>
 
-<div class="styles-radar-container">
+<div class="holds-radar-container">
   <!-- Title for the chart -->
-  <div class="styles-title">Styles</div>
-
+  <div class="holds-title">Holds</div>
+  
   <!-- The canvas element will bind to `canvasEl` -->
   <canvas bind:this={canvasEl}></canvas>
 

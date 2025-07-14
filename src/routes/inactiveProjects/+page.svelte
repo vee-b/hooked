@@ -1,39 +1,61 @@
 <!-- src/routes/inactiveProjects/+page.svelte -->
 
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
-  import ProjectComponent from '../../components/ProjectComponent.svelte';
-  import { writable } from 'svelte/store';
-  import { PlusCircle, Filter } from 'lucide-svelte';
-  import type { Project } from '../../models/Project';
-  import { fetchInactiveProjects, fetchInactiveFilteredProjects, deleteProject } from '../../stores/projectsList';
-  import { checkLoginStatus, logoutAccount } from '../../controllers/accountsController';
-  import { tick } from 'svelte';
-  import { slide } from 'svelte/transition'
-  import { afterNavigate } from '$app/navigation';
-  import { gradeSystem, getCurrentGrades, convertFontScaleGrade, allStyles } from '../../stores/settingsStore';
-  
-  export const projectsList = writable<Project[]>([]);
+  // --- SVELTE + ROUTING TOOLS ---
+  import { onMount, tick } from 'svelte';
+  import { goto, afterNavigate } from '$app/navigation';
 
-  // Grade conversion
+  // --- UI COMPONENTS & ICONS ---
+  import ProjectComponent from '../../components/ProjectComponent.svelte';
+  import { PlusCircle, Filter } from 'lucide-svelte';
+
+  // --- STATE MANAGEMENT ---
+  import { writable } from 'svelte/store';
+
+  // --- TYPES ---
+  import type { Project } from '../../models/Project';
+
+  // --- PROJECT FETCHING FUNCTIONS ---
+  import { 
+    fetchInactiveProjects, // gets ALL inactive projects
+    fetchInactiveFilteredProjects, // gets inactive projects based on filters
+    deleteProject // deletes a project (called by child component)
+  } from '../../stores/projectsList';
+
+  // --- AUTH + SETTINGS ---
+  import { checkLoginStatus } from '../../controllers/accountsController';
+  
+  // --- TRANSITIONS ---
+  import { slide } from 'svelte/transition'
+
+  // --- GRADES & FILTER OPTIONS ---
+  import { gradeSystem, getCurrentGrades, convertFontScaleGrade, allStyles, allHolds } from '../../stores/settingsStore';
+  
+  // --- STATE VARIABLES ---
+  export const projectsList = writable<Project[]>([]); // holds the list of inactive projects for display
+
+  // re-compute currentGrades when $gradeSystem changes (reactive declaration)
   $: currentGrades = getCurrentGrades($gradeSystem);
   
-  const fetchProjects = async () => {
-  try {
-    const projectsData = await fetchInactiveProjects();
-    projectsList.set(projectsData);
-    console.log('Fetched active projects:', projectsData);
+  // --- DATA FETCHING FUNCTIONS ---
 
-  } catch (error) {
-    console.error('Error fetching active projects:', error);
-  }
-};
+  // Fetch all inactive projects (no filters applied)
+  const fetchProjects = async () => {
+    try {
+      const projectsData = await fetchInactiveProjects();
+      projectsList.set(projectsData);
+      console.log('Fetched active projects:', projectsData);
+
+    } catch (error) {
+      console.error('Error fetching active projects:', error);
+    }
+  };
   
-  const fetchFilteredProjects = async (filters: { grades: string[], styles: string[], isSent?: boolean }) => {
+  // Fetch inactive projects with filtering applied
+  const fetchFilteredProjects = async (filters: { grades: string[], styles: string[], holds: string[], isSent?: boolean }) => {
     try {
       const isSentParam = filters.isSent !== undefined ? String(filters.isSent) : null;
-      const projectsData = await fetchInactiveFilteredProjects(filters.grades, String(filters.isSent), filters.styles);
+      const projectsData = await fetchInactiveFilteredProjects(filters.grades, String(filters.isSent), filters.styles, filters.holds);
       projectsList.set(projectsData);  // projectsData should be Project[]
       console.log('Fetched projects successfully:', projectsData);
     } catch (error) {
@@ -41,6 +63,7 @@
     }
   };
   
+  // --- ON COMPONENT LOAD ---
   onMount(() => {
     const isLoggedIn = checkLoginStatus();  // Check login status when the component mounts
     if (isLoggedIn) {
@@ -50,25 +73,27 @@
     }
   });
 
+  // Refresh projects on any route change
   afterNavigate(() => {
     fetchProjects(); // or fetchFilteredProjects if filters should persist
   });
   
-  let filterActive = false;
-  let selectedGrades: string[] = []; // Store multiple selected grades
-  let isSent: boolean | null = null; // null = no filter applied
-  let sentFilterValue: string = 'all';
-  let selectedStyles: string[] = [];
+  // --- FILTER CONTROL VARIABLES ---
+  let filterActive = false; // toggles the visibility of the filter UI panel
+  let selectedGrades: string[] = []; // stores selected grades from checkboxes
+  let isSent: boolean | null = null; // stores sent filter (true, false or null=all)
+  let sentFilterValue: string = 'all'; // actual dropdown string state
+  let selectedStyles: string[] = []; // selected climbing styles
+  let selectedHolds: string[] = []; // selected hold types
     
+  // --- FILTER FUNCTIONS ---
   const toggleFilter = () => {
     filterActive = !filterActive;
   };
   
   const applyFilters = async () => {
-    await tick(); // Wait for UI updates
-    console.log('Selected Grades:', selectedGrades);  // Log selected grades
-    console.log('Selected Styles:', selectedStyles);
-    console.log('Applying Filters:', { selectedGrades, isSent });
+    await tick(); // ensure UI updates before data fetch
+    console.log('Applying Filters:', { selectedGrades, selectedStyles, selectedHolds, isSent });
       
     const gradesToSend = $gradeSystem === 'Font Scale'
       ? selectedGrades.map(grade => convertFontScaleGrade(grade, $gradeSystem))
@@ -77,6 +102,7 @@
     const filters = {
       grades: gradesToSend,
       styles: selectedStyles,
+      holds: selectedHolds,
       isSent: isSent !== null ? isSent : undefined // omit if null
     };
   
@@ -87,9 +113,10 @@
   const clearFilters = async () => {
     selectedGrades = [];
     selectedStyles = [];
+    selectedHolds = [];
     isSent = null;
-    await tick(); // Ensure UI updates before fetching
-    fetchProjects(); // Fetch unfiltered active projects
+    await tick(); // Wait for UI to update
+    fetchProjects(); // Reset to unfiltered list
   }
 </script>
 
@@ -106,6 +133,7 @@
     text-align: center;
     padding: 1rem;
     color: black;
+    margin-bottom: 3rem;
   }
 
   .header-container {
@@ -147,12 +175,6 @@
     box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.123), inset -3px -3px 6px #ffffff;
   }
 
-  /* button {
-    display: block;
-    width: 100%;
-    padding: 12px;
-  } */
-
   .top-buttons-container {
     display: flex;
     gap: 10px;
@@ -169,6 +191,10 @@
     font-family: 'Inter', sans-serif;
     max-width: 90%;
     transition: all 0.3s ease;
+
+    max-width: 600px;
+    width: 60%;
+    margin: 1rem auto;
   }
 
   .divider {
@@ -304,28 +330,28 @@
     margin-bottom: 10px;
   }
 </style>
-  
+<!-- MAIN PAGE LAYOUT -->
 <div class="home">
   
+  <!-- Page Header -->
   <div class="header-container">
     <h1 class="title">Inactive Projects</h1>
-    <!-- <button class="button logout-button" on:click={handleLogout}>
-      Logout
-    </button> -->
   </div>
 
   <div class="divider"></div>
 
+  <!-- Top Action Buttons -->
   <div class=top-buttons-container>
     <button class="button {filterActive ? 'active' : ''}" on:click={toggleFilter}>
       <Filter size={18}/>
-      <!-- <span>Filters</span> -->
     </button>
   </div>
     
+  <!-- Filter Panel -->
     {#if filterActive}
     <div class="filter-button-container" transition:slide={{ duration: 300 }}>
       <div class="filters">
+        <!-- Filter by Sent Status -->
         <div class="sent-filter-container">
           <label for="sentFilter">Sent</label>
           <select id="sentFilter" bind:value={sentFilterValue} on:change={() => {
@@ -337,6 +363,7 @@
           </select>
         </div>
 
+        <!-- Filter by Grades -->
         <div class="filter-item">
           <label>Grades</label>
           <div class="checkbox-container">
@@ -354,6 +381,7 @@
           </div>
         </div>
 
+        <!-- Filter by Styles -->
         <div class="filter-item">
           <label>Styles</label>
           <div class="checkbox-container">
@@ -371,6 +399,25 @@
           </div>
         </div>
 
+        <!-- Filter by Holds -->
+        <div class="filter-item">
+          <label>Holds</label>
+          <div class="checkbox-container">
+            {#each allHolds as hold}
+              <div class="checkbox-item">
+                <input
+                  type="checkbox"
+                  bind:group={selectedHolds}
+                  value={hold}
+                  id={hold}
+                />
+                <label for={hold}>{hold}</label>
+              </div>
+            {/each}
+          </div>
+        </div>
+
+        <!-- Apply / Clear Buttons -->
         <div class="filter-button-div">
           <button class="button" on:click={applyFilters}>Apply</button>
           <button class="button" on:click={clearFilters}>Clear</button>
@@ -379,6 +426,7 @@
     </div>
   {/if}
 
+  <!-- Project List -->
   <div class="project-components-container">
     {#each $projectsList as project (project._id)}
       <ProjectComponent {project} on:projectDeleted={() => fetchInactiveFilteredProjects()} />

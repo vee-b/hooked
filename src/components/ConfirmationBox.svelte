@@ -1,6 +1,11 @@
+<!-- src/components/confirmationBox.svelte -->
+
 <script lang="ts">
+  // Confirmation box message
   export let message = "Are you sure?";
+  // A callback function to call if the user confirms (clicks Yes)
   export let onConfirm: () => void;
+  // A callback function to call if the user cancels (clicks No)
   export let onCancel: () => void;
 </script>
 
