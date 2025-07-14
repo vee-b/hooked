@@ -7,7 +7,7 @@
 // Import database_helper (assuming `database_helper.rs` is in the same directory)
 mod database_helper; 
 
-use database_helper::{DatabaseHelper, Project, Account};
+use database_helper::{DatabaseHelper, Project};
 use tauri::{Manager, State}; // Manager: Provides app management features like accessing state. State: Allows sharing state (like database connections) between Tauri commands.
 use mongodb::{Client as MongoClient, options::ClientOptions}; // MongoClient: The main MongoDB client for database interactions. ClientOptions: For configuring MongoDB connection options.
 use mongodb::bson::{self, Document, oid::ObjectId}; // bson: MongoDB’s binary JSON format. doc: Macro for creating BSON documents. 
@@ -312,27 +312,6 @@ async fn update_project(client: State<'_, MongoClient>, mut project: Project) ->
         if let Some(bson::Bson::Boolean(is_sent)) = update_doc.get("is_sent") {
             update_doc.insert("is_sent", bson::Bson::Int32(if *is_sent { 1 } else { 0 }));
         }
-
-        // // Ensure `coordinates` field is properly handled as an array of floats
-        // if let Some(bson::Bson::Array(coordinates)) = update_doc.get("coordinates") {
-        //     // Log the received coordinates
-        //     println!("Received coordinates: {:?}", coordinates);
-            
-        //     // We assume that coordinates is an array of numbers (floats or integers).
-        //     let coordinates: Vec<f64> = coordinates.iter()
-        //         .filter_map(|bson| match bson {
-        //             bson::Bson::Double(val) => Some(*val),
-        //             bson::Bson::Int32(val) => Some(*val as f64),
-        //             bson::Bson::Int64(val) => Some(*val as f64),
-        //             _ => None, // Ignore invalid types
-        //         })
-        //         .collect();
-
-        //     // Log the coordinates before updating
-        //     println!("Processed coordinates: {:?}", coordinates);
-            
-        //     update_doc.insert("coordinates", bson::Bson::Array(coordinates.iter().map(|&x| bson::Bson::Double(x)).collect()));
-        // }
 
         // Handle `coordinates` only if valid array of objects
         let valid_coordinates = match update_doc.get("coordinates") {
@@ -691,8 +670,8 @@ async fn get_holds_summary(client: State<'_, MongoClient>) -> Result<Vec<(String
 #[tauri::command]
 async fn upload_image(image_data: Vec<u8>, image_name: String) -> Result<String, String> { // image_data: A vector of bytes (Vec<u8>) representing the raw image data.
     let client = reqwest::Client::new();
-    let cloud_name = "du9hsgxds"; // Replace with your Cloudinary cloud name
-    let upload_preset = "shafaedyn"; // Replace with your upload preset
+    let cloud_name = "du9hsgxds"; 
+    let upload_preset = "shafaedyn"; 
 
     // Createthe image part.
     let part = reqwest::multipart::Part::bytes(image_data) // Converts the raw image_data (a byte vector) into a multipart form part for file uploads.

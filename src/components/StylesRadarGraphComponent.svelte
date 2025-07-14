@@ -1,3 +1,5 @@
+<!-- src/components/StylesRadarGraphComponent.svelte -->
+
 <script lang="ts">
   import { onMount } from 'svelte';
   import { Chart } from 'chart.js/auto';
@@ -5,17 +7,21 @@
   import { allStyles } from '../stores/settingsStore';
   import { writable } from 'svelte/store';
 
+  // Reference to the <canvas> element where we render the radar chart
   let canvasEl: HTMLCanvasElement | null = null;
+  // Holds the Chart.js radar chart instance so we can update it later
   let radarChart: Chart | null = null;
 
-  // Toggle state
+  // Toggle state to switch between counts vs percentages
   let showPercent = false;
 
+  // ON MOUNT: fetch styles summary data from the store
   onMount(async () => {
     await fetchStylesSummary();
   });
 
-  // Prepare normalized data
+  // COMPUTED DERIVED DATA
+  // This creates a consistent array matching allStyles, combining the fetched summary
   $: styleChartData = allStyles.map(style => {
     const found = $stylesSummary.find(item => item.style === style);
     return {
@@ -25,17 +31,19 @@
     };
   });
 
+  // Totals for calculating percentages
   $: totalDone = styleChartData.reduce((sum, item) => sum + item.done, 0);
   $: totalPracticing = styleChartData.reduce((sum, item) => sum + item.practicing, 0);
 
-  // Calculate % data relative to total done/practicing
+  // Compute percentage data relative to totals
   $: stylePercentData = styleChartData.map(item => ({
     style: item.style,
     done: totalDone ? +((item.done / totalDone) * 100).toFixed(2) : 0,
     practicing: totalPracticing ? +((item.practicing / totalPracticing) * 100).toFixed(2) : 0
   }));
 
-  // Watch for changes
+  // WATCHER: whenever data changes or the toggle changes,
+  // rebuild or update the radar chart
   $: if (canvasEl && styleChartData.length) {
     const labels = styleChartData.map(item => item.style);
     const dataDone = showPercent 
@@ -46,6 +54,7 @@
       : styleChartData.map(item => item.practicing);
 
     if (!radarChart) {
+      // INITIALIZE A NEW RADAR CHART
       radarChart = new Chart(canvasEl, {
         type: 'radar',
         data: {
@@ -94,14 +103,14 @@
         }
       });
     } else {
+      // UPDATE EXISTING CHART
       radarChart.data.labels = labels;
       radarChart.data.datasets[0].data = dataDone;
-      // radarChart.data.datasets[0].label = showPercent ? 'Done (%)' : 'Done';
       radarChart.data.datasets[0].label = 'Done';
       radarChart.data.datasets[1].data = dataPracticing;
-      // radarChart.data.datasets[1].label = showPercent ? 'Practicing (%)' : 'Practicing';
       radarChart.data.datasets[1].label = 'Practicing';
     
+      // Also update the scale for percentages
       const rScale = radarChart.options.scales?.r;
       if (rScale?.ticks) {
         rScale.max = showPercent ? 100 : undefined;
@@ -111,6 +120,7 @@
     }
   }
 
+  // ACTION: Toggle between showing counts or percentages
   function toggleMode() {
     showPercent = !showPercent;
   }
@@ -157,8 +167,13 @@
 </style>
 
 <div class="styles-radar-container">
+  <!-- Title for the chart -->
   <div class="styles-title">Styles</div>
+
+  <!-- The canvas element will bind to `canvasEl` -->
   <canvas bind:this={canvasEl}></canvas>
+
+  <!-- Toggle button to switch between counts and percentages -->
   <div class="toggle-container">
     <button class="toggle-button" on:click={toggleMode}>
       Toggle to {showPercent ? 'Counts' : 'Percentages'}

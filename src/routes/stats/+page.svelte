@@ -8,18 +8,25 @@
   import { projectsList } from '../../stores/projectsList';
   import { checkLoginStatus } from '../../controllers/accountsController';
 
+  // REACTIVE DERIVED DATA
+  // These `$:` statements automatically re-compute whenever 
+  // $projectsList or allStyles/allHolds change.
+
+  // How many completed projects for each style?
   $: completedStyleData = allStyles.map(style =>
     $projectsList.reduce(
       (acc, project) => acc + (project.is_sent && project.style?.includes(style) ? 1 : 0), 0
     )
   );
 
+  // How many projects still being practiced for each style?
   $: practicingStyleData = allStyles.map(style =>
     $projectsList.reduce(
       (acc, project) => acc + (!project.is_sent && project.style?.includes(style) ? 1 : 0), 0
     )
   );
 
+  // Similarly, compute hold stats
   $: completedHoldsData = allHolds.map(holds =>
     $projectsList.reduce(
       (acc, project) => acc + (project.is_sent && project.holds?.includes(holds) ? 1 : 0), 0
@@ -32,9 +39,8 @@
     )
   );
 
-  // Fetch project details on mount
+  // ON MOUNT: CHECK LOGIN
   onMount(async () => {
-    // Check if user if logged in
     const isLoggedIn = checkLoginStatus();
     if (!isLoggedIn) {
       goto('/login'); // Redirect if not logged in
@@ -95,16 +101,17 @@
 
   <div class="divider"></div>
 
-  <!-- <SendsComponent /> -->
-
+  <!-- Sends summary -->
   <div class="sends-card">
     <SendsComponent />
   </div>
 
+  <!-- Styles radar graph -->
   <div class="graph-card">
     <StylesRadarGraphComponent />
   </div>
 
+  <!-- Holds radar graph -->
   <div class="graph-card">
     <HoldsRadarGraphComponent />
   </div>

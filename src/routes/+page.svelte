@@ -1,37 +1,59 @@
+<!-- src/routes/inactiveProjects/+page.svelte -->
+
 <script lang="ts">
-  import { onMount } from 'svelte';
-  import { goto } from '$app/navigation';
+  // SvelteKit lifecycle and routing tools
+  import { onMount, tick } from 'svelte';
+  import { goto, afterNavigate } from '$app/navigation';
+  
+  // Svelte component and utilities
   import ProjectComponent from '../components/ProjectComponent.svelte';
   import { writable } from 'svelte/store';
-  import { PlusCircle, Filter } from 'lucide-svelte';
-  import type { Project } from '../models/Project';
-  import { fetchActiveProjects, fetchActiveFilteredProjects } from '../stores/projectsList';
-  import { checkLoginStatus, logoutAccount } from '../controllers/accountsController';
-  import { tick } from 'svelte';
-  import { slide } from 'svelte/transition'
-  import { afterNavigate } from '$app/navigation';
-  import Select from 'svelte-select';
-  import { gradeSystem, getCurrentGrades, convertFontScaleGrade, allStyles, allHolds } from '../stores/settingsStore';
 
+  // Icons from lucide-svelte
+  import { PlusCircle, Filter } from 'lucide-svelte';
+
+  // Type definitions
+  import type { Project } from '../models/Project';
+
+  // Project fetching functions (active and filtered)
+  import { fetchActiveProjects, fetchActiveFilteredProjects } from '../stores/projectsList';
+
+  // Auth check
+  import { checkLoginStatus } from '../controllers/accountsController';
+
+  // Grade-related utilities and filter options
+  import { 
+    gradeSystem, // reactive store indicating current grade scale ("V-Scale" or "Font Scale")
+    getCurrentGrades, // returns the grade list for the selected system
+    convertFontScaleGrade, // converts Font scale grades to V-scale (since MongoDB stores in V-scale)
+    allStyles, allHolds // preset style and hold tag options 
+  } from '../stores/settingsStore';
+
+  import { slide } from 'svelte/transition'
+
+  // Writable store to hold the current project list displayed on the page
   export const projectsList = writable<Project[]>([]);
 
-  // Grade conversion
+  // Reactive declaration to watch grade system and fetch the relevant scale (V or Font)
   $: currentGrades = getCurrentGrades($gradeSystem);
 
+  // Navigation button to go to the project creation page
   const navigateToNewProject = () => {
     goto('/projectDetails');
   };
 
+  // Fetch all active projects (no filters)
   const fetchProjects = async () => {
-  try {
-    const projectsData = await fetchActiveProjects();
-    projectsList.set(projectsData);
-    console.log('Fetched active projects:', projectsData);
-  } catch (error) {
-    console.error('Error fetching active projects:', error);
-  }
-};
+    try {
+      const projectsData = await fetchActiveProjects();
+      projectsList.set(projectsData);
+      console.log('Fetched active projects:', projectsData);
+    } catch (error) {
+      console.error('Error fetching active projects:', error);
+    }
+  };
 
+  // Fetch active projects with applied filters
   const fetchFilteredProjects = async (filters: { grades: string[], styles: string[], holds: string[], isSent?: boolean }) => {
     try {
       const isSentParam = filters.isSent !== undefined ? String(filters.isSent) : null;
@@ -43,6 +65,7 @@
     }
   };
 
+  // When the component first mounts, check login and fetch projects
   onMount(async () => {
     const isLoggedIn = checkLoginStatus();  // Check login status when the component mounts
     if (isLoggedIn) {
@@ -52,10 +75,12 @@
     }
   });
 
+  // Refetch projects after every page navigation
   afterNavigate(() => {
-    fetchProjects(); // or fetchFilteredProjects if filters should persist
+    fetchProjects(); 
   });
 
+  // UI State variables for filtering system
   let filterActive = false;
   let selectedGrades: string[] = []; // Store multiple selected grades
   let isSent: boolean | null = null; // null = no filter applied
@@ -63,11 +88,12 @@
   let selectedStyles: string[] = [];
   let selectedHolds: string[] = [];
 
-
+  // Toggle the filter panel visibility
   const toggleFilter = () => {
     filterActive = !filterActive;
   };
 
+  // Apply filters and fetch new filtered projects
   const applyFilters = async () => {
     await tick(); // Wait for UI updates
     console.log('Selected Grades:', selectedGrades);  // Log selected grades
@@ -75,6 +101,7 @@
     console.log('Selected Holds:', selectedHolds);
     console.log('Applying Filters:', { selectedGrades, isSent });
 
+    // Convert font-scale grades to V-scale before sending to backend
     const gradesToSend = $gradeSystem === 'Font Scale'
       ? selectedGrades.map(grade => convertFontScaleGrade(grade, $gradeSystem))
       : selectedGrades;
@@ -90,6 +117,7 @@
     fetchFilteredProjects(filters);
   };
 
+  // Clear all filters and show unfiltered project list
   const clearFilters = async () => {
     selectedGrades = [];
     selectedStyles = [];
@@ -146,12 +174,6 @@
   .button:hover {
     box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.123), inset -3px -3px 6px #ffffff;
   }
-
-  /* button {
-    display: block;
-    width: 100%;
-    padding: 12px;
-  } */
 
   .top-buttons-container {
     display: flex;
@@ -308,14 +330,17 @@
   }
 </style>
 
+<!-- MAIN PAGE LAYOUT -->
 <div class="home">
 
+  <!-- Header Section -->
   <div class="header-container">
     <h1 class="title">Active Projects</h1>
   </div>
 
   <div class="divider"></div>
 
+  <!-- Top action buttons: Toggle Filter | New Project -->
   <div class="top-buttons-container">
     <button class="button {filterActive ? 'active' : ''}" on:click={toggleFilter}>
       <Filter size={18}/>
@@ -327,9 +352,11 @@
     </button>
   </div>
 
+  <!-- Filter Panel (Only visible if filterActive === true) -->
   {#if filterActive}
     <div class="filter-button-container" transition:slide={{ duration: 300 }}>
       <div class="filters">
+        <!-- Sent Status Dropdown -->
         <div class="sent-filter-container">
           <label for="sentFilter">Sent</label>
           <select id="sentFilter" bind:value={sentFilterValue} on:change={() => {
@@ -341,6 +368,7 @@
           </select>
         </div>
 
+        <!-- Grade Checkboxes -->
         <div class="filter-item">
           <label>Grades</label>
           <div class="checkbox-container">
@@ -358,6 +386,7 @@
           </div>
         </div>
 
+        <!-- Style Checkboxes -->
         <div class="filter-item">
           <label>Styles</label>
           <div class="checkbox-container">
@@ -375,6 +404,7 @@
           </div>
         </div>
 
+        <!-- Hold Type Checkboxes -->
         <div class="filter-item">
           <label>Holds</label>
           <div class="checkbox-container">
@@ -392,6 +422,7 @@
           </div>
         </div>
 
+        <!-- Apply / Clear Buttons -->
         <div class="filter-button-div">
           <button class="button" on:click={applyFilters}>Apply</button>
           <button class="button" on:click={clearFilters}>Clear</button>
@@ -400,6 +431,7 @@
     </div>
   {/if}
 
+  <!-- Project List Section -->
   <div class="project-components-container">
     {#each $projectsList as project (project._id)}
       <ProjectComponent {project} />

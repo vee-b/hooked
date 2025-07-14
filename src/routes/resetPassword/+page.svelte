@@ -7,31 +7,6 @@
     let email = '';
     let errorMessage = writable('');
   
-    // // Simulate a login API request (you can replace this with your real API call)
-    // const login = async () => {
-    //   // Clear previous error messages
-    //   errorMessage.set('');
-
-    //   if (!email || !password) {
-    //     errorMessage.set('Please fill in both fields.');
-    //     return;
-    //   }
-  
-    //   try {
-    //     // Call the backend via the login function (you will get a token if login is successful)
-    //     const token = await loginAccount(email, password);  // Call the Tauri command login function
-    //     console.log('Login successful, received token:', token);
-
-    //     // Store the token in localStorage
-    //     localStorage.setItem('token', token);
-
-    //     // Redirect to the dashboard (or any other page)
-    //     goto('/');
-    //   } catch (error) {
-    //     console.error('Login error:', error);
-    //     errorMessage.set('Invalid credentials, please try again.');
-    //   }
-    // };
   </script>
   
     <style global>

@@ -19,15 +19,15 @@ When 'isEditMode' == false, the add new project page is shown.
   import { fade } from 'svelte/transition';
   import ConfirmationBox from '../../components/ConfirmationBox.svelte';
 
-  // Form state and mode indicator
-  let projectId: string | undefined = undefined;  // Changed to undefined instead of null
+  // LOCAL STATE 
+  let projectId: string | undefined = undefined;  // If present, we are editing
   let isEditMode = false;
   let project: Project | null = null;
   let projectCoordinates: { lat: number; lng: number }[] = [];
-  let imagePath: string = 'No Image';
-  let imagePreview: string = '/images/logo.png';
+  let imagePath: string = 'No Image'; // Stored image path
+  let imagePreview: string = '/images/logo.png'; // What to show in <img>
   let attempts: string = '0';
-  let selectedOption: string = ''; // grade
+  let selectedOption: string = ''; // Grade
   let dateTime: Date = new Date();
   let inputDateTime = formatDateForInput(dateTime);
   let isSent: boolean = false;
@@ -39,9 +39,13 @@ When 'isEditMode' == false, the add new project page is shown.
   let selectedHolds: string[] = [];
   let showConfirmationBox = false;
 
+  // REACTIVE DERIVED VALUES
+  // Whenever grade system changes, update grade list
   $: currentGrades = getCurrentGrades($gradeSystem);
+  // Keep selectedOption always formatted to correct scale
   $: selectedOption = convertVScaleGrade(selectedOption, $gradeSystem);
 
+  // HELPERS FOR FORM & CHECKBOXES 
   function toggleStyle(style: string) {
     if (selectedStyles.includes(style)) {
       selectedStyles = selectedStyles.filter(s => s !== style);
@@ -82,20 +86,20 @@ When 'isEditMode' == false, the add new project page is shown.
     }
   }
   
-  // Fetch query params for projectId
+  // INITIAL SETUP ON PAGE LOAD
+  // Pull the ?id=... from URL for editing
   $: {
     const urlParams = new URLSearchParams(window.location.search);
     projectId = urlParams.get('id') || '';
   }
 
-  // On mount, check if we are editing an existing project.
   onMount(async () => {
-    // Check if user if logged in
     const isLoggedIn = checkLoginStatus();
     if (!isLoggedIn) {
       goto('/login'); // Redirect if not logged in
     }
     
+    // Fetch any annotation coords for this project
     annotations.subscribe(store => {
       if (projectId && store[projectId]) {
         // Convert string coordinates to numbers
@@ -110,6 +114,7 @@ When 'isEditMode' == false, the add new project page is shown.
       }
     });
 
+    // If editing, populate all form fields
     const urlParams = new URLSearchParams(window.location.search);
     projectId = urlParams.get('id') ?? undefined; // Use undefined for new project
     if (projectId) {
@@ -139,7 +144,7 @@ When 'isEditMode' == false, the add new project page is shown.
     }
   });
 
-  // Function to capture/upload an image
+  // CAPTURE OR PICK IMAGE FUNCTION
   const pickImage = async () => {
     try {
       const image = await CapacitorCamera.getPhoto({
@@ -173,7 +178,7 @@ When 'isEditMode' == false, the add new project page is shown.
     }
   }
 
-  // Unified submit function
+  // FORM SUBMIT HANDLER
   async function submitData() {
     try {
       const dateTimeObj = new Date(dateTime);
@@ -218,13 +223,6 @@ When 'isEditMode' == false, the add new project page is shown.
         }
         await addProject(currentProject, imageFile);
         message = 'Project added successfully!';
-        // goto(`/`);
-
-        // if (history.length > 1) {
-        //   history.back(); // Navigate to previous page
-        // } else {
-        //   goto('/');
-        // }
       }
       await resetForm();
     } catch (error) {
@@ -470,7 +468,6 @@ When 'isEditMode' == false, the add new project page is shown.
 </style>
 
 <div class="home">
-
   <div class="header-container">  
     <button class="back-button" on:click={navigateToHome}>
       <ArrowLeft/>
@@ -496,19 +493,9 @@ When 'isEditMode' == false, the add new project page is shown.
       <img src={imagePreview} alt="Selected Image" class="image-preview" />
     {/if}
   </div>
-
-  <!-- <div>
-    {#if isEditMode}
-      {#if projectCoordinates.length > 0}
-        <p>Notes: {projectCoordinates.length}</p>
-      {:else}
-        <p>Notes: 0</p>
-      {/if}
-    {/if}
-  </div> -->
     
+  <!-- Form inputs -->
   <div class="selection-box-container">
-
     <div class="form-group">
       <label for="dateTime">Date & Time</label>
       <input

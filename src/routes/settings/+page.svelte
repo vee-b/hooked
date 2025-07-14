@@ -4,15 +4,15 @@
   import { checkLoginStatus, logoutAccount } from '../../controllers/accountsController';
   import { gradeSystem, setGradeSystem } from '../../stores/settingsStore';
 
-  // Handle dropdown change event
+  // EVENT HANDLER FOR DROPDOWN
+  // Whenever user changes dropdown, update the global grade system
   const handleGradeChange = (event: Event) => {
     const target = event.target as HTMLSelectElement;
     setGradeSystem(target.value);
   };
 
-  // Fetch project details on mount
+  // ON MOUNT: CHECK LOGIN
   onMount(async () => {
-    // Check if user if logged in
     const isLoggedIn = checkLoginStatus();
     if (!isLoggedIn) {
       goto('/login'); // Redirect if not logged in
@@ -34,7 +34,7 @@
     font-family: 'Poppins', sans-serif;
 
     max-width: 600px;
-    width: 90%;
+    width: 80%;
     margin: 1rem auto;
   }
 
@@ -86,8 +86,9 @@
   <div class="divider"></div>
 
   <!-- Dropdown for Grade System -->
-  <!-- <label for="grade-system">Choose Grade System:</label> -->
   <div class="settings">
+    <!-- 'bind:value={$gradeSystem}' Binds directly to global writable store -->
+    <!-- 'on:change={handleGradeChange}' Still fires handler to ensure explicit update  -->
     <select 
       id="grade-system" 
       bind:value={$gradeSystem} 
