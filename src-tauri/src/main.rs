@@ -93,10 +93,15 @@ async fn main() {
 // Inserts a new Project document into the projects collection.
 #[tauri::command] // Marks the function as a Tauri command, allowing the frontend (e.g., SvelteKit) to invoke the function asynchronously.
 // client: State<'_, MongoClient>: State: This is Tauri's way of sharing state across different commands.MongoClient: The MongoDB client instance, which provides access to the database. '_': A lifetime specifier. This indicates that the MongoClient reference is tied to the application's state lifetime. 
-async fn insert_project(client: State<'_, MongoClient>, mut project: Project) -> Result<(), String> {
+async fn insert_project(client: State<'_, MongoClient>, mut project: Project, account_id: String) -> Result<(), String> {
     let collection = client.database("hooked_db").collection("projects");
 
     project.normalize();
+
+    // parse account_id to ObjectId
+    let object_id = ObjectId::parse_str(&account_id)
+        .map_err(|e| format!("Invalid account_id: {}", e))?;
+    project.account_id = object_id; // set foreign key
 
     // Convert project to BSON document
     let doc = match bson::to_document(&project) {
@@ -114,10 +119,18 @@ async fn insert_project(client: State<'_, MongoClient>, mut project: Project) ->
 // Fetches all project documents from the database and converts them to Project objects.
 #[tauri::command]
 // Returns a vector (list) of Project objects.
-async fn get_all_projects(client: State<'_, MongoClient>) -> Result<Vec<Project>, String> {
+async fn get_all_projects(client: State<'_, MongoClient>, account_id: String) -> Result<Vec<Project>, String> {
     let collection = client.database("hooked_db").collection::<Document>("projects");
+
+    // Ensure users only see their projects
+    let filter = doc! {
+        "account_id": bson::oid::ObjectId::parse_str(&account_id)
+            .map_err(|e| format!("Invalid account_id: {}", e))?,
+        "is_active": 1
+    };
+
     // Performs a find query with no filter (None means "match everything"). The second None is for additional options (e.g., sorting or projection).
-    let mut cursor = collection.find(None, None).await.map_err(|e| e.to_string())?; // The ? operator propagates the error, exiting the function early if an error occurs.
+    let mut cursor = collection.find(filter, None).await.map_err(|e| e.to_string())?; // The ? operator propagates the error, exiting the function early if an error occurs.
     // Initialize an empty Vec (vector) to hold the list of Project objects.
     let mut projects = Vec::new();
 
@@ -133,10 +146,16 @@ async fn get_all_projects(client: State<'_, MongoClient>) -> Result<Vec<Project>
 
 // Fetches all project where is_active is 1.
 #[tauri::command]
-async fn get_active_projects(client: State<'_, MongoClient>) -> Result<Vec<Project>, String> {
+async fn get_active_projects(client: State<'_, MongoClient>, account_id: String) -> Result<Vec<Project>, String> {
     let collection = client.database("hooked_db").collection::<Document>("projects");
+
     // Retrieve only active projects (where is_active is set to 1). doc!: This macro from the mongodb crate helps create BSON documents in a concise way. {"is_active": 1}: This is the MongoDB filter.
-    let filter = doc! {"is_active": 1};
+    let filter = doc! {
+        "account_id": bson::oid::ObjectId::parse_str(&account_id)
+            .map_err(|e| format!("Invalid account_id: {}", e))?,
+        "is_active": 1
+    };
+    
     // Queries the database for all documents matching the filter.
     let mut cursor = collection.find(filter, None).await.map_err(|e| e.to_string())?;
     let mut projects = Vec::new();
@@ -150,10 +169,16 @@ async fn get_active_projects(client: State<'_, MongoClient>) -> Result<Vec<Proje
 
 // Fetches all project where is_active is 0.
 #[tauri::command]
-async fn get_inactive_projects(client: State<'_, MongoClient>) -> Result<Vec<Project>, String> {
+async fn get_inactive_projects(client: State<'_, MongoClient>, account_id: String) -> Result<Vec<Project>, String> {
     let collection = client.database("hooked_db").collection::<Document>("projects");
+
     // Retrieve only active projects (where is_active is set to 0).
-    let filter = doc! {"is_active": 0};
+    let filter = doc! {
+        "account_id": bson::oid::ObjectId::parse_str(&account_id)
+            .map_err(|e| format!("Invalid account_id: {}", e))?,
+        "is_active": 0
+    };
+
     let mut cursor = collection.find(filter, None).await.map_err(|e| e.to_string())?;
     let mut projects = Vec::new();
 
@@ -168,7 +193,7 @@ async fn get_inactive_projects(client: State<'_, MongoClient>) -> Result<Vec<Pro
 #[tauri::command]
 async fn get_active_filtered_projects(
     client: State<'_, MongoClient>,
-    // grade: Option<String>,
+    account_id: String,
     grades: Option<Vec<String>>,
     sent_status: Option<String>,
     styles: Option<Vec<String>>,
@@ -177,7 +202,11 @@ async fn get_active_filtered_projects(
     let collection = client.database("hooked_db").collection::<Document>("projects");
 
     // Base filter: Only return active projects
-    let mut filter = doc! { "is_active": 1 };
+    let mut filter = doc! {
+        "account_id": bson::oid::ObjectId::parse_str(&account_id)
+            .map_err(|e| format!("Invalid account_id: {}", e))?,
+        "is_active": 1
+    };
 
     // Add grade filter if provided
     if let Some(grades_list) = grades {
@@ -227,7 +256,7 @@ async fn get_active_filtered_projects(
 #[tauri::command]
 async fn get_inactive_filtered_projects(
     client: State<'_, MongoClient>,
-    // grade: Option<String>,
+    account_id: String,
     grades: Option<Vec<String>>,
     sent_status: Option<String>,
     styles: Option<Vec<String>>,
@@ -236,7 +265,11 @@ async fn get_inactive_filtered_projects(
     let collection = client.database("hooked_db").collection::<Document>("projects");
 
     // Base filter: Only return active projects
-    let mut filter = doc! { "is_active": 0 };
+    let mut filter = doc! {
+        "account_id": bson::oid::ObjectId::parse_str(&account_id)
+            .map_err(|e| format!("Invalid account_id: {}", e))?,
+        "is_active": 0
+    };
 
     // Add grade filter if provided
     if let Some(grades_list) = grades {
@@ -309,9 +342,16 @@ async fn update_project(client: State<'_, MongoClient>, mut project: Project) ->
         if let Some(bson::Bson::Boolean(is_active)) = update_doc.get("is_active") {
             update_doc.insert("is_active", bson::Bson::Int32(if *is_active { 1 } else { 0 }));
         }
+
         if let Some(bson::Bson::Boolean(is_sent)) = update_doc.get("is_sent") {
             update_doc.insert("is_sent", bson::Bson::Int32(if *is_sent { 1 } else { 0 }));
         }
+
+        if let Some(account_id_str) = update_doc.get_str("account_id").ok() {
+        let object_id = ObjectId::parse_str(account_id_str)
+            .map_err(|e| format!("Invalid account_id: {}", e))?;
+        update_doc.insert("account_id", bson::Bson::ObjectId(object_id));
+}
 
         // Handle `coordinates` only if valid array of objects
         let valid_coordinates = match update_doc.get("coordinates") {
@@ -514,22 +554,24 @@ async fn get_sends_count(client: State<'_, MongoClient>) -> Result<i64, String> 
 
 // Returns the total sends and sends count by grade.
 #[tauri::command]
-async fn get_sends_summary(client: State<'_, MongoClient>) -> Result<(i64, Vec<(String, i64)>), String> {
+async fn get_sends_summary(client: State<'_, MongoClient>, account_id: String) -> Result<(i64, Vec<(String, i64)>), String> {
     let collection = client.database("hooked_db").collection::<Document>("projects");
 
     // Log the number of matching projects before aggregation
     let matching_count = collection.count_documents(doc! { "is_sent": 1 }, None).await.map_err(|e| e.to_string())?;
     println!("Matching projects with is_sent = 1: {}", matching_count);
 
+    let account_id = bson::oid::ObjectId::parse_str(&account_id)
+        .map_err(|e| format!("Invalid account_id: {}", e))?;
+
     // Aggregation pipeline: filter sent projects and group by grade.
     let pipeline = vec![
-        doc! { "$match": { "is_sent": 1 } },
+        doc! { "$match": { "account_id": account_id.clone(), "is_sent": 1 } },
         doc! { "$group": { "_id": "$grade", "count": { "$sum": 1 } } }
     ];
 
     // Execute the aggregation pipeline.
     let mut cursor = collection.aggregate(pipeline, None).await.map_err(|e| e.to_string())?;
-
     let mut grade_counts = Vec::new();
     let mut total_count = 0;
 
@@ -557,12 +599,15 @@ async fn get_sends_summary(client: State<'_, MongoClient>) -> Result<(i64, Vec<(
 }
 
 #[tauri::command]
-async fn get_styles_summary(client: State<'_, MongoClient>) -> Result<Vec<(String, i64, i64)>, String> {
+async fn get_styles_summary(client: State<'_, MongoClient>, account_id: String) -> Result<Vec<(String, i64, i64)>, String> {
     let collection = client.database("hooked_db").collection::<Document>("projects");
+
+    let account_id = bson::oid::ObjectId::parse_str(&account_id)
+        .map_err(|e| format!("Invalid account_id: {}", e))?;
 
     // Pipeline to group by style for done (is_sent = 1)
     let done_pipeline = vec![
-        doc! { "$match": { "is_sent": 1 }},
+        doc! { "$match": { "account_id": account_id.clone(), "is_sent": 1 }},
         doc! { "$unwind": "$style" },  // break style array into multiple docs
         doc! { "$group": { "_id": "$style", "count": { "$sum": 1 }}}
     ];
@@ -582,7 +627,7 @@ async fn get_styles_summary(client: State<'_, MongoClient>) -> Result<Vec<(Strin
 
     // Pipeline to group by style for practicing (is_sent = 0)
     let practicing_pipeline = vec![
-        doc! { "$match": { "is_sent": 0 }},
+        doc! { "$match": { "account_id": account_id.clone(), "is_sent": 1 }},
         doc! { "$unwind": "$style" },
         doc! { "$group": { "_id": "$style", "count": { "$sum": 1 }}}
     ];
@@ -612,12 +657,15 @@ async fn get_styles_summary(client: State<'_, MongoClient>) -> Result<Vec<(Strin
 }
 
 #[tauri::command]
-async fn get_holds_summary(client: State<'_, MongoClient>) -> Result<Vec<(String, i64, i64)>, String> {
+async fn get_holds_summary(client: State<'_, MongoClient>, account_id: String) -> Result<Vec<(String, i64, i64)>, String> {
     let collection = client.database("hooked_db").collection::<Document>("projects");
+
+    let account_id = bson::oid::ObjectId::parse_str(&account_id)
+        .map_err(|e| format!("Invalid account_id: {}", e))?;
 
     // Pipeline to group by style for done (is_sent = 1)
     let done_pipeline = vec![
-        doc! { "$match": { "is_sent": 1 }},
+        doc! { "$match": { "account_id": account_id.clone(), "is_sent": 1 }},
         doc! { "$unwind": "$holds" },  // break style array into multiple docs
         doc! { "$group": { "_id": "$holds", "count": { "$sum": 1 }}}
     ];
@@ -637,7 +685,7 @@ async fn get_holds_summary(client: State<'_, MongoClient>) -> Result<Vec<(String
 
     // Pipeline to group by style for practicing (is_sent = 0)
     let practicing_pipeline = vec![
-        doc! { "$match": { "is_sent": 0 }},
+        doc! { "$match": { "account_id": account_id.clone(), "is_sent": 0 }},
         doc! { "$unwind": "$holds" },
         doc! { "$group": { "_id": "$holds", "count": { "$sum": 1 }}}
     ];
@@ -732,10 +780,10 @@ async fn create_account(email: String, password: String, db: State<'_, Arc<Mutex
 }
 
 #[tauri::command]
-async fn login(email: String, password: String, db: State<'_, Arc<Mutex<DatabaseHelper>>>) -> Result<String, String> {
+async fn login(email: String, password: String, db: State<'_, Arc<Mutex<DatabaseHelper>>>) -> Result<(String, String), String> {
   // Lock the Mutex asynchronously
   let db = db.lock().await;
-  db.login(&email, &password)
-    .await
+  db.login(&email, &password).await
+    .map(|(token, account_id)| (token, account_id.to_hex()))
     .map_err(|e| format!("Error logging in: {:?}", e))
 }

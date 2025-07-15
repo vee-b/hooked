@@ -87,6 +87,9 @@ export class Project {
   toMap() {
     return {
       ...(this._id ? { _id: this._id } : {}),
+      
+      account_id: localStorage.getItem("account_id"),  // or wherever you store the user id
+
       date_time: this.date_time.getTime(),  // Store as milliseconds (or use ISODate in MongoDB)
       image_path: this.image_path,
       is_sent: this.is_sent ? 1 : 0,

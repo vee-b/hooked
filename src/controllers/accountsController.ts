@@ -26,10 +26,10 @@ export async function registerAccount(email: string, password: string): Promise<
  * @param password - The user's password.
  * @returns A promise that resolves with a JWT token as a string.
  */
-export async function loginAccount(email: string, password: string): Promise<string> {
+export async function loginAccount(email: string, password: string): Promise<[string, string]> {
   try {
     // Invoke the Tauri command 'login' (registered in main.rs)
-    const token = await invoke<string>('login', { email, password });
+    const token = await invoke<[string, string]>('login', { email, password });
     return token;
   } catch (error) {
     console.error("Error logging in:", error);

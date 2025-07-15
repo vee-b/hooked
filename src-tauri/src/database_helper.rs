@@ -39,6 +39,7 @@ pub struct Coordinate {
 pub struct Project {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub _id: Option<ObjectId>, // MongoDB uses _id
+    pub account_id: ObjectId,  // 🔥 foreign key to Account
     pub date_time: i64, // UNIX timestamp
     pub sent_date: Option<i64>, // Optional UNIX timestamp
     pub image_path: String,
@@ -140,7 +141,7 @@ impl DatabaseHelper {
 
     // LOGIN
     // Verifies password + returns a JWT token
-    pub async fn login(&self, email: &str, password: &str) -> Result<String, Error> {
+    pub async fn login(&self, email: &str, password: &str) -> Result<(String, ObjectId), Error> {
         let database = self.client.database("hooked_db");
         let collection: Collection<Account> = database.collection("accounts");
 
@@ -156,10 +157,15 @@ impl DatabaseHelper {
                 let expiration = Utc::now().timestamp() as usize + 3600; // 1-hour expiry
                 let claims = Claims { sub: email.to_string(), exp: expiration };
                 let secret = "my_secret_key"; // WARNING: should be ENV VAR in production!
+
                 let token = encode(&Header::default(), &claims, &EncodingKey::from_secret(secret.as_ref()))
                     .map_err(|_| Error::from(std::io::Error::new(std::io::ErrorKind::Other, "JWT Error")))?;
 
-                return Ok(token);
+                let account_id = user._id.ok_or_else(|| 
+                    Error::from(std::io::Error::new(std::io::ErrorKind::Other, "Account ID missing"))
+                )?;
+
+                return Ok((token, account_id));
             }
         }
 
