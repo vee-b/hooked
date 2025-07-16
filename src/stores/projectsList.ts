@@ -41,7 +41,14 @@ export const holdsSummary = writable<{ holds: string; done: number; practicing: 
 export async function initializeProjectsList(): Promise<void> {
   try {
     // Invoke Rust command to get all projects. 'result' is typed as 'unknown' because the function does not initially know what type the backend will return.
-    const result: unknown = await invoke('get_all_projects');
+    // const result: unknown = await invoke('get_all_projects');
+    const accountId = localStorage.getItem("account_id");
+    if (!accountId) {
+      console.error("No account ID found in localStorage.");
+      return;
+    }
+
+    const result: unknown = await invoke('get_all_projects', { accountId });
 
     // Ensure the response is an array (if not an array, throw error). 
     if (!Array.isArray(result)) {
@@ -82,8 +89,16 @@ export async function deleteProject(_id: string): Promise<void> {
 // e.g. sends count by grade
 export async function fetchSendsSummary(): Promise<void> {
   try {
-    const [total, gradeCounts] = await invoke<[number, [string, number][]]>('get_sends_summary');
+    const accountId = localStorage.getItem("account_id");
+    if (!accountId) {
+      console.error("No account ID found in localStorage.");
+      return;
+    }
 
+    const [total, gradeCounts] = await invoke<[number, [string, number][]]>(
+      'get_sends_summary', 
+      { accountId }
+    );
 
     console.log('Backend returned data:', { total, gradeCounts }); // Debugging log
 
@@ -106,7 +121,13 @@ export async function fetchSendsSummary(): Promise<void> {
 // Same pattern for style & holds
 export async function fetchStylesSummary() {
   try {
-    const result: [string, number, number][] = await invoke('get_styles_summary');
+    const accountId = localStorage.getItem("account_id");
+    if (!accountId) {
+      console.error("No account ID found in localStorage.");
+      return;
+    }
+
+    const result: [string, number, number][] = await invoke('get_styles_summary', { accountId });
     const summary = result.map(([style, done, practicing]) => ({ style, done, practicing }));
     stylesSummary.set(summary);
     console.log('Fetched styles summary:', summary);
@@ -117,7 +138,13 @@ export async function fetchStylesSummary() {
 
 export async function fetchHoldsSummary() {
   try {
-    const result: [string, number, number][] = await invoke('get_holds_summary');
+    const accountId = localStorage.getItem("account_id");
+    if (!accountId) {
+      console.error("No account ID found in localStorage.");
+      return;
+    }
+
+    const result: [string, number, number][] = await invoke('get_holds_summary', { accountId });
     const summary = result.map(([holds, done, practicing]) => ({ holds, done, practicing }));
     holdsSummary.set(summary);
     console.log('Fetched holds summary:', summary);
@@ -130,7 +157,13 @@ export async function fetchHoldsSummary() {
 // Used in /+page.svelte or /inactiveProjects
 export async function fetchActiveProjects(): Promise<Project[]> {
   try {
-    const projectsData: unknown = await invoke('get_active_projects');
+    const accountId = localStorage.getItem("account_id");
+    if (!accountId) {
+      console.error("No account ID found in localStorage.");
+      return [];
+    }
+
+    const projectsData: unknown = await invoke('get_active_projects', { accountId });
 
     if (!Array.isArray(projectsData)) {
       console.error('Unexpected response format:', projectsData);
@@ -167,7 +200,13 @@ export async function fetchActiveProjects(): Promise<Project[]> {
 // Function to fetch inactive projects
 export async function fetchInactiveProjects(): Promise<Project[]> {
   try {
-    const projectsData: unknown = await invoke('get_inactive_projects');
+    const accountId = localStorage.getItem("account_id");
+    if (!accountId) {
+      console.error("No account ID found in localStorage.");
+      return [];
+    }
+
+    const projectsData: unknown = await invoke('get_inactive_projects', { accountId });
 
     if (!Array.isArray(projectsData)) {
       console.error('Unexpected response format:', projectsData);
@@ -204,9 +243,16 @@ export async function fetchActiveFilteredProjects(
   holds: string[] = [],
 ): Promise<Project[]> {
   try {
+    const accountId = localStorage.getItem("account_id");
+    if (!accountId) {
+      console.error("No account ID found in localStorage.");
+      return [];
+    }
+
     console.log('Sending to Rust:', { grades, sentStatus, styles, holds }); // Log filters
 
     const projectsData: unknown = await invoke('get_active_filtered_projects', {
+      accountId,
       grades,
       sentStatus,
       styles,
@@ -255,9 +301,16 @@ export async function fetchInactiveFilteredProjects(
   holds: string[] = [],
 ): Promise<Project[]> {
   try {
+    const accountId = localStorage.getItem("account_id");
+    if (!accountId) {
+      console.error("No account ID found in localStorage.");
+      return [];
+    }
+
     console.log('Sending to Rust:', { grades, sentStatus, styles, holds }); // Log filters
 
     const projectsData: unknown = await invoke('get_inactive_filtered_projects', {
+      accountId,
       grades,
       sentStatus,
       styles,
@@ -355,8 +408,11 @@ export async function addProject(newProject: Project, imageFile: File): Promise<
       coordinates: newProject.coordinates || [],
     });
 
+    const account_id = localStorage.getItem("account_id");
+
     // Convert project to map and send to Rust backend to insert
-    await invoke('insert_project', { project: projectWithImage.toMap() });
+    // await invoke('insert_project', { project: projectWithImage.toMap() });
+    await invoke('insert_project', { project: projectWithImage.toMap(), accountId: account_id });
 
     // Refresh the project list after adding the new project
     await initializeProjectsList();
@@ -420,9 +476,11 @@ export async function editProject(updatedProject: Project, imageFile?: File): Pr
 
     console.log("Updating project:", updatedProject);
 
+    const account_id = localStorage.getItem("account_id");
     // Ensure correct formatting before sending to Rust
     const formattedProject = {
       _id: updatedProject._id,
+      account_id,
       date_time: typeof updatedProject.date_time === "number" 
         ? updatedProject.date_time 
         : new Date(updatedProject.date_time).getTime(), // Convert to timestamp

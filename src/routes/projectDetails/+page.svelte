@@ -213,6 +213,7 @@ When 'isEditMode' == false, the add new project page is shown.
         await editProject(currentProject, imageFile ?? undefined);
         message = 'Project updated successfully!';
         setTimeout(() => message = '', 3000);
+        await resetForm();
       } else {
         if (!imageFile) {
           // Fetch and use the default logo image
@@ -224,7 +225,6 @@ When 'isEditMode' == false, the add new project page is shown.
         await addProject(currentProject, imageFile);
         message = 'Project added successfully!';
       }
-      await resetForm();
     } catch (error) {
       console.error('Error submitting project:', error);
       message = isEditMode ? 'Failed to update project.' : 'Failed to add project.';

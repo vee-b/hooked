@@ -29,11 +29,12 @@
 
     try {
       // Try to login, e.g. via a Tauri IPC command
-      const token = await loginAccount(email, password);
+      const [token, accountId] = await loginAccount(email, password);
       console.log('Login successful, received token:', token);
 
       // Save token to localStorage
-      localStorage.setItem('token', token);
+      localStorage.setItem('token', token,);
+      localStorage.setItem("account_id", accountId);
 
       // Redirect to home/dashboard
       goto('/');
