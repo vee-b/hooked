@@ -2,7 +2,7 @@
 
 A web app to log and track climbing projects by grade, style and completion status.
 
-## 🛠️ Built With
+## Built With
 
 - [SvelteKit](https://kit.svelte.dev/)
 - [Tauri](https://tauri.app/)
@@ -10,7 +10,7 @@ A web app to log and track climbing projects by grade, style and completion stat
 - [Cloudinary](https://cloudinary.com/)
 - [Vite](https://vitejs.dev/)
 
-## 🚀 Getting Started
+## Getting Started
 
 Follow these steps to run the project locally.
 
@@ -42,7 +42,7 @@ node -v
 npm -v
 ```
 
-## 📸 Screenshots
+## Screenshots
 
 ![Login](./assets/login.png)  
 
