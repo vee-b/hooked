@@ -93,7 +93,8 @@ impl DatabaseHelper {
     // NEW INSTANCE
     // Connect to MongoDB, do a test ping
     pub async fn new() -> Result<Self, mongodb::error::Error> { // Connect to MongoDB.
-        let mongo_uri = "***REMOVED***vness:8dSKcqijM7aVUH2V@hooked.1zbi6.mongodb.net/?retryWrites=true&w=majority&appName=Hooked"; // A string containing the MongoDB connection URI.
+        let mongo_uri = std::env::var("MONGODB_URI").expect("MONGODB_URI must be set");
+
         let client = Client::with_uri_str(mongo_uri).await?; // Asynchronously connects to MongoDB using the URI.
 
         client.database("admin").run_command(doc! {"ping": 1}, None).await?; // client.database("admin"): Selects the admin database. .run_command(doc! {"ping": 1}, None).await?: Executes a ping command to check the database connection.

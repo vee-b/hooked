@@ -31,7 +31,9 @@ struct CloudinaryUploadResponse {
 async fn main() {
     // Set up MongoDB client asynchronously.
     // MongoDB connection string.
-    let mongo_uri = "***REMOVED***vness:8dSKcqijM7aVUH2V@hooked.1zbi6.mongodb.net/?retryWrites=true&w=majority&appName=Hooked";
+    dotenvy::dotenv().ok(); // Load .env file
+    let mongo_uri = std::env::var("MONGODB_URI").expect("MONGODB_URI must be set");
+
     // Parse MongoDB connection options asynchronously.
     let mut client_options = ClientOptions::parse(mongo_uri).await.unwrap();
     // Sets the MongoDB API version to V1 for stability.
@@ -481,10 +483,10 @@ async fn delete_project(client: State<'_, MongoClient>, _id: String) -> Result<(
 async fn delete_from_cloudinary(image_url: String) -> Result<(), String> {
     // Extract the public_id (necessary to identify and delete the image from Cloudinary) from the image URL.
     let public_id = extract_cloudinary_public_id(&image_url)?;
+    let cloud_name = std::env::var("CLOUDINARY_CLOUD_NAME").expect("CLOUDINARY_CLOUD_NAME must be set");
+    let api_key = std::env::var("CLOUDINARY_API_KEY").expect("CLOUDINARY_API_KEY must be set");
+    let api_secret = std::env::var("CLOUDINARY_API_SECRET").expect("CLOUDINARY_API_SECRET must be set");
 
-    let cloud_name = "du9hsgxds";
-    let api_key = "896781979879415";
-    let api_secret = "X-xII6Q4WQkXfjV68MCLFKPq5hQ";
 
     // Generate a secure signature using the current time.
     let timestamp = chrono::Utc::now().timestamp().to_string(); // For signing the request
@@ -718,8 +720,9 @@ async fn get_holds_summary(client: State<'_, MongoClient>, account_id: String) -
 #[tauri::command]
 async fn upload_image(image_data: Vec<u8>, image_name: String) -> Result<String, String> { // image_data: A vector of bytes (Vec<u8>) representing the raw image data.
     let client = reqwest::Client::new();
-    let cloud_name = "du9hsgxds"; 
-    let upload_preset = "shafaedyn"; 
+    let cloud_name = std::env::var("CLOUDINARY_CLOUD_NAME").expect("CLOUDINARY_CLOUD_NAME must be set");
+    let upload_preset = std::env::var("CLOUDINARY_UPLOAD_PRESET").expect("CLOUDINARY_UPLOAD_PRESET must be set");
+
 
     // Createthe image part.
     let part = reqwest::multipart::Part::bytes(image_data) // Converts the raw image_data (a byte vector) into a multipart form part for file uploads.

@@ -1731,6 +1731,7 @@ dependencies = [
  "bson",
  "chrono",
  "dirs",
+ "dotenvy",
  "futures",
  "futures-util",
  "jsonwebtoken",
